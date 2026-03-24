@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "fullName": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "teacher", "coach", "admin", "organic-admin", "breakfast-admin"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "username": { "type": "string" },
+        "points": { "type": "number" },
+        "photoUrl": { "type": "string" }
+      },
+      "required": ["uid", "email", "fullName", "role"]
+    },
+    "HealthRecord": {
+      "title": "HealthRecord",
+      "description": "Student health record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "bmi": { "type": "number" },
+        "weight": { "type": "number" },
+        "height": { "type": "number" },
+        "category": { "type": "string" }
+      },
+      "required": ["userId", "date", "bmi", "weight", "height"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Student activity record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "name": { "type": "string" },
+        "points": { "type": "number" },
+        "type": { "type": "string" }
+      },
+      "required": ["userId", "date", "name", "points", "type"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Class announcement",
+      "type": "object",
+      "properties": {
+        "class": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "teacherName": { "type": "string" }
+      },
+      "required": ["class", "title", "content", "teacherName"]
+    },
+    "Module": {
+      "title": "Module",
+      "description": "Learning module",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "link": { "type": "string" }
+      },
+      "required": ["title", "imageUrl", "description", "category"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Breakfast item or vegetable",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" }
+      },
+      "required": ["name", "imageUrl", "price", "quantity"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/health_records/{recordId}": { "schema": "HealthRecord", "description": "Student health records" },
+    "/activities/{activityId}": { "schema": "Activity", "description": "Student activities" },
+    "/announcements/{announcementId}": { "schema": "Announcement", "description": "Class announcements" },
+    "/modules/{moduleId}": { "schema": "Module", "description": "Learning modules" },
+    "/breakfast_items/{itemId}": { "schema": "Product", "description": "Breakfast items" },
+    "/vegetables/{itemId}": { "schema": "Product", "description": "Vegetables" }
+  }
+}
