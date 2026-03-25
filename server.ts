@@ -7,11 +7,22 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import admin from "firebase-admin";
+import fs from "fs";
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize Firebase Admin
+const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
+if (fs.existsSync(firebaseConfigPath)) {
+  const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+  admin.initializeApp({
+    projectId: firebaseConfig.projectId,
+  });
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 const db = new Database("database.sqlite");
@@ -243,17 +254,32 @@ async function startServer() {
   app.use(express.json());
 
   // Middleware
-  const authenticate = (req: any, res: any, next: any) => {
+  const authenticate = async (req: any, res: any, next: any) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ error: "Unauthorized" });
     const token = authHeader.split(" ")[1];
 
     try {
-      const decoded: any = jwt.verify(token, JWT_SECRET);
-      const user = db.prepare("SELECT id, email, role, fullName FROM users WHERE id = ?").get(decoded.id);
-      if (!user) return res.status(401).json({ error: "User not found" });
-      req.user = user;
-      next();
+      // Try verifying as Firebase ID Token first
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        // For simplicity, we'll check the email for admin status if it's a Firebase token
+        const isAdminEmail = decodedToken.email === "rameshnathankaruvoolan10@gmail.com" && decodedToken.email_verified;
+        
+        req.user = {
+          id: decodedToken.uid,
+          email: decodedToken.email,
+          role: isAdminEmail ? 'admin' : 'student' // Default to student unless it's the admin email
+        };
+        return next();
+      } catch (firebaseErr) {
+        // Not a valid Firebase token, try JWT
+        const decoded: any = jwt.verify(token, JWT_SECRET);
+        const user = db.prepare("SELECT id, email, role, fullName FROM users WHERE id = ?").get(decoded.id);
+        if (!user) return res.status(401).json({ error: "User not found" });
+        req.user = user;
+        next();
+      }
     } catch (err) {
       res.status(401).json({ error: "Invalid token" });
     }
@@ -1111,7 +1137,26 @@ async function startServer() {
   });
 
   // Analytics
-  app.get("/api/analytics", authenticate, isAdmin, (req, res) => {
+  app.post("/api/admin/delete-auth-user", authenticate, isAdmin, async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    const user = await admin.auth().getUserByEmail(email);
+    await admin.auth().deleteUser(user.uid);
+    res.json({ success: true, message: `Auth user ${email} deleted successfully` });
+  } catch (error: any) {
+    if (error.code === 'auth/user-not-found') {
+      return res.json({ success: true, message: "Auth user not found, nothing to delete" });
+    }
+    console.error("Error deleting auth user:", error);
+    res.status(500).json({ error: "Failed to delete auth user", details: error.message });
+  }
+});
+
+app.get("/api/analytics", authenticate, isAdmin, (req, res) => {
     const totalStudents = (db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'student'").get() as { count: number }).count;
     
     const bmiStats = db.prepare(`

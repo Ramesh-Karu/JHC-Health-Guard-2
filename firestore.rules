@@ -11,15 +11,22 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    function isMigrating(oldUserId) {
+      return isAuthenticated() && (
+        getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.oldId == oldUserId
+      );
+    }
+
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAuthenticated() && (request.auth.uid == userId || isMigrating(userId));
     }
     
     function isAdmin() {
       return isAuthenticated() && (
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-        (request.auth.token.email == "rameshnathankaruvoolan10@gmail.com" && request.auth.token.email_verified == true)
+        (getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        (request.auth.token.email == "rameshnathankaruvoolan10@gmail.com") // Primary admin email
       );
     }
     
@@ -101,7 +108,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
         (isOwner(userId)) || isAdmin()
       );
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isMigrating(userId);
     }
 
     match /classrooms/{classroomId} {
@@ -112,13 +119,14 @@ service cloud.firestore {
     match /health_records/{recordId} {
       allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin());
       allow create: if isTeacherOrAdmin();
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow delete: if isAdmin();
     }
 
     match /activities/{activityId} {
       allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin());
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isMigrating(resource.data.userId));
       allow delete: if isAdmin();
     }
 
@@ -189,15 +197,29 @@ service cloud.firestore {
     match /breakfast_reservations/{reservationId} {
       allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if isAdmin();
+      allow update: if isAdmin() || isMigrating(resource.data.userId);
       allow delete: if isAdmin();
     }
 
     match /organic_reservations/{reservationId} {
       allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if isAdmin();
+      allow update: if isAdmin() || isMigrating(resource.data.userId);
       allow delete: if isAdmin();
+    }
+
+    match /badges/{badgeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || isOwner(request.resource.data.userId);
+      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow delete: if isAdmin();
+    }
+
+    match /likes/{likeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     match /home_page_data/{docId} {

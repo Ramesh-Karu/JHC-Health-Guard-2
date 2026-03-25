@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, setDoc, deleteDoc, onSnapshot, updateDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch } from '../firebase';
+import { db, auth, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, setDoc, deleteDoc, onSnapshot, updateDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch } from '../firebase';
 import { Search, Plus, Trash2, FileDown, FileUp, X, UserPlus, Edit2 } from 'lucide-react';
 import { useAuth } from '../App';
 import Papa from 'papaparse';
@@ -145,6 +145,42 @@ export default function UserManagement() {
     }
   };
 
+  const handleDeleteAllStudents = async () => {
+    const students = users.filter(u => u.role === 'student');
+    if (students.length === 0) {
+      setToast({ message: 'No students found to delete', type: 'error' });
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ALL ${students.length} students? This action cannot be undone.`)) {
+      try {
+        setIsImporting(true);
+        setImportProgress(0);
+        
+        const batchSize = 500;
+        for (let i = 0; i < students.length; i += batchSize) {
+          const batch = writeBatch(db);
+          const currentBatch = students.slice(i, i + batchSize);
+          
+          currentBatch.forEach(student => {
+            batch.delete(doc(db, 'users', student.id));
+          });
+          
+          await batch.commit();
+          setImportProgress(Math.round(((i + currentBatch.length) / students.length) * 100));
+        }
+        
+        setToast({ message: `Successfully deleted ${students.length} students`, type: 'success' });
+      } catch (err) {
+        console.error('Error deleting all students:', err);
+        setToast({ message: 'Error deleting students. Some may not have been deleted.', type: 'error' });
+      } finally {
+        setIsImporting(false);
+        setImportProgress(0);
+      }
+    }
+  };
+
   const handleExportCSV = () => {
     const csv = Papa.unparse(users);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -228,6 +264,7 @@ export default function UserManagement() {
               systemEmail: systemEmail,
               fullName: row.fullName,
               role: row.role || 'student',
+              dob: row.dob || '',
               authCreated: false,
               tempPassword: row.password,
               passwordChanged: false,
@@ -272,23 +309,46 @@ export default function UserManagement() {
   };
 
   const handleResetAccount = async (u: User) => {
-    if (window.confirm(`Are you sure you want to reset ${u.fullName}'s account? This will change their username to allow a fresh login if they are stuck.`)) {
+    if (window.confirm(`Are you sure you want to reset ${u.fullName}'s account? This will delete their Firebase Auth account and allow a fresh login with the default password.`)) {
       try {
-        const newUsername = `${u.username}-rst${Math.floor(Math.random() * 1000)}`;
-        const newSystemEmail = `${newUsername}@school.internal`;
-        
+        // 1. Delete Auth user via backend API
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const idToken = await currentUser.getIdToken();
+          const emailToDelete = u.email || `${u.username}@school.internal`;
+          
+          const response = await fetch('/api/admin/delete-auth-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ email: emailToDelete })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete auth user');
+          }
+          
+          const result = await response.json();
+          console.log('Auth user deletion result:', result);
+        }
+
+        // 2. Reset Firestore document
+        // We don't need to change the username anymore if we delete the Auth user!
+        // But we'll keep the option to reset it if they want to be extra safe.
+        // For now, let's just reset the authCreated flag.
         await updateDoc(doc(db, 'users', u.id), {
-          username: newUsername,
-          systemEmail: newSystemEmail,
           authCreated: false,
           passwordChanged: false,
           tempPassword: '123456'
         });
         
-        setToast({ message: `Account reset. New username: ${newUsername}. Password: 123456`, type: 'success' });
-      } catch (err) {
+        setToast({ message: `Account reset for ${u.username}. Password: 123456`, type: 'success' });
+      } catch (err: any) {
         console.error('Error resetting account:', err);
-        setToast({ message: 'Error resetting account', type: 'error' });
+        setToast({ message: `Error resetting account: ${err.message}`, type: 'error' });
       }
     }
   };
@@ -308,6 +368,9 @@ export default function UserManagement() {
               className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl"
             />
           </div>
+          <button onClick={handleDeleteAllStudents} className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 rounded-xl text-red-600 font-bold hover:bg-red-50">
+            <Trash2 size={18} /> Delete All Students
+          </button>
           <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50">
             <FileDown size={18} /> Export CSV
           </button>
@@ -489,6 +552,7 @@ export default function UserManagement() {
                         <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Username</th>
                         <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Role</th>
                         <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">DOB</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -498,6 +562,7 @@ export default function UserManagement() {
                           <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.username || '-'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.role || '-'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.email || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.dob || '-'}</td>
                         </tr>
                       ))}
                     </tbody>

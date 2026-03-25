@@ -108,7 +108,8 @@ export default function Login() {
               batch.set(doc(db, 'users', userId), {
                 ...rest,
                 authCreated: true,
-                uid: userId
+                uid: userId,
+                oldId: existingDocId
               });
               
               // Delete the temporary document
@@ -127,7 +128,12 @@ export default function Login() {
                 });
               }
 
-              await batch.commit();
+              try {
+                await batch.commit();
+                console.log("Lazy Auth migration batch committed successfully");
+              } catch (batchErr) {
+                handleFirestoreError(batchErr, OperationType.WRITE, 'batch-migration');
+              }
               console.log("Lazy Auth: Migration batch committed successfully");
               
               userData = { ...rest, authCreated: true, uid: userId };
