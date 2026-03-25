@@ -78,6 +78,7 @@ export default function Students() {
   }, [user]);
 
   const fetchStudents = async (loadMore = false) => {
+    console.log('fetchStudents called, loadMore:', loadMore);
     try {
       let q = query(
         collection(db, 'users'), 
@@ -92,6 +93,7 @@ export default function Students() {
 
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('Fetched students:', data);
       
       if (querySnapshot.docs.length < PAGE_SIZE) {
         setHasMore(false);
@@ -100,6 +102,7 @@ export default function Students() {
       setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
       setStudents(prev => loadMore ? [...prev, ...(data as User[])] : (data as User[]));
     } catch (err) {
+      console.error('Error fetching students:', err);
       handleFirestoreError(err, OperationType.GET, 'users');
     } finally {
       setLoading(false);
@@ -108,17 +111,22 @@ export default function Students() {
 
   const handleSaveStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Saving student, formData:', formData, 'editingStudent:', editingStudent);
     try {
       if (editingStudent) {
+        console.log('Updating student:', editingStudent.id);
         // Update existing student
         const studentRef = doc(db, 'users', editingStudent.id);
         const updateData = { ...formData };
         if (!updateData.password) {
           delete (updateData as any).password;
         }
+        console.log('Updating Firestore doc:', editingStudent.id, 'with data:', updateData);
         await updateDoc(studentRef, updateData);
+        console.log('Student updated successfully');
         setToast({ message: 'Student updated successfully!', type: 'success' });
       } else {
+        console.log('Creating new student');
         // Create new student
         const tempApp = initializeApp(firebaseConfig as any, 'temp-create-student-' + Date.now());
         const tempAuth = getAuth(tempApp);
@@ -127,6 +135,8 @@ export default function Students() {
         const systemEmail = `${normalizedUsername}@school.internal`;
         const userCredential = await createUserWithEmailAndPassword(tempAuth, systemEmail, formData.password);
         
+        console.log('Student created in Auth, UID:', userCredential.user.uid);
+
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           ...formData,
           username: normalizedUsername,
@@ -138,6 +148,7 @@ export default function Students() {
           createdAt: new Date().toISOString()
         });
         
+        console.log('Student saved to Firestore');
         await deleteApp(tempApp);
         setToast({ message: 'Student registered successfully!', type: 'success' });
       }

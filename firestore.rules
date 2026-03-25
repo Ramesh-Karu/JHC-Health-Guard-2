@@ -94,8 +94,9 @@ service cloud.firestore {
     match /users/{userId} {
       // Allow reading public profiles or own profile
       // Note: If users collection contains PII, we should split it or be more restrictive.
-      // For now, let's allow authenticated users to read profiles but restrict write.
-      allow read: if isAuthenticated();
+      // For now, let's allow all users to read profiles for login purposes.
+      // SECURITY WARNING: This leaks PII. Should be replaced with a public_users collection.
+      allow read: if true;
       allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
         (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin()

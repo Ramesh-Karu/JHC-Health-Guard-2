@@ -44,16 +44,31 @@ export default function UserManagement() {
     return () => unsubscribe();
   }, []);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 20;
+
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
       u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.role.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [users, searchTerm]);
 
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * usersPerPage;
+    return filteredUsers.slice(startIndex, startIndex + usersPerPage);
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Creating user with data:', formData);
     try {
       const tempApp = initializeApp(firebaseConfig, 'temp-create-user-' + Date.now());
       const tempAuth = getAuth(tempApp);
@@ -62,6 +77,8 @@ export default function UserManagement() {
       const systemEmail = `${normalizedUsername}@school.internal`;
       const userCredential = await createUserWithEmailAndPassword(tempAuth, systemEmail, formData.password);
       
+      console.log('User created in Auth, UID:', userCredential.user.uid);
+
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: formData.email,
         username: normalizedUsername,
@@ -73,6 +90,7 @@ export default function UserManagement() {
         createdAt: new Date().toISOString()
       });
       
+      console.log('User saved to Firestore');
       await deleteApp(tempApp);
       
       setIsModalOpen(false);
@@ -94,15 +112,19 @@ export default function UserManagement() {
   const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
+    console.log('Editing user:', editingUser.id, 'with data:', { fullName: editingUser.fullName, role: editingUser.role });
     try {
+      console.log('Updating Firestore doc:', editingUser.id);
       await updateDoc(doc(db, 'users', editingUser.id), {
         fullName: editingUser.fullName,
         role: editingUser.role
       });
+      console.log('User updated successfully');
       setIsEditModalOpen(false);
       setEditingUser(null);
       setToast({ message: 'User updated successfully', type: 'success' });
     } catch (err) {
+      console.error('Error updating user:', err);
       setToast({ message: 'Error updating user', type: 'error' });
       handleFirestoreError(err, OperationType.UPDATE, 'users');
     }
@@ -186,6 +208,7 @@ export default function UserManagement() {
         for (const row of currentBatchRows) {
           try {
             const normalizedUsername = row.username.toLowerCase().trim();
+            console.log('Importing user:', normalizedUsername);
             // Check for duplicate username
             if (existingUsernames.has(normalizedUsername)) {
               console.log(`Skipping duplicate user with username: ${normalizedUsername}`);
@@ -210,6 +233,7 @@ export default function UserManagement() {
               createdAt: new Date().toISOString()
             });
             
+            console.log('User added to batch:', normalizedUsername);
             existingUsernames.add(normalizedUsername);
             added++;
             batchCount++;
@@ -278,15 +302,17 @@ export default function UserManagement() {
           <thead>
             <tr className="bg-slate-50/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
               <th className="px-6 py-4">Name</th>
+              <th className="px-6 py-4">Username</th>
               <th className="px-6 py-4">Email</th>
               <th className="px-6 py-4">Role</th>
               <th className="px-6 py-4">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredUsers.map((u) => (
+            {paginatedUsers.map((u) => (
               <tr key={u.id}>
                 <td className="px-6 py-4 font-bold">{u.fullName}</td>
+                <td className="px-6 py-4">{u.username}</td>
                 <td className="px-6 py-4">{u.email}</td>
                 <td className="px-6 py-4 capitalize">{u.role}</td>
                 <td className="px-6 py-4 flex gap-2">
@@ -298,6 +324,28 @@ export default function UserManagement() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => p - 1)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-bold text-slate-700">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button 
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => p + 1)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
@@ -330,7 +378,7 @@ export default function UserManagement() {
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
             <h2 className="text-xl font-bold mb-6">Edit User</h2>
             <form onSubmit={handleEditUser} className="space-y-4">
-              <input type="text" placeholder="Full Name" required value={editingUser.fullName} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
+              <input type="text" placeholder="Full Name" required value={editingUser.fullName || ''} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
               <select value={editingUser.role} onChange={(e) => setEditingUser({...editingUser, role: e.target.value as any})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                 <option value="student">Student</option>
                 <option value="teacher">Teacher</option>
