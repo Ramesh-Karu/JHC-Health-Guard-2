@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Code, Github, X, User } from 'lucide-react';
+import { Code, Github, X, User, Database } from 'lucide-react';
+import { seedDatabase } from '../firebase';
 
 export default function DeveloperMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   
   const isFirebaseConfigured = !!import.meta.env.VITE_FIREBASE_API_KEY;
   const requiredEnvVars = [
@@ -15,6 +17,20 @@ export default function DeveloperMenu() {
     'VITE_FIREBASE_APP_ID'
   ];
   const missingVars = requiredEnvVars.filter(v => !import.meta.env[v]);
+
+  const handleReseed = async () => {
+    if (!confirm('Are you sure you want to reseed the database? This will overwrite existing data.')) return;
+    setIsSeeding(true);
+    try {
+      await seedDatabase();
+      alert('Database reseeded successfully!');
+    } catch (error) {
+      console.error('Seeding failed:', error);
+      alert('Failed to reseed database. Check console for details.');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   return (
     <>
@@ -60,6 +76,14 @@ export default function DeveloperMenu() {
             </div>
             
             <div className="space-y-2">
+              <button 
+                onClick={handleReseed}
+                disabled={isSeeding}
+                className="flex items-center gap-3 w-full p-3 bg-white/50 rounded-xl hover:bg-white/80 transition-all text-slate-700 font-medium disabled:opacity-50"
+              >
+                <Database size={20} />
+                {isSeeding ? 'Seeding...' : 'Reseed Database'}
+              </button>
               <a 
                 href="https://github.com/Ramesh-Karu" 
                 target="_blank" 
