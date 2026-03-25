@@ -288,7 +288,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => window.location.href = '/profile'}
+            onClick={() => window.location.href = '/health-pass'}
             className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
           >
             View Profile

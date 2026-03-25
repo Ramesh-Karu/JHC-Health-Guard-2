@@ -22,22 +22,23 @@ export default function Leaderboard() {
           const data = leaderboardDoc.data();
           const lastUpdated = data.updatedAt?.toDate().getTime() || 0;
           
-          // If less than 24 hours old, use cached
-          if (now - lastUpdated < 24 * 60 * 60 * 1000) {
+          // If less than 24 hours old and has users, use cached
+          if (data.users && now - lastUpdated < 24 * 60 * 60 * 1000) {
             setLeaderboard(data.users);
             setLoading(false);
             return;
           }
         }
         
-        // Recalculate
+        // Fetch all students and sort in memory to avoid composite index requirements
         const q = query(
           collection(db, 'users'), 
-          where('role', '==', 'student'),
-          orderBy('points', 'desc')
+          where('role', '==', 'student')
         );
         const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const data = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
         
         // Update cache
         await setDoc(doc(db, 'system', 'leaderboard'), {

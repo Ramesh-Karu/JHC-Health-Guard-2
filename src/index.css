@@ -3,6 +3,10 @@
 
 @theme {
   --font-sans: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-blue: #0066FF;
+  --color-brand-blue-light: #E6F0FF;
+  --color-brand-orange: #FF8C00;
+  --color-brand-orange-light: #FFF4E6;
 }
 
 @layer base {

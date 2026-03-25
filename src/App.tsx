@@ -104,6 +104,8 @@ import AdminHealthUpdate from './pages/AdminHealthUpdate';
 import StudentTracking from './pages/StudentTracking';
 import AdminBadgeApplications from './pages/AdminBadgeApplications';
 
+import Onboarding from './components/Onboarding';
+
 const SidebarItem = ({ icon: Icon, label, path, onClick }: any) => (
   <NavLink
     to={path}
@@ -249,7 +251,10 @@ const Layout = () => {
 
           <div className="mt-auto pt-6 border-t border-white/10">
             <button
-              onClick={logout}
+              onClick={async () => {
+                await logout();
+                window.location.href = '/login';
+              }}
               className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/50 hover:text-red-600 transition-all duration-200"
             >
               <LogOut size={20} />
@@ -391,12 +396,18 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
+    console.log("Attempting logout...");
     try {
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+        console.log("Firebase signOut successful");
+      }
+    } catch (error) {
+      console.error("Firebase signOut error:", error);
+    } finally {
+      console.log("Clearing local user state");
       setUser(null);
       localStorage.removeItem('user');
-    } catch (error) {
-      console.error("Logout error:", error);
     }
   };
 
@@ -447,10 +458,6 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
   if (user.role === 'student' && !user.passwordChanged && location.pathname !== '/change-password') {
     return <Navigate to="/change-password" />;
   }
-  
-  if (user.role === 'student' && !user.profileCompleted && location.pathname !== '/profile') {
-    return <Navigate to="/profile" />;
-  }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" />;
@@ -461,8 +468,18 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
 };
 
 export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return localStorage.getItem('hasSeenOnboarding') !== 'true';
+  });
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
+  };
+
   return (
     <AuthProvider>
+      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -30,9 +30,15 @@ export default function Others() {
   const [isDeveloperOpen, setIsDeveloperOpen] = useState(false);
 
   const handleLogout = async () => {
-    if (confirm('Are you sure you want to log out?')) {
+    console.log("Logout triggered from Others menu");
+    try {
       await logout();
-      navigate('/login');
+      console.log("Logout function completed, redirecting...");
+      window.location.href = '/login';
+    } catch (error) {
+      console.error("Error during logout navigation:", error);
+      // Fallback redirect
+      window.location.href = '/login';
     }
   };
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, getDoc, orderBy } from '../firebase';
+import { useAuth } from '../App';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, getDoc, orderBy, auth, signInWithPopup, GoogleAuthProvider, setDoc } from '../firebase';
 import { 
   Heart, 
   Brain, 
@@ -66,7 +67,7 @@ const FeatureCard = ({ icon: Icon, title, description, delay }: any) => (
     whileHover={{ y: -10, scale: 1.02 }}
     className="bg-white/30 backdrop-blur-xl p-8 rounded-[32px] border border-white/50 shadow-xl shadow-slate-200/20 group"
   >
-    <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-200 group-hover:rotate-12 transition-transform">
+    <div className="w-14 h-14 bg-brand-blue rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-blue/20 group-hover:rotate-12 transition-transform">
       <Icon size={28} className="text-white" />
     </div>
     <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
@@ -84,7 +85,7 @@ const StepItem = ({ number, title, description, icon: Icon }: any) => (
     </div>
     <div className="pt-1">
       <div className="flex items-center gap-3 mb-2">
-        <Icon size={18} className="text-blue-500" />
+        <Icon size={18} className="text-brand-blue" />
         <h4 className="font-bold text-slate-900">{title}</h4>
       </div>
       <p className="text-sm text-slate-500">{description}</p>
@@ -94,6 +95,7 @@ const StepItem = ({ number, title, description, icon: Icon }: any) => (
 
 export default function Home() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [modules, setModules] = useState<Module[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -105,6 +107,70 @@ export default function Home() {
   const [scannedStudent, setScannedStudent] = useState<any>(null);
   const [isScannedModalOpen, setIsScannedModalOpen] = useState(false);
   const [scannedLoading, setScannedLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // Check if user exists in Firestore
+      const userRef = doc(db, 'users', result.user.uid);
+      let userDoc;
+      try {
+        userDoc = await getDoc(userRef);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, 'users');
+        throw err;
+      }
+      
+      let userData;
+      if (!userDoc.exists()) {
+        // Create new user document
+        userData = {
+          uid: result.user.uid,
+          email: result.user.email,
+          fullName: result.user.displayName || 'User',
+          role: 'student', // Default role
+          createdAt: new Date().toISOString(),
+          points: 0,
+          passwordChanged: true,
+          authCreated: true
+        };
+        try {
+          await setDoc(userRef, userData);
+        } catch (err) {
+          handleFirestoreError(err, OperationType.WRITE, 'users');
+          throw err;
+        }
+      } else {
+        userData = userDoc.data();
+      }
+
+      login({ ...userData, id: result.user.uid });
+      
+      // Navigate based on role
+      if (userData.role === 'teacher') {
+        navigate('/teacher/dashboard');
+      } else if (userData.role === 'coach') {
+        navigate('/coach/dashboard');
+      } else if (userData.role === 'organic-admin') {
+        navigate('/organic-admin-dashboard');
+      } else if (userData.role === 'breakfast-admin') {
+        navigate('/breakfast-admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError('Failed to sign in with Google. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleScan = async (decodedText: string) => {
     try {
@@ -201,7 +267,7 @@ export default function Home() {
       <nav className="fixed top-6 left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl shadow-slate-200/20">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 justify-start">
-            <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <div className="w-8 h-8 bg-brand-blue rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20">
               <Heart className="text-white" size={18} />
             </div>
             <div>
@@ -210,14 +276,14 @@ export default function Home() {
             </div>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-xs font-bold text-slate-700 hover:text-blue-600 transition-colors uppercase tracking-wide">Features</a>
-            <a href="#how-it-works" className="text-xs font-bold text-slate-700 hover:text-blue-600 transition-colors uppercase tracking-wide">How it Works</a>
-            <a href="#leaderboard" className="text-xs font-bold text-slate-700 hover:text-blue-600 transition-colors uppercase tracking-wide">Leaderboard</a>
+            <a href="#features" className="text-xs font-bold text-slate-700 hover:text-brand-blue transition-colors uppercase tracking-wide">Features</a>
+            <a href="#how-it-works" className="text-xs font-bold text-slate-700 hover:text-brand-blue transition-colors uppercase tracking-wide">How it Works</a>
+            <a href="#leaderboard" className="text-xs font-bold text-slate-700 hover:text-brand-blue transition-colors uppercase tracking-wide">Leaderboard</a>
           </div>
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/login')}
-              className="px-6 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2"
+              className="px-6 py-2.5 bg-brand-blue text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-blue/20 hover:bg-blue-700 transition-all flex items-center gap-2"
             >
               Login
               <ChevronRight size={14} />
@@ -237,13 +303,13 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-xs font-bold mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-blue-light text-brand-blue rounded-full text-xs font-bold mb-8">
               <Zap size={14} />
               JAFFNA HINDU COLLEGE • AI-POWERED STUDENT WELLNESS
             </div>
             <h1 className="text-6xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-8 tracking-tight">
               Smart Student <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Health Monitoring</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-blue-700">Health Monitoring</span>
             </h1>
             <p className="text-xl text-slate-500 mb-10 leading-relaxed max-w-xl">
               AI-powered health tracking, nutrition guidance, and fitness analytics designed to build a healthier future for schools.
@@ -251,9 +317,16 @@ export default function Home() {
             <div className="flex flex-wrap gap-4">
               <button 
                 onClick={() => navigate('/login')}
-                className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center gap-3 hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+                className="px-8 py-4 bg-brand-orange text-white rounded-2xl font-bold flex items-center gap-3 hover:bg-orange-600 transition-all shadow-xl shadow-brand-orange/20"
               >
                 Student Login <ArrowRight size={20} />
+              </button>
+              <button 
+                onClick={handleGoogleLogin}
+                className="px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-lg flex items-center gap-3"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                Sign in with Google
               </button>
               <button 
                 onClick={() => setIsScannerOpen(true)}
@@ -292,7 +365,7 @@ export default function Home() {
             <div className="bg-white/30 backdrop-blur-xl p-8 rounded-[48px] shadow-2xl shadow-blue-200/20 border border-white/50 relative z-10">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center">
                     <Activity size={20} className="text-white" />
                   </div>
                   <div>
@@ -309,14 +382,14 @@ export default function Home() {
                   <AreaChart data={MOCK_BMI_DATA}>
                     <defs>
                       <linearGradient id="colorBmi" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#0066FF" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#0066FF" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <Tooltip 
                       contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Area type="monotone" dataKey="bmi" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorBmi)" />
+                    <Area type="monotone" dataKey="bmi" stroke="#0066FF" strokeWidth={4} fillOpacity={1} fill="url(#colorBmi)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -331,7 +404,7 @@ export default function Home() {
                 </div>
                 <div className="p-4 bg-slate-50 rounded-2xl">
                   <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Status</p>
-                  <p className="text-lg font-bold text-blue-600">Normal</p>
+                  <p className="text-lg font-bold text-brand-blue">Normal</p>
                 </div>
               </div>
             </div>
@@ -449,7 +522,7 @@ export default function Home() {
           <div className="relative">
             <div className="bg-slate-900 rounded-[48px] p-10 text-white shadow-2xl relative z-10">
               <div className="flex items-center gap-4 mb-10">
-                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-brand-blue rounded-2xl flex items-center justify-center">
                   <ShieldCheck size={24} />
                 </div>
                 <div>
@@ -483,13 +556,13 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="absolute -top-10 -right-10 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20" />
+            <div className="absolute -top-10 -right-10 w-64 h-64 bg-brand-blue rounded-full blur-[100px] opacity-20" />
           </div>
         </div>
       </section>
 
       {/* Statistics Section */}
-      <section className="py-24 px-6 bg-blue-600">
+      <section className="py-24 px-6 bg-brand-blue">
         <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
           <div>
             <p className="text-5xl font-bold text-white mb-2">3,000+</p>
@@ -518,7 +591,7 @@ export default function Home() {
               <h2 className="text-4xl font-bold text-slate-900 mb-4">Health Learning Center</h2>
               <p className="text-slate-500">Expert-curated resources for a better lifestyle.</p>
             </div>
-            <button className="hidden md:flex items-center gap-2 text-blue-600 font-bold hover:gap-4 transition-all">
+            <button className="hidden md:flex items-center gap-2 text-brand-blue font-bold hover:gap-4 transition-all">
               View All Modules <ChevronRight size={20} />
             </button>
           </div>
@@ -629,7 +702,7 @@ export default function Home() {
             <p className="text-slate-500 mb-10 leading-relaxed">Share tips, celebrate achievements, and participate in school-wide health challenges. Building healthy habits is better together.</p>
             <button 
               onClick={() => navigate('/login')}
-              className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all"
+              className="px-8 py-4 bg-brand-blue text-white rounded-2xl font-bold shadow-xl shadow-brand-blue/20 hover:bg-blue-700 transition-all"
             >
               Join the Community
             </button>
@@ -661,7 +734,7 @@ export default function Home() {
                     <span className="font-bold text-slate-900">{student.name}</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-blue-600 font-bold">{student.points}</p>
+                    <p className="text-brand-blue font-bold">{student.points}</p>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Points</p>
                   </div>
                 </div>
@@ -687,7 +760,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center">
                   <Heart className="text-white" size={24} />
                 </div>
                 <span className="text-xl font-bold tracking-tight">Health Guard</span>
@@ -699,19 +772,19 @@ export default function Home() {
             <div>
               <h4 className="font-bold mb-6">Quick Links</h4>
               <ul className="space-y-4 text-slate-400 text-sm font-medium">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">How it Works</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Leaderboard</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Community</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">How it Works</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">Leaderboard</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">Community</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-6">Support</h4>
               <ul className="space-y-4 text-slate-400 text-sm font-medium">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Contact Us</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-brand-blue transition-colors">Contact Us</a></li>
               </ul>
             </div>
             <div>
@@ -726,7 +799,7 @@ export default function Home() {
           </div>
           <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-slate-500 text-xs">
-              © 2026 Health Guard. Developed by <a href="https://github.com/Ramesh-Karu" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Ramesh Karu</a>. All rights reserved.
+              © 2026 Health Guard. Developed by <a href="https://github.com/Ramesh-Karu" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline">Ramesh Karu</a>. All rights reserved.
             </p>
             <div className="flex gap-6">
               <a href="https://github.com/Ramesh-Karu" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
