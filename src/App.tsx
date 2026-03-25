@@ -435,6 +435,10 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
 
   if (!user) return <Navigate to="/login" />;
   
+  if (user.role === 'student' && !user.passwordChanged && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" />;
+  }
+  
   if (user.role === 'student' && !user.profileCompleted && location.pathname !== '/profile') {
     return <Navigate to="/profile" />;
   }

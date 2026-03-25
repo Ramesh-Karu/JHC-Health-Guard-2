@@ -27,14 +27,24 @@ export default function ChangePassword() {
     setLoading(true);
     try {
       if (auth.currentUser) {
+        console.log('Attempting to update password for:', auth.currentUser.uid);
         await updatePassword(auth.currentUser, newPassword);
+        console.log('Password updated in Auth');
+        
+        console.log('Updating passwordChanged flag in Firestore for:', auth.currentUser.uid);
         await updateDoc(doc(db, 'users', auth.currentUser.uid), {
           passwordChanged: true
         });
+        console.log('passwordChanged flag updated in Firestore');
+        
         navigate('/dashboard');
+      } else {
+        console.error('No current user found for password update');
+        setError('No user found. Please login again.');
       }
-    } catch (err) {
-      setError('Failed to update password. Please try again.');
+    } catch (err: any) {
+      console.error('Failed to update password:', err);
+      setError(`Failed to update password: ${err.message || 'Please try again.'}`);
     } finally {
       setLoading(false);
     }
