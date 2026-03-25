@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db, updatePassword, doc, updateDoc } from '../firebase';
+import { auth, db, updatePassword, doc, updateDoc, setDoc } from '../firebase';
 import { useAuth } from '../App';
 import { Lock, AlertCircle } from 'lucide-react';
 
@@ -31,11 +31,15 @@ export default function ChangePassword() {
         await updatePassword(auth.currentUser, newPassword);
         console.log('Password updated in Auth');
         
-        console.log('Updating passwordChanged flag in Firestore for:', auth.currentUser.uid);
-        await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-          passwordChanged: true
-        });
-        console.log('passwordChanged flag updated in Firestore');
+        console.log('Updating passwordChanged and authCreated flag in Firestore for:', auth.currentUser.uid);
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await setDoc(userRef, {
+          passwordChanged: true,
+          authCreated: true
+        }, { merge: true });
+        const updatedDoc = await getDoc(userRef);
+        console.log('Updated user document:', updatedDoc.data());
+        console.log('passwordChanged and authCreated flags updated in Firestore');
         
         navigate('/dashboard');
       } else {

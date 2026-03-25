@@ -72,24 +72,34 @@ export default function Login() {
             }
           }
 
+          console.log("Lazy Auth: userData:", JSON.stringify(userData));
+          console.log("Lazy Auth: loginEmail:", loginEmail, "password length:", password.length);
           if (userData && userData.authCreated === false && userData.tempPassword === password) {
             try {
               console.log("Lazy Auth: Creating account for", loginEmail);
-              const createResult = await createUserWithEmailAndPassword(auth, loginEmail, password);
+              let createResult;
+              try {
+                createResult = await createUserWithEmailAndPassword(auth, loginEmail, password);
+              } catch (createErr: any) {
+                console.log("Lazy Auth: createUserWithEmailAndPassword failed with code:", createErr.code);
+                if (createErr.code === 'auth/email-already-in-use') {
+                  console.log("Lazy Auth: Email already in use, attempting sign in with password:", password);
+                  createResult = await signInWithEmailAndPassword(auth, loginEmail, password);
+                } else {
+                  throw createErr;
+                }
+              }
               userId = createResult.user.uid;
+              console.log("Lazy Auth: Auth user UID", userId);
               
               // Move Firestore data to the new UID and mark as authCreated
-              const oldDocRef = doc(db, 'users', userId); // This is wrong, the old doc has a random ID
-              // Wait, I need the document ID of the existing Firestore doc
               const q = query(collection(db, 'users'), where('username', '==', userData.username));
               const snapshot = await getDocs(q);
+              if (snapshot.empty) {
+                throw new Error("Could not find existing user document for migration");
+              }
               const existingDocId = snapshot.docs[0].id;
-              
-              // Update existing document with new UID if necessary, or just update it
-              // Actually, it's better to keep the same document ID if possible, but createUser generates a new UID.
-              // So we should probably delete the old doc and create a new one with the Auth UID, 
-              // or just update the old one and link it.
-              // The app uses doc(db, 'users', userId) in many places, so we MUST use the Auth UID.
+              console.log("Lazy Auth: Found existing doc ID", existingDocId);
               
               const { tempPassword, authCreated, ...rest } = userData;
               const batch = writeBatch(db);
@@ -118,6 +128,7 @@ export default function Login() {
               }
 
               await batch.commit();
+              console.log("Lazy Auth: Migration batch committed successfully");
               
               userData = { ...rest, authCreated: true, uid: userId };
               result = createResult;

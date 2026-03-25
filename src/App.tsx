@@ -347,16 +347,19 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('Auth state changed:', firebaseUser ? firebaseUser.uid : 'null');
       if (firebaseUser) {
         try {
           // Fetch user profile from Firestore
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data() as User;
+            console.log('User data fetched:', userData);
             const userObj = { ...userData, id: firebaseUser.uid };
             setUser(userObj);
             localStorage.setItem('user', JSON.stringify(userObj));
           } else {
+            console.warn('User document does not exist for UID:', firebaseUser.uid);
             setUser(null);
             localStorage.removeItem('user');
           }
