@@ -8,6 +8,8 @@ export interface User {
   fullName: string;
   passwordChanged?: boolean;
   profileCompleted?: boolean;
+  authCreated?: boolean;
+  tempPassword?: string;
   indexNumber?: string;
   dob?: string;
   gender?: string;

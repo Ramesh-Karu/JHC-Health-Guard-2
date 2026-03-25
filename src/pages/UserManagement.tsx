@@ -13,6 +13,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showOnlyLazy, setShowOnlyLazy] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -54,9 +55,9 @@ export default function UserManagement() {
         (u.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (u.role?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-      )
+      ) && (!showOnlyLazy || u.authCreated === false)
     );
-  }, [users, searchTerm]);
+  }, [users, searchTerm, showOnlyLazy]);
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const paginatedUsers = useMemo(() => {
@@ -368,6 +369,15 @@ export default function UserManagement() {
               className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl"
             />
           </div>
+          <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={showOnlyLazy} 
+              onChange={(e) => setShowOnlyLazy(e.target.checked)}
+              className="w-4 h-4"
+            />
+            Show Lazy Accounts
+          </label>
           <button onClick={handleDeleteAllStudents} className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 rounded-xl text-red-600 font-bold hover:bg-red-50">
             <Trash2 size={18} /> Delete All Students
           </button>
@@ -398,7 +408,12 @@ export default function UserManagement() {
           <tbody className="divide-y divide-slate-100">
             {paginatedUsers.map((u) => (
               <tr key={u.id}>
-                <td className="px-6 py-4 font-bold">{u.fullName}</td>
+                <td className="px-6 py-4 font-bold">
+                  {u.fullName}
+                  {u.authCreated === false && (
+                    <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-full">Lazy</span>
+                  )}
+                </td>
                 <td className="px-6 py-4">{u.username}</td>
                 <td className="px-6 py-4">{u.email}</td>
                 <td className="px-6 py-4 capitalize">{u.role}</td>
