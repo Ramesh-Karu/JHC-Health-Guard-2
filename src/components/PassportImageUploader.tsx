@@ -1,13 +1,13 @@
 import React from 'react';
 import { Camera } from 'lucide-react';
 
-interface ProfileImageUploaderProps {
+interface PassportImageUploaderProps {
   photoUrl: string;
   fullName: string;
   onUpload: (file: File) => void;
 }
 
-export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({ photoUrl, fullName, onUpload }) => {
+export const PassportImageUploader: React.FC<PassportImageUploaderProps> = ({ photoUrl, fullName, onUpload }) => {
   const defaultImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3b82f6&color=fff&size=256`;
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

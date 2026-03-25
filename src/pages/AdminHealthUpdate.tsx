@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment, getDoc } from '../firebase';
 import { Search, Save, User, FileUp } from 'lucide-react';
 import Papa from 'papaparse';
 import Toast from '../components/Toast';
@@ -11,6 +11,28 @@ export default function AdminHealthUpdate() {
   const [formData, setFormData] = useState({ height: '', weight: '', hip: '', waist: '', gripStrength: '' });
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [pointSettings, setPointSettings] = useState({
+    normalBMI: 50,
+    goodStrength: 50
+  });
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setPointSettings({
+            normalBMI: data.pointsPerNormalBMI || 50,
+            goodStrength: data.pointsPerGoodStrength || 50
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const searchStudent = async () => {
     if (!indexNumber) return;
@@ -52,6 +74,10 @@ export default function AdminHealthUpdate() {
       // Simple health assessment based on new metrics
       if (waist && hip && (waist / hip > 0.9)) category = 'At Risk (Waist/Hip)';
 
+      let pointsAwarded = 0;
+      if (category === 'Normal') pointsAwarded += pointSettings.normalBMI;
+      if (gripStrength > 20) pointsAwarded += pointSettings.goodStrength; // Assuming >20kg is good strength
+
       await addDoc(collection(db, 'health_records'), {
         userId: student.id,
         height,
@@ -61,11 +87,18 @@ export default function AdminHealthUpdate() {
         waist,
         gripStrength,
         category,
+        pointsAwarded,
         date: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString()
       });
 
-      setToast({ message: 'Health data updated successfully!', type: 'success' });
+      if (pointsAwarded > 0) {
+        await updateDoc(doc(db, 'users', student.id), {
+          points: increment(pointsAwarded)
+        });
+      }
+
+      setToast({ message: `Health data updated successfully! Awarded ${pointsAwarded} points.`, type: 'success' });
       setFormData({ height: '', weight: '', hip: '', waist: '', gripStrength: '' });
       setStudent(null);
       setIndexNumber('');
@@ -103,6 +136,10 @@ export default function AdminHealthUpdate() {
                 if (bmi >= 30) category = 'Obese';
                 if (waist && hip && (waist / hip > 0.9)) category = 'At Risk (Waist/Hip)';
 
+                let pointsAwarded = 0;
+                if (category === 'Normal') pointsAwarded += pointSettings.normalBMI;
+                if (gripStrength > 20) pointsAwarded += pointSettings.goodStrength;
+
                 await addDoc(collection(db, 'health_records'), {
                   userId: studentId,
                   height,
@@ -112,9 +149,16 @@ export default function AdminHealthUpdate() {
                   gripStrength,
                   bmi,
                   category,
+                  pointsAwarded,
                   date: new Date().toISOString().split('T')[0],
                   createdAt: new Date().toISOString()
                 });
+
+                if (pointsAwarded > 0) {
+                  await updateDoc(doc(db, 'users', studentId), {
+                    points: increment(pointsAwarded)
+                  });
+                }
               }
             } catch (err) {
               console.error('Error importing health data:', err);
@@ -127,20 +171,20 @@ export default function AdminHealthUpdate() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="w-full max-w-2xl mx-auto p-4 md:p-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Health Data Update</h1>
           <p className="text-slate-500">Update student health metrics</p>
         </div>
-        <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 cursor-pointer">
+        <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 cursor-pointer w-full sm:w-auto justify-center">
           <FileUp size={18} /> Import
           <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
         </label>
       </div>
 
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-        <div className="flex gap-2">
+      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             placeholder="Index Number"
@@ -151,7 +195,7 @@ export default function AdminHealthUpdate() {
           <button 
             onClick={searchStudent}
             disabled={loading}
-            className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
+            className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
           >
             <Search size={18} />
             {loading ? '...' : 'Search'}

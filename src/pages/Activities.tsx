@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, orderBy, doc, updateDoc, increment, onSnapshot } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, orderBy, doc, updateDoc, increment, onSnapshot, getDoc } from '../firebase';
 import { 
   Play, 
   Clock, 
@@ -36,6 +36,31 @@ export default function Activities() {
   });
 
   const [students, setStudents] = useState<any[]>([]);
+  const [pointSettings, setPointSettings] = useState({
+    sport: SCORING_RULES.sport,
+    exercise: SCORING_RULES.exercise,
+    habit: SCORING_RULES.habit
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setPointSettings({
+            sport: data.pointsPerSport || SCORING_RULES.sport,
+            exercise: data.pointsPerExercise || SCORING_RULES.exercise,
+            habit: data.pointsPerHabit || SCORING_RULES.habit
+          });
+          setFormData(prev => ({ ...prev, points: data.pointsPerSport || SCORING_RULES.sport }));
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -93,16 +118,16 @@ export default function Activities() {
         type: 'exercise',
         name: exercise.title,
         date: new Date().toISOString().split('T')[0],
-        points: exercise.points
+        points: pointSettings.exercise || exercise.points
       });
 
       // Update user points
       const userRef = doc(db, 'users', user.id);
       await updateDoc(userRef, {
-        points: increment(exercise.points)
+        points: increment(pointSettings.exercise || exercise.points)
       });
 
-      alert(`Great job! You earned ${exercise.points} points.`);
+      alert(`Great job! You earned ${pointSettings.exercise || exercise.points} points.`);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'activities');
     }
@@ -158,7 +183,7 @@ export default function Activities() {
                 <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                   <div className="flex items-center gap-1 text-blue-600 font-bold">
                     <Award size={16} />
-                    <span>{exercise.points} pts</span>
+                    <span>{pointSettings.exercise || exercise.points} pts</span>
                   </div>
                   <button 
                     onClick={() => handleCompleteExercise(exercise)}

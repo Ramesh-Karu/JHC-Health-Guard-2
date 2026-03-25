@@ -10,7 +10,7 @@ export default function ChangePassword() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +27,18 @@ export default function ChangePassword() {
     setLoading(true);
     try {
       if (auth.currentUser) {
-        console.log('Attempting to update password for:', auth.currentUser.uid);
-        await updatePassword(auth.currentUser, newPassword);
-        console.log('Password updated in Auth');
+        // Check if the user signed in with a password provider
+        const hasPasswordProvider = auth.currentUser.providerData.some(
+          (provider) => provider.providerId === 'password'
+        );
+
+        if (hasPasswordProvider) {
+          console.log('Attempting to update password for:', auth.currentUser.uid);
+          await updatePassword(auth.currentUser, newPassword);
+          console.log('Password updated in Auth');
+        } else {
+          console.log('User signed in with Google, skipping Auth password update');
+        }
         
         console.log('Updating passwordChanged and authCreated flag in Firestore for:', auth.currentUser.uid);
         const userRef = doc(db, 'users', auth.currentUser.uid);
@@ -46,6 +55,11 @@ export default function ChangePassword() {
         const updatedDoc = await getDoc(userRef);
         console.log('Updated user document:', updatedDoc.data());
         console.log('passwordChanged and authCreated flags updated in Firestore');
+        
+        // Update local user state so ProtectedRoute doesn't redirect back
+        if (user) {
+          login({ ...user, passwordChanged: true, authCreated: true });
+        }
         
         navigate('/dashboard');
       } else {

@@ -97,13 +97,27 @@ service cloud.firestore {
              (data.email is string || !('email' in data)) && 
              (data.fullName is string || !('fullName' in data)) && 
              (data.role in ['student', 'teacher', 'coach', 'admin', 'organic-admin', 'breakfast-admin'] || !('role' in data)) &&
-             (data.points is number || !('points' in data));
+             (data.points is number || !('points' in data)) &&
+             (data.wellnessBadge is bool || !('wellnessBadge' in data)) &&
+             (data.badgeStatus in ['none', 'pending', 'approved', 'rejected'] || !('badgeStatus' in data));
     }
     
     // ===============================================================
     // Rules
     // ===============================================================
     
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /badge_applications/{appId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read, list: if true;
       allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());

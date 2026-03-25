@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment, getDoc } from '../firebase';
 import { useAuth } from '../App';
 
 export default function CoachActivities() {
   const { user } = useAuth();
   const [athletes, setAthletes] = useState([]);
+  const [pointSettings, setPointSettings] = useState({
+    sport: 20
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setPointSettings({
+            sport: data.pointsPerSport || 20
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
   const [formData, setFormData] = useState({
     studentId: '',
     sportId: '',
@@ -35,7 +55,7 @@ export default function CoachActivities() {
   const recordActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const points = Math.floor(parseInt(formData.duration) / 10) * 5; // 5 points per 10 mins
+      const points = Math.floor(parseInt(formData.duration) / 10) * (pointSettings.sport / 4); // Scale points based on duration and sport points
 
       await addDoc(collection(db, 'activities'), {
         userId: formData.studentId,

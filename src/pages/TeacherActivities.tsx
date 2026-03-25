@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment, getDoc, orderBy, limit } from '../firebase';
 import { Plus, Search, Activity } from 'lucide-react';
 import { useAuth } from '../App';
 
@@ -10,6 +10,36 @@ export default function TeacherActivities() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterDivision, setFilterDivision] = useState('');
+  const [filterBmiCategory, setFilterBmiCategory] = useState('');
+  const [filterHealthStatus, setFilterHealthStatus] = useState('');
+  const [filterPoints, setFilterPoints] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+  const [pointSettings, setPointSettings] = useState({
+    sport: 20,
+    exercise: 10,
+    habit: 5
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setPointSettings({
+            sport: data.pointsPerSport || 20,
+            exercise: data.pointsPerExercise || 10,
+            habit: data.pointsPerHabit || 5
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
   
   const [formData, setFormData] = useState({
     userId: '',
@@ -29,11 +59,38 @@ export default function TeacherActivities() {
 
   const fetchStudents = async () => {
     try {
-      // Assuming teachers can see all students for now, or filter by class if needed
       const q = query(collection(db, 'users'), where('role', '==', 'student'));
       const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setStudents(data as any);
+      const studentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      const studentsWithHealth = await Promise.all(studentsData.map(async (student: any) => {
+        const healthQ = query(
+          collection(db, 'health_records'),
+          where('userId', '==', student.id),
+          orderBy('date', 'desc'),
+          limit(1)
+        );
+        const healthSnapshot = await getDocs(healthQ);
+        let latestBmi = null;
+        let healthCategory = 'N/A';
+        let latestDate = '';
+        
+        if (!healthSnapshot.empty) {
+          const latestRecord = healthSnapshot.docs[0].data();
+          latestBmi = latestRecord.bmi;
+          healthCategory = latestRecord.category;
+          latestDate = latestRecord.date;
+        }
+
+        return {
+          ...student,
+          latestBmi,
+          healthCategory,
+          latestDate
+        };
+      }));
+
+      setStudents(studentsWithHealth as any);
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, 'users');
     } finally {
@@ -45,9 +102,9 @@ export default function TeacherActivities() {
     e.preventDefault();
     try {
       let points = 0;
-      if (formData.type === 'exercise') points = 10;
-      else if (formData.type === 'sport') points = 20;
-      else if (formData.type === 'diet') points = 5;
+      if (formData.type === 'exercise') points = pointSettings.exercise;
+      else if (formData.type === 'sport') points = pointSettings.sport;
+      else if (formData.type === 'diet') points = pointSettings.habit;
 
       await addDoc(collection(db, 'activities'), {
         ...formData,
@@ -78,9 +135,35 @@ export default function TeacherActivities() {
     }
   };
 
-  const filteredStudents = students.filter((s: any) => 
-    s.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const uniqueClasses = Array.from(new Set(students.map((s: any) => s.class).filter(Boolean)));
+  const uniqueDivisions = Array.from(new Set(students.map((s: any) => s.division).filter(Boolean)));
+
+  const filteredStudents = students.filter((s: any) => {
+    const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const matchesSearch = nameMatch || indexMatch;
+    const matchesClass = filterClass ? s.class === filterClass : true;
+    const matchesDivision = filterDivision ? s.division === filterDivision : true;
+    const matchesBmiCategory = filterBmiCategory ? s.healthCategory === filterBmiCategory : true;
+    
+    let matchesHealthStatus = true;
+    if (filterHealthStatus === 'Healthy') {
+      matchesHealthStatus = s.healthCategory === 'Normal';
+    } else if (filterHealthStatus === 'Unhealthy') {
+      matchesHealthStatus = s.healthCategory && s.healthCategory !== 'Normal' && s.healthCategory !== 'N/A';
+    }
+
+    let matchesPoints = true;
+    const pts = s.points || 0;
+    if (filterPoints === '0-100') matchesPoints = pts >= 0 && pts <= 100;
+    else if (filterPoints === '101-500') matchesPoints = pts > 100 && pts <= 500;
+    else if (filterPoints === '501-1000') matchesPoints = pts > 500 && pts <= 1000;
+    else if (filterPoints === '>1000') matchesPoints = pts > 1000;
+
+    const matchesDate = filterDate ? s.latestDate === filterDate : true;
+    
+    return matchesSearch && matchesClass && matchesDivision && matchesBmiCategory && matchesHealthStatus && matchesPoints && matchesDate;
+  });
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -99,7 +182,7 @@ export default function TeacherActivities() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+        <div className="p-4 border-b border-slate-200 flex flex-wrap gap-4 items-center">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
@@ -110,6 +193,35 @@ export default function TeacherActivities() {
               className="pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-64"
             />
           </div>
+          <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Classes</option>
+            {uniqueClasses.map((c: any) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Divisions</option>
+            {uniqueDivisions.map((d: any) => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select value={filterBmiCategory} onChange={e => setFilterBmiCategory(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All BMI Categories</option>
+            <option value="Normal">Normal</option>
+            <option value="Underweight">Underweight</option>
+            <option value="Overweight">Overweight</option>
+            <option value="Obese">Obese</option>
+            <option value="At Risk (Waist/Hip)">At Risk (Waist/Hip)</option>
+          </select>
+          <select value={filterHealthStatus} onChange={e => setFilterHealthStatus(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Health Status</option>
+            <option value="Healthy">Healthy</option>
+            <option value="Unhealthy">Unhealthy</option>
+          </select>
+          <select value={filterPoints} onChange={e => setFilterPoints(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Points</option>
+            <option value="0-100">0 - 100</option>
+            <option value="101-500">101 - 500</option>
+            <option value="501-1000">501 - 1000</option>
+            <option value=">1000">&gt; 1000</option>
+          </select>
+          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="p-2 border border-slate-200 rounded-xl" />
         </div>
 
         <div className="overflow-x-auto">
@@ -117,6 +229,10 @@ export default function TeacherActivities() {
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                 <th className="p-4 font-medium">Student</th>
+                <th className="p-4 font-medium">Class/Div</th>
+                <th className="p-4 font-medium">Latest BMI</th>
+                <th className="p-4 font-medium">Health Status</th>
+                <th className="p-4 font-medium">Latest Date</th>
                 <th className="p-4 font-medium">Total Points</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
@@ -127,10 +243,28 @@ export default function TeacherActivities() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <span className="font-medium text-slate-900">{student.fullName}</span>
+                      <span className="text-sm text-slate-500">({student.indexNumber || 'N/A'})</span>
                     </div>
                   </td>
+                  <td className="p-4 text-slate-600">{student.class ? `${student.class} - ${student.division}` : 'N/A'}</td>
+                  <td className="p-4 font-mono text-slate-700">
+                    {student.latestBmi ? student.latestBmi.toFixed(1) : 'N/A'}
+                  </td>
+                  <td className="p-4">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      student.healthCategory === 'Normal' ? 'bg-emerald-100 text-emerald-700' :
+                      student.healthCategory === 'Underweight' ? 'bg-blue-100 text-blue-700' :
+                      student.healthCategory === 'Overweight' ? 'bg-orange-100 text-orange-700' :
+                      student.healthCategory === 'Obese' ? 'bg-red-100 text-red-700' :
+                      student.healthCategory === 'At Risk (Waist/Hip)' ? 'bg-purple-100 text-purple-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>
+                      {student.healthCategory || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
                   <td className="p-4 font-medium text-blue-600">
-                    {student.points} pts
+                    {student.points || 0} pts
                   </td>
                   <td className="p-4 text-right">
                     <button 

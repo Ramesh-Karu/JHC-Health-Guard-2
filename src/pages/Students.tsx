@@ -33,14 +33,15 @@ export default function Students() {
   const navigate = useNavigate();
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastVisible, setLastVisible] = useState<any>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 20;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [editingStudent, setEditingStudent] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterDivision, setFilterDivision] = useState('');
+  const [filterGender, setFilterGender] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Import Preview States
@@ -77,30 +78,20 @@ export default function Students() {
     }
   }, [user]);
 
-  const fetchStudents = async (loadMore = false) => {
-    console.log('fetchStudents called, loadMore:', loadMore);
+  const fetchStudents = async () => {
+    console.log('fetchStudents called');
     try {
       let q = query(
         collection(db, 'users'), 
         where('role', '==', 'student'),
-        orderBy('fullName'),
-        limit(PAGE_SIZE)
+        orderBy('fullName')
       );
-
-      if (loadMore && lastVisible) {
-        q = query(q, startAfter(lastVisible));
-      }
 
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       console.log('Fetched students:', data);
       
-      if (querySnapshot.docs.length < PAGE_SIZE) {
-        setHasMore(false);
-      }
-      
-      setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
-      setStudents(prev => loadMore ? [...prev, ...(data as User[])] : (data as User[]));
+      setStudents(data as User[]);
     } catch (err) {
       console.error('Error fetching students:', err);
       handleFirestoreError(err, OperationType.GET, 'users');
@@ -411,10 +402,17 @@ export default function Students() {
     }
   };
 
-  const filteredStudents = students.filter(s => 
-    s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.indexNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStudents = students.filter(s => {
+    const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const searchMatch = nameMatch || indexMatch;
+    
+    const classMatch = filterClass ? s.class === filterClass : true;
+    const divisionMatch = filterDivision ? s.division === filterDivision : true;
+    const genderMatch = filterGender ? s.gender === filterGender : true;
+
+    return searchMatch && classMatch && divisionMatch && genderMatch;
+  });
 
   return (
     <div className="space-y-8">
@@ -459,11 +457,32 @@ export default function Students() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-500">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
               <Filter size={20} />
             </button>
           </div>
         </div>
+        
+        {showFilters && (
+          <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-4">
+            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 rounded-xl text-sm">
+              <option value="">All Classes</option>
+              {Array.from(new Set(students.map(s => s.class).filter(Boolean))).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 rounded-xl text-sm">
+              <option value="">All Divisions</option>
+              {Array.from(new Set(students.map(s => s.division).filter(Boolean))).map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="p-2 border border-slate-200 rounded-xl text-sm">
+              <option value="">All Genders</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -541,16 +560,6 @@ export default function Students() {
               ))}
             </tbody>
           </table>
-          {hasMore && (
-            <div className="p-6 text-center">
-              <button 
-                onClick={() => fetchStudents(true)}
-                className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
-              >
-                Load More
-              </button>
-            </div>
-          )}
         </div>
       </div>
 

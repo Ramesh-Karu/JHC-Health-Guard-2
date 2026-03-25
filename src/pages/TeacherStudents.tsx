@@ -9,6 +9,12 @@ export default function TeacherStudents() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterDivision, setFilterDivision] = useState('');
+  const [filterBmiCategory, setFilterBmiCategory] = useState('');
+  const [filterHealthStatus, setFilterHealthStatus] = useState('');
+  const [filterPoints, setFilterPoints] = useState('');
+  const [filterDate, setFilterDate] = useState('');
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -30,17 +36,20 @@ export default function TeacherStudents() {
           const healthSnapshot = await getDocs(healthQ);
           let latestBmi = null;
           let healthCategory = 'N/A';
+          let latestDate = '';
           
           if (!healthSnapshot.empty) {
             const latestRecord = healthSnapshot.docs[0].data();
             latestBmi = latestRecord.bmi;
             healthCategory = latestRecord.category;
+            latestDate = latestRecord.date;
           }
 
           return {
             ...student,
             latestBmi,
-            healthCategory
+            healthCategory,
+            latestDate
           };
         }));
 
@@ -55,10 +64,35 @@ export default function TeacherStudents() {
     fetchStudents();
   }, [user]);
 
-  const filteredStudents = students.filter((s: any) => 
-    s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.indexNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const uniqueClasses = Array.from(new Set(students.map((s: any) => s.class).filter(Boolean)));
+  const uniqueDivisions = Array.from(new Set(students.map((s: any) => s.division).filter(Boolean)));
+
+  const filteredStudents = students.filter((s: any) => {
+    const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const matchesSearch = nameMatch || indexMatch;
+    const matchesClass = filterClass ? s.class === filterClass : true;
+    const matchesDivision = filterDivision ? s.division === filterDivision : true;
+    const matchesBmiCategory = filterBmiCategory ? s.healthCategory === filterBmiCategory : true;
+    
+    let matchesHealthStatus = true;
+    if (filterHealthStatus === 'Healthy') {
+      matchesHealthStatus = s.healthCategory === 'Normal';
+    } else if (filterHealthStatus === 'Unhealthy') {
+      matchesHealthStatus = s.healthCategory && s.healthCategory !== 'Normal' && s.healthCategory !== 'N/A';
+    }
+
+    let matchesPoints = true;
+    const pts = s.points || 0;
+    if (filterPoints === '0-100') matchesPoints = pts >= 0 && pts <= 100;
+    else if (filterPoints === '101-500') matchesPoints = pts > 100 && pts <= 500;
+    else if (filterPoints === '501-1000') matchesPoints = pts > 500 && pts <= 1000;
+    else if (filterPoints === '>1000') matchesPoints = pts > 1000;
+
+    const matchesDate = filterDate ? s.latestDate === filterDate : true;
+    
+    return matchesSearch && matchesClass && matchesDivision && matchesBmiCategory && matchesHealthStatus && matchesPoints && matchesDate;
+  });
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -70,7 +104,7 @@ export default function TeacherStudents() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+        <div className="p-4 border-b border-slate-200 flex flex-wrap gap-4 items-center">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
@@ -81,6 +115,35 @@ export default function TeacherStudents() {
               className="pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-64"
             />
           </div>
+          <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Classes</option>
+            {uniqueClasses.map((c: any) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Divisions</option>
+            {uniqueDivisions.map((d: any) => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select value={filterBmiCategory} onChange={e => setFilterBmiCategory(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All BMI Categories</option>
+            <option value="Normal">Normal</option>
+            <option value="Underweight">Underweight</option>
+            <option value="Overweight">Overweight</option>
+            <option value="Obese">Obese</option>
+            <option value="At Risk (Waist/Hip)">At Risk (Waist/Hip)</option>
+          </select>
+          <select value={filterHealthStatus} onChange={e => setFilterHealthStatus(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Health Status</option>
+            <option value="Healthy">Healthy</option>
+            <option value="Unhealthy">Unhealthy</option>
+          </select>
+          <select value={filterPoints} onChange={e => setFilterPoints(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Points</option>
+            <option value="0-100">0 - 100</option>
+            <option value="101-500">101 - 500</option>
+            <option value="501-1000">501 - 1000</option>
+            <option value=">1000">&gt; 1000</option>
+          </select>
+          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="p-2 border border-slate-200 rounded-xl" />
         </div>
 
         <div className="overflow-x-auto">
@@ -89,9 +152,11 @@ export default function TeacherStudents() {
               <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                 <th className="p-4 font-medium">Student</th>
                 <th className="p-4 font-medium">Index Number</th>
+                <th className="p-4 font-medium">Class/Div</th>
+                <th className="p-4 font-medium">Points</th>
                 <th className="p-4 font-medium">Latest BMI</th>
                 <th className="p-4 font-medium">Health Status</th>
-                <th className="p-4 font-medium">Points</th>
+                <th className="p-4 font-medium">Latest Date</th>
               </tr>
             </thead>
             <tbody>
@@ -110,6 +175,8 @@ export default function TeacherStudents() {
                     </div>
                   </td>
                   <td className="p-4 text-slate-600">{student.indexNumber || 'N/A'}</td>
+                  <td className="p-4 text-slate-600">{student.class ? `${student.class} - ${student.division}` : 'N/A'}</td>
+                  <td className="p-4 font-bold text-blue-600">{student.points || 0}</td>
                   <td className="p-4 font-mono text-slate-700">
                     {student.latestBmi ? student.latestBmi.toFixed(1) : 'N/A'}
                   </td>
@@ -119,12 +186,13 @@ export default function TeacherStudents() {
                       student.healthCategory === 'Underweight' ? 'bg-blue-100 text-blue-700' :
                       student.healthCategory === 'Overweight' ? 'bg-orange-100 text-orange-700' :
                       student.healthCategory === 'Obese' ? 'bg-red-100 text-red-700' :
+                      student.healthCategory === 'At Risk (Waist/Hip)' ? 'bg-purple-100 text-purple-700' :
                       'bg-slate-100 text-slate-700'
                     }`}>
                       {student.healthCategory}
                     </span>
                   </td>
-                  <td className="p-4 font-medium text-blue-600">{student.points}</td>
+                  <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

@@ -200,7 +200,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-6 left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl shadow-slate-200/20">
         <div className="px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-start">
             <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <Heart className="text-white" size={18} />
             </div>

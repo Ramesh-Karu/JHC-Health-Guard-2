@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, orderBy, limit } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, orderBy, limit, updateDoc, doc, increment, getDoc } from '../firebase';
 import { Activity, Plus, Search } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
@@ -8,13 +8,36 @@ import Toast from '../components/Toast';
 export default function TeacherHealthRecords() {
   const { user } = useAuth();
   const [students, setStudents] = useState([]);
+  const [pointSettings, setPointSettings] = useState({
+    normalBMI: 50,
+    goodStrength: 50
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setPointSettings({
+            normalBMI: data.pointsPerNormalBMI || 50,
+            goodStrength: data.pointsPerGoodStrength || 50
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('');
-  const [filterGrade, setFilterGrade] = useState('');
   const [filterDivision, setFilterDivision] = useState('');
-  const [filterHealthLevel, setFilterHealthLevel] = useState('');
+  const [filterBmiCategory, setFilterBmiCategory] = useState('');
+  const [filterHealthStatus, setFilterHealthStatus] = useState('');
+  const [filterPoints, setFilterPoints] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
@@ -95,6 +118,10 @@ export default function TeacherHealthRecords() {
       else if (bmi >= 30) category = 'Obese';
       if (waist && hip && (waist / hip > 0.9)) category = 'At Risk (Waist/Hip)';
 
+      let pointsAwarded = 0;
+      if (category === 'Normal') pointsAwarded += pointSettings.normalBMI;
+      if (gripStrength > 20) pointsAwarded += pointSettings.goodStrength;
+
       await addDoc(collection(db, 'health_records'), {
         ...formData,
         height: parseFloat(formData.height),
@@ -104,11 +131,18 @@ export default function TeacherHealthRecords() {
         gripStrength,
         bmi,
         category,
+        pointsAwarded,
         createdAt: new Date().toISOString()
       });
       
+      if (pointsAwarded > 0) {
+        await updateDoc(doc(db, 'users', formData.userId), {
+          points: increment(pointsAwarded)
+        });
+      }
+      
       setShowAddModal(false);
-      setToast({ message: 'Health record saved successfully', type: 'success' });
+      setToast({ message: `Health record saved successfully! Awarded ${pointsAwarded} points.`, type: 'success' });
       setFormData({
         userId: '',
         height: '',
@@ -124,14 +158,34 @@ export default function TeacherHealthRecords() {
       handleFirestoreError(error, OperationType.CREATE, 'health_records');
     }
   };
+  const uniqueClasses = Array.from(new Set(students.map((s: any) => s.class).filter(Boolean)));
+  const uniqueDivisions = Array.from(new Set(students.map((s: any) => s.division).filter(Boolean)));
+
   const filteredStudents = students.filter((s: any) => {
-    const matchesSearch = s.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+    const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const matchesSearch = nameMatch || indexMatch;
     const matchesClass = filterClass ? s.class === filterClass : true;
-    const matchesGrade = filterGrade ? s.grade === filterGrade : true; // Assuming grade is a field
     const matchesDivision = filterDivision ? s.division === filterDivision : true;
-    const matchesHealthLevel = filterHealthLevel ? s.healthCategory === filterHealthLevel : true;
+    const matchesBmiCategory = filterBmiCategory ? s.healthCategory === filterBmiCategory : true;
+    
+    let matchesHealthStatus = true;
+    if (filterHealthStatus === 'Healthy') {
+      matchesHealthStatus = s.healthCategory === 'Normal';
+    } else if (filterHealthStatus === 'Unhealthy') {
+      matchesHealthStatus = s.healthCategory && s.healthCategory !== 'Normal' && s.healthCategory !== 'N/A';
+    }
+
+    let matchesPoints = true;
+    const pts = s.points || 0;
+    if (filterPoints === '0-100') matchesPoints = pts >= 0 && pts <= 100;
+    else if (filterPoints === '101-500') matchesPoints = pts > 100 && pts <= 500;
+    else if (filterPoints === '501-1000') matchesPoints = pts > 500 && pts <= 1000;
+    else if (filterPoints === '>1000') matchesPoints = pts > 1000;
+
     const matchesDate = filterDate ? s.latestDate === filterDate : true;
-    return matchesSearch && matchesClass && matchesGrade && matchesDivision && matchesHealthLevel && matchesDate;
+    
+    return matchesSearch && matchesClass && matchesDivision && matchesBmiCategory && matchesHealthStatus && matchesPoints && matchesDate;
   });
 
   return (
@@ -164,23 +218,31 @@ export default function TeacherHealthRecords() {
           </div>
           <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
             <option value="">All Classes</option>
-            {/* Add class options */}
-          </select>
-          <select value={filterGrade} onChange={e => setFilterGrade(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
-            <option value="">All Grades</option>
-            {/* Add grade options */}
+            {uniqueClasses.map((c: any) => <option key={c} value={c}>{c}</option>)}
           </select>
           <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
             <option value="">All Divisions</option>
-            {/* Add division options */}
+            {uniqueDivisions.map((d: any) => <option key={d} value={d}>{d}</option>)}
           </select>
-          <select value={filterHealthLevel} onChange={e => setFilterHealthLevel(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
-            <option value="">All Health Levels</option>
+          <select value={filterBmiCategory} onChange={e => setFilterBmiCategory(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All BMI Categories</option>
             <option value="Normal">Normal</option>
             <option value="Underweight">Underweight</option>
             <option value="Overweight">Overweight</option>
             <option value="Obese">Obese</option>
             <option value="At Risk (Waist/Hip)">At Risk (Waist/Hip)</option>
+          </select>
+          <select value={filterHealthStatus} onChange={e => setFilterHealthStatus(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Health Status</option>
+            <option value="Healthy">Healthy</option>
+            <option value="Unhealthy">Unhealthy</option>
+          </select>
+          <select value={filterPoints} onChange={e => setFilterPoints(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
+            <option value="">All Points</option>
+            <option value="0-100">0 - 100</option>
+            <option value="101-500">101 - 500</option>
+            <option value="501-1000">501 - 1000</option>
+            <option value=">1000">&gt; 1000</option>
           </select>
           <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="p-2 border border-slate-200 rounded-xl" />
         </div>
@@ -191,8 +253,11 @@ export default function TeacherHealthRecords() {
               <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                 <th className="p-4 font-medium">Student</th>
                 <th className="p-4 font-medium">Index Number</th>
+                <th className="p-4 font-medium">Class/Div</th>
+                <th className="p-4 font-medium">Points</th>
                 <th className="p-4 font-medium">Latest BMI</th>
                 <th className="p-4 font-medium">Health Status</th>
+                <th className="p-4 font-medium">Latest Date</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -205,6 +270,8 @@ export default function TeacherHealthRecords() {
                     </div>
                   </td>
                   <td className="p-4 text-slate-600">{student.indexNumber || 'N/A'}</td>
+                  <td className="p-4 text-slate-600">{student.class ? `${student.class} - ${student.division}` : 'N/A'}</td>
+                  <td className="p-4 font-bold text-blue-600">{student.points || 0}</td>
                   <td className="p-4 font-mono text-slate-700">
                     {student.latestBmi ? student.latestBmi.toFixed(1) : 'N/A'}
                   </td>
@@ -214,11 +281,13 @@ export default function TeacherHealthRecords() {
                       student.healthCategory === 'Underweight' ? 'bg-blue-100 text-blue-700' :
                       student.healthCategory === 'Overweight' ? 'bg-orange-100 text-orange-700' :
                       student.healthCategory === 'Obese' ? 'bg-red-100 text-red-700' :
+                      student.healthCategory === 'At Risk (Waist/Hip)' ? 'bg-purple-100 text-purple-700' :
                       'bg-slate-100 text-slate-700'
                     }`}>
                       {student.healthCategory}
                     </span>
                   </td>
+                  <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => {

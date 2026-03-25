@@ -20,6 +20,8 @@ export interface User {
   parentContact?: string;
   photoUrl?: string;
   points: number;
+  wellnessBadge?: boolean;
+  badgeStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
 

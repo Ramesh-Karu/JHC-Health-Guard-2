@@ -16,13 +16,14 @@ import {
   Camera,
   Heart,
   Activity,
-  Award
+  Award,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { User } from '../types';
-import { ProfileImageUploader } from '../components/ProfileImageUploader';
+import { PassportImageUploader } from '../components/PassportImageUploader';
 
-export default function Profile() {
+export default function HealthPass() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(!user?.profileCompleted);
@@ -114,13 +115,13 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Profile Info Card */}
+      {/* Passport Info Card */}
       <div className="relative -mt-24 px-4 md:px-8">
         <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Avatar Section */}
             <div className="relative group">
-              <ProfileImageUploader 
+              <PassportImageUploader 
                 photoUrl={formData.photoUrl || ''} 
                 fullName={user.fullName} 
                 onUpload={handleImageUpload} 
@@ -136,7 +137,10 @@ export default function Profile() {
             <div className="flex-1 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-slate-900">{user.fullName}</h1>
+                  <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                    {user.fullName}
+                    {user.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={28} className="text-emerald-500 fill-emerald-100" /></span>}
+                  </h1>
                   <p className="text-slate-500 font-medium flex items-center gap-2">
                     <Shield size={16} className="text-blue-500" />
                     {user.role === 'admin' ? 'System Administrator' : `Student • Class ${user.class}`}
@@ -169,7 +173,7 @@ export default function Profile() {
                       className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all"
                     >
                       <Edit3 size={18} />
-                      Edit Profile
+                      Edit Health Pass
                     </button>
                   )}
                 </div>
@@ -182,7 +186,7 @@ export default function Profile() {
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-bold">
                   <Activity size={16} />
-                  Active Profile
+                  Active Health Pass
                 </div>
               </div>
             </div>

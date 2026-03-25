@@ -73,8 +73,9 @@ import Nutrition from './pages/Nutrition';
 import AIInsights from './pages/AIInsights';
 import HealthPassport from './pages/HealthPassport';
 import STEMInnovation from './pages/STEMInnovation';
-import Home from './pages/Home';
-import Profile from './pages/Profile';
+import BottomNav from './components/BottomNav';
+import Others from './pages/Others';
+import HealthPass from './pages/HealthPass';
 import Modules from './pages/Modules';
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherStudents from './pages/TeacherStudents';
@@ -101,7 +102,7 @@ import OrganicAdminDashboard from './pages/OrganicAdminDashboard';
 import BreakfastAdminDashboard from './pages/BreakfastAdminDashboard';
 import AdminHealthUpdate from './pages/AdminHealthUpdate';
 import StudentTracking from './pages/StudentTracking';
-import DeveloperMenu from './components/DeveloperMenu';
+import AdminBadgeApplications from './pages/AdminBadgeApplications';
 
 const SidebarItem = ({ icon: Icon, label, path, onClick }: any) => (
   <NavLink
@@ -163,9 +164,10 @@ const Layout = () => {
     { icon: ShieldCheck, label: 'Organic Admin', path: '/organic-admin', roles: ['admin'] },
     { icon: ShieldCheck, label: 'Breakfast Admin', path: '/breakfast-admin', roles: ['admin'] },
     { icon: Users, label: 'User Management', path: '/admin/users', roles: ['admin'] },
-    { icon: UserCircle, label: 'Profile', path: '/profile', roles: ['admin', 'student', 'teacher', 'coach'] },
+    { icon: UserCircle, label: 'Health Pass', path: '/health-pass', roles: ['admin', 'student', 'teacher', 'coach'] },
     { icon: Users, label: 'Students', path: '/students', roles: ['admin'] },
     { icon: Users, label: 'Teachers', path: '/admin/teachers', roles: ['admin'] },
+    { icon: ShieldCheck, label: 'Badge Applications', path: '/admin/badges', roles: ['admin'] },
     { icon: BookOpen, label: 'Classrooms', path: '/admin/classrooms', roles: ['admin'] },
     { icon: Activity, label: 'Health Update', path: '/admin/health-update', roles: ['admin'] },
     { icon: Award, label: 'Sports Management', path: '/admin/sports', roles: ['admin'] },
@@ -210,7 +212,7 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
+      {/* Sidebar - Hidden on mobile, replaced by BottomNav */}
       <motion.aside
         initial={false}
         animate={{ 
@@ -219,7 +221,7 @@ const Layout = () => {
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed h-[calc(100vh-32px)] z-30 overflow-hidden m-4 rounded-3xl",
+          "fixed h-[calc(100vh-32px)] z-30 overflow-hidden m-4 rounded-3xl hidden md:block",
           "bg-white/70 backdrop-blur-2xl border border-white/50 shadow-2xl shadow-slate-200/20",
           !isSidebarOpen && "w-0 border-none p-0"
         )}
@@ -258,13 +260,13 @@ const Layout = () => {
       </motion.aside>
 
       {/* Main Content */}
-      <main className={cn("flex-1 flex flex-col overflow-hidden transition-all duration-300", isSidebarOpen && "md:ml-[300px]")}>
+      <main className={cn("flex-1 flex flex-col overflow-hidden transition-all duration-300 pb-20 md:pb-0", isSidebarOpen && "md:ml-[300px]")}>
         {/* Header */}
         <header className="h-16 mt-4 mx-4 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-2xl flex items-center justify-between px-4 md:px-8 flex-shrink-0 shadow-xl shadow-blue-900/5 z-10 relative">
           <div className="flex items-center gap-4 z-10">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 hover:bg-white/50 rounded-lg text-slate-500 transition-colors"
+              className="p-2 hover:bg-white/50 rounded-lg text-slate-500 transition-colors hidden md:block"
               aria-label="Toggle Sidebar"
             >
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
@@ -279,8 +281,8 @@ const Layout = () => {
             </div>
           </div>
 
-          {/* Center Logo */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 pointer-events-none">
+          {/* Left Logo */}
+          <div className="flex items-center gap-3 pointer-events-none">
             <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <Heart className="text-white" size={20} />
             </div>
@@ -293,7 +295,10 @@ const Layout = () => {
           <div className="flex items-center gap-6 z-10">
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-900">{user?.fullName}</p>
+                <p className="text-sm font-bold text-slate-900 flex items-center justify-end gap-1">
+                  {user?.fullName}
+                  {user?.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={14} className="text-emerald-500 fill-emerald-100" /></span>}
+                </p>
                 <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
@@ -322,6 +327,7 @@ const Layout = () => {
               </AnimatePresence>
         </div>
       </main>
+      {user && <BottomNav />}
     </div>
   );
 };
@@ -459,7 +465,7 @@ export default function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/change-password" element={<ChangePassword />} />
           
@@ -474,12 +480,13 @@ export default function App() {
             <Route path="/ai-insights" element={<AIInsights />} />
             <Route path="/health-passport" element={<HealthPassport />} />
             <Route path="/health-records" element={<HealthRecords />} />
+            <Route path="/others" element={<Others />} />
           </Route>
           
           <Route path="/health-passport/:id" element={<HealthPassport />} />
 
           <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/health-pass" element={<HealthPass />} />
           </Route>
 
           {/* Teacher Only Routes */}
@@ -534,6 +541,7 @@ export default function App() {
             <Route path="/admin/teachers" element={<AdminTeachers />} />
             <Route path="/admin/classrooms" element={<AdminClassrooms />} />
             <Route path="/admin/sports" element={<AdminSports />} />
+            <Route path="/admin/badges" element={<AdminBadgeApplications />} />
             <Route path="/admin/health-update" element={<AdminHealthUpdate />} />
             <Route path="/stem-innovation" element={<STEMInnovation />} />
             <Route path="/modules" element={<Modules />} />
@@ -541,7 +549,6 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-        <DeveloperMenu />
       </Router>
     </AuthProvider>
   );

@@ -277,9 +277,14 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 px-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Hello, {user?.fullName}! 👋</h1>
-          <p className="text-slate-500">Here's your health summary for today.</p>
+        <div className="flex items-center gap-3 justify-start">
+          <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <Heart className="text-white" size={18} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Hello, {user?.fullName}! 👋</h1>
+            <p className="text-slate-500">Here's your health summary for today.</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button 
