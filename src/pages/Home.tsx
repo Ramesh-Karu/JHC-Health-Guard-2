@@ -148,10 +148,10 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const [modulesSnapshot, usersSnapshot, breakfastSnapshot, vegSnapshot] = await Promise.all([
-          getDocs(collection(db, 'modules')),
-          getDocs(query(collection(db, 'users'), where('role', '==', 'student'))),
-          getDocs(collection(db, 'breakfast_items')),
-          getDocs(collection(db, 'vegetables'))
+          getDocs(collection(db, 'modules')).catch(err => { handleFirestoreError(err, OperationType.GET, 'modules'); throw err; }),
+          getDocs(query(collection(db, 'users'), where('role', '==', 'student'))).catch(err => { handleFirestoreError(err, OperationType.GET, 'users'); throw err; }),
+          getDocs(collection(db, 'breakfast_items')).catch(err => { handleFirestoreError(err, OperationType.GET, 'breakfast_items'); throw err; }),
+          getDocs(collection(db, 'vegetables')).catch(err => { handleFirestoreError(err, OperationType.GET, 'vegetables'); throw err; })
         ]);
         
         const modulesData = modulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Module));
@@ -174,7 +174,7 @@ export default function Home() {
         setBreakfastItems(breakfastData);
         setVegetables(vegData);
       } catch (err) {
-        handleFirestoreError(err, OperationType.GET, 'home_page_data');
+        console.error("Home data fetch error:", err);
       } finally {
         setLoading(false);
       }

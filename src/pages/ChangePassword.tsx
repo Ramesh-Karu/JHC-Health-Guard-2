@@ -33,10 +33,16 @@ export default function ChangePassword() {
         
         console.log('Updating passwordChanged and authCreated flag in Firestore for:', auth.currentUser.uid);
         const userRef = doc(db, 'users', auth.currentUser.uid);
-        await setDoc(userRef, {
-          passwordChanged: true,
-          authCreated: true
-        }, { merge: true });
+        try {
+          await setDoc(userRef, {
+            passwordChanged: true,
+            authCreated: true
+          }, { merge: true });
+        } catch (err) {
+          console.error('Failed to update user document in Firestore:', err);
+          throw new Error('Failed to update user profile. Please try again.');
+        }
+        
         const updatedDoc = await getDoc(userRef);
         console.log('Updated user document:', updatedDoc.data());
         console.log('passwordChanged and authCreated flags updated in Firestore');

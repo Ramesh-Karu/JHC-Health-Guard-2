@@ -11,21 +11,27 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function isMigrating(oldUserId) {
-      return isAuthenticated() && (
-        getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.oldId == oldUserId
-      );
+    function isMigratingRead(oldUserId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(oldUserId)) && 
+             get(/databases/$(database)/documents/users/$(oldUserId)).data.authCreated == false &&
+             (get(/databases/$(database)/documents/users/$(oldUserId)).data.username + "@school.internal" == request.auth.token.email ||
+              get(/databases/$(database)/documents/users/$(oldUserId)).data.email == request.auth.token.email);
+    }
+
+    function isMigratingWrite(oldUserId) {
+      return isAuthenticated() && 
+             getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.oldId == oldUserId;
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && (request.auth.uid == userId || isMigrating(userId));
+      return isAuthenticated() && request.auth.uid == userId;
     }
     
     function isAdmin() {
       return isAuthenticated() && (
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-        (getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
         (request.auth.token.email == "rameshnathankaruvoolan10@gmail.com") // Primary admin email
       );
     }
@@ -99,16 +105,21 @@ service cloud.firestore {
     // ===============================================================
     
     match /users/{userId} {
-      // Allow reading public profiles or own profile
-      // Note: If users collection contains PII, we should split it or be more restrictive.
-      // For now, let's allow all users to read profiles for login purposes.
-      // SECURITY WARNING: This leaks PII. Should be replaced with a public_users collection.
-      allow read: if true;
+      allow read, list: if true;
       allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
-        (isOwner(userId)) || isAdmin()
+        isOwner(userId) || isAdmin()
       );
-      allow delete: if isAdmin() || isMigrating(userId);
+      allow delete: if isAdmin() || isMigratingWrite(userId);
+    }
+
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    match /home_page_data/{docId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
     }
 
     match /classrooms/{classroomId} {
@@ -117,16 +128,16 @@ service cloud.firestore {
     }
 
     match /health_records/{recordId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin());
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin() || isMigratingRead(resource.data.userId));
       allow create: if isTeacherOrAdmin();
-      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin();
     }
 
     match /activities/{activityId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin());
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin() || isMigratingRead(resource.data.userId));
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isMigrating(resource.data.userId));
+      allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isMigratingWrite(resource.data.userId));
       allow delete: if isAdmin();
     }
 
@@ -195,30 +206,30 @@ service cloud.firestore {
     }
 
     match /breakfast_reservations/{reservationId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin() || isMigratingRead(resource.data.userId));
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin();
     }
 
     match /organic_reservations/{reservationId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin() || isMigratingRead(resource.data.userId));
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin();
     }
 
     match /badges/{badgeId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() || isOwner(request.resource.data.userId);
-      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin();
     }
 
     match /likes/{likeId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if isAdmin() || isMigrating(resource.data.userId);
+      allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 

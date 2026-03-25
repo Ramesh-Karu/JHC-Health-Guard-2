@@ -121,18 +121,29 @@ export default function Login() {
               const collectionsToMigrate = ['health_records', 'activities', 'badges', 'organic_reservations', 'breakfast_reservations', 'likes'];
               
               for (const colName of collectionsToMigrate) {
+                console.log(`Lazy Auth: Fetching ${colName} for migration...`);
                 const qMigrate = query(collection(db, colName), where('userId', '==', existingDocId));
-                const snapshotMigrate = await getDocs(qMigrate);
-                snapshotMigrate.docs.forEach(recordDoc => {
-                  batch.update(recordDoc.ref, { userId: userId });
-                });
+                try {
+                  const snapshotMigrate = await getDocs(qMigrate);
+                  console.log(`Lazy Auth: Found ${snapshotMigrate.docs.length} records in ${colName}`);
+                  snapshotMigrate.docs.forEach(recordDoc => {
+                    batch.update(recordDoc.ref, { userId: userId });
+                  });
+                } catch (migrateErr) {
+                  console.error(`Lazy Auth: Failed to fetch ${colName} for migration:`, migrateErr);
+                  handleFirestoreError(migrateErr, OperationType.LIST, colName);
+                  throw migrateErr;
+                }
               }
 
+              console.log("Lazy Auth: Committing migration batch...");
               try {
                 await batch.commit();
                 console.log("Lazy Auth migration batch committed successfully");
               } catch (batchErr) {
+                console.error("Lazy Auth: Batch commit failed:", batchErr);
                 handleFirestoreError(batchErr, OperationType.WRITE, 'batch-migration');
+                throw batchErr;
               }
               console.log("Lazy Auth: Migration batch committed successfully");
               
@@ -163,7 +174,14 @@ export default function Login() {
       // If we haven't fetched userData yet (because they logged in with email), fetch it now
       if (!userData) {
         const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+        let userDoc;
+        try {
+          userDoc = await getDoc(userRef);
+        } catch (err) {
+          handleFirestoreError(err, OperationType.GET, 'users');
+          throw err;
+        }
+        
         if (userDoc.exists()) {
           userData = userDoc.data();
         } else {
@@ -175,7 +193,12 @@ export default function Login() {
             role: 'student',
             createdAt: new Date().toISOString()
           };
-          await setDoc(userRef, userData);
+          try {
+            await setDoc(userRef, userData);
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, 'users');
+            throw err;
+          }
         }
       }
       
@@ -205,7 +228,13 @@ export default function Login() {
       
       // Check if user exists in Firestore
       const userRef = doc(db, 'users', result.user.uid);
-      const userDoc = await getDoc(userRef);
+      let userDoc;
+      try {
+        userDoc = await getDoc(userRef);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, 'users');
+        throw err;
+      }
       
       let userData;
       if (!userDoc.exists()) {
@@ -217,7 +246,12 @@ export default function Login() {
           role: 'student', // Default role
           createdAt: new Date().toISOString()
         };
-        await setDoc(userRef, userData);
+        try {
+          await setDoc(userRef, userData);
+        } catch (err) {
+          handleFirestoreError(err, OperationType.WRITE, 'users');
+          throw err;
+        }
       } else {
         userData = userDoc.data();
       }
