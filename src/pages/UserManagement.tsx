@@ -49,10 +49,10 @@ export default function UserManagement() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
-      u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.role.toLowerCase().includes(searchTerm.toLowerCase())
+      (u.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (u.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (u.role?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
   }, [users, searchTerm]);
 

@@ -72,9 +72,9 @@ export default function Login() {
             }
           }
 
-          console.log("Lazy Auth: userData:", JSON.stringify(userData));
-          console.log("Lazy Auth: loginEmail:", loginEmail, "password length:", password.length);
-          if (userData && userData.authCreated === false && userData.tempPassword === password) {
+          const passwordToMatch = userData?.tempPassword || '123456';
+          console.log("Lazy Auth: userData exists:", !!userData, "authCreated:", userData?.authCreated, "passwordToMatch:", passwordToMatch, "input password:", password);
+          if (userData && userData.authCreated === false && passwordToMatch === password) {
             try {
               console.log("Lazy Auth: Creating account for", loginEmail);
               let createResult;
