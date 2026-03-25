@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db, updatePassword, doc, updateDoc, setDoc } from '../firebase';
+import { auth, db, updatePassword, doc, updateDoc, setDoc, getDoc } from '../firebase';
 import { useAuth } from '../App';
 import { Lock, AlertCircle } from 'lucide-react';
 

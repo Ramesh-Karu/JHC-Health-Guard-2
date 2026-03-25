@@ -49,10 +49,12 @@ export default function UserManagement() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
-      (u.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (u.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (u.role?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      u && (
+        (u.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (u.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (u.role?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      )
     );
   }, [users, searchTerm]);
 
@@ -269,6 +271,28 @@ export default function UserManagement() {
     setToast({ message, type: errors > 0 ? 'error' : 'success' });
   };
 
+  const handleResetAccount = async (u: User) => {
+    if (window.confirm(`Are you sure you want to reset ${u.fullName}'s account? This will change their username to allow a fresh login if they are stuck.`)) {
+      try {
+        const newUsername = `${u.username}-rst${Math.floor(Math.random() * 1000)}`;
+        const newSystemEmail = `${newUsername}@school.internal`;
+        
+        await updateDoc(doc(db, 'users', u.id), {
+          username: newUsername,
+          systemEmail: newSystemEmail,
+          authCreated: false,
+          passwordChanged: false,
+          tempPassword: '123456'
+        });
+        
+        setToast({ message: `Account reset. New username: ${newUsername}. Password: 123456`, type: 'success' });
+      } catch (err) {
+        console.error('Error resetting account:', err);
+        setToast({ message: 'Error resetting account', type: 'error' });
+      }
+    }
+  };
+
   return (
     <div className="space-y-8 px-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -316,8 +340,9 @@ export default function UserManagement() {
                 <td className="px-6 py-4">{u.email}</td>
                 <td className="px-6 py-4 capitalize">{u.role}</td>
                 <td className="px-6 py-4 flex gap-2">
-                  <button onClick={() => { setEditingUser(u); setIsEditModalOpen(true); }} className="text-blue-500 hover:text-blue-700"><Edit2 size={18} /></button>
-                  <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+                  <button onClick={() => { setEditingUser(u); setIsEditModalOpen(true); }} className="text-blue-500 hover:text-blue-700" title="Edit User"><Edit2 size={18} /></button>
+                  <button onClick={() => handleResetAccount(u)} className="text-amber-500 hover:text-amber-700" title="Reset Account (Fix Login Issues)"><UserPlus size={18} /></button>
+                  <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-700" title="Delete User"><Trash2 size={18} /></button>
                 </td>
               </tr>
             ))}

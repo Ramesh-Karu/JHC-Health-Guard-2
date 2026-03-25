@@ -144,7 +144,7 @@ export default function Login() {
             return;
           }
         } else if (err.code === 'auth/too-many-requests') {
-          setError('Too many failed login attempts. Please try again later.');
+          setError('Too many failed login attempts. Please wait a few minutes and try again.');
           setLoading(false);
           return;
         } else {
