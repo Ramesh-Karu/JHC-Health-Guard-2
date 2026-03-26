@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { 
   UserCircle, 
   Settings, 
@@ -84,7 +85,14 @@ export default function Others() {
       ]
     },
     {
+      title: 'Appearance',
+      items: [
+        { icon: Settings, label: 'Dark Mode', path: '#', color: 'bg-slate-500', component: <ThemeToggle /> },
+      ]
+    },
+    {
       title: 'Account & Support',
+// ...
       items: [
         { icon: UserCircle, label: 'Health Pass', path: '/health-pass', color: 'bg-blue-500' },
         { icon: Bell, label: 'Notifications', path: '#', color: 'bg-red-500' },
@@ -96,9 +104,9 @@ export default function Others() {
   ];
 
   return (
-    <div className="min-h-full bg-[#F2F2F7] -m-4 md:-m-8 p-4 md:p-8 pb-24 pt-safe">
+    <div className="min-h-full bg-[#F2F2F7] dark:bg-slate-900 -m-4 md:-m-8 p-4 md:p-8 pb-24 pt-safe">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-slate-900 mb-8 px-2">Settings</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 px-2">Settings</h1>
 
         {/* Admin Section (Admin Only) */}
         {user?.role === 'admin' && (

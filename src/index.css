@@ -9,6 +9,8 @@
   --color-brand-orange-light: #FFF4E6;
 }
 
+@variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
     @apply text-slate-900 antialiased;

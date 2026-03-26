@@ -117,7 +117,7 @@ const SidebarItem = ({ icon: Icon, label, path, onClick }: any) => (
       "flex items-center w-full gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
       isActive 
         ? "bg-blue-500 text-white shadow-lg shadow-blue-200" 
-        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
     )}
   >
     {({ isActive }) => (
@@ -197,12 +197,12 @@ const Layout = () => {
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role || 'student'));
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans relative pt-safe">
+    <div className="flex h-screen bg-[#F8FAFC] dark:bg-slate-900 overflow-hidden font-sans relative pt-safe">
       {/* Global Background Gradients for Glass Effect */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-400/20 rounded-full blur-[120px]" />
-        <div className="absolute top-[40%] right-[10%] w-[30%] h-[30%] bg-emerald-400/10 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/20 dark:bg-blue-900/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-400/20 dark:bg-indigo-900/20 rounded-full blur-[120px]" />
+        <div className="absolute top-[40%] right-[10%] w-[30%] h-[30%] bg-emerald-400/10 dark:bg-emerald-900/10 rounded-full blur-[100px]" />
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -228,7 +228,7 @@ const Layout = () => {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
           "fixed h-[calc(100vh-32px)] z-30 overflow-hidden m-4 rounded-3xl hidden md:block",
-          "bg-white/70 backdrop-blur-2xl border border-white/50 shadow-2xl shadow-slate-200/20",
+          "bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl border border-white/50 dark:border-slate-700/50 shadow-2xl shadow-slate-200/20 dark:shadow-slate-900/20",
           !isSidebarOpen && "w-0 border-none p-0"
         )}
       >
@@ -271,11 +271,11 @@ const Layout = () => {
       {/* Main Content */}
       <main className={cn("flex-1 flex flex-col overflow-hidden transition-all duration-300", isSidebarOpen && "md:ml-[300px]")}>
         {/* Header */}
-        <header className="h-16 mt-4 mx-4 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-2xl flex items-center justify-between px-4 md:px-8 flex-shrink-0 shadow-xl shadow-blue-900/5 z-10 relative">
+        <header className="h-16 mt-4 mx-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-2xl border border-white/60 dark:border-slate-700/60 rounded-2xl flex items-center justify-between px-4 md:px-8 flex-shrink-0 shadow-xl shadow-blue-900/5 z-10 relative">
           <div className="flex items-center gap-4 z-10">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 hover:bg-white/50 rounded-lg text-slate-500 transition-colors hidden md:block"
+              className="p-2 hover:bg-white/50 dark:hover:bg-slate-700/50 rounded-lg text-slate-500 dark:text-slate-400 transition-colors hidden md:block"
               aria-label="Toggle Sidebar"
             >
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
@@ -285,7 +285,7 @@ const Layout = () => {
               <input 
                 type="text" 
                 placeholder="Search health data..." 
-                className="pl-10 pr-4 py-2 bg-white/50 border border-white/60 rounded-xl w-64 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm shadow-sm"
+                className="pl-10 pr-4 py-2 bg-white/50 dark:bg-slate-700/50 border border-white/60 dark:border-slate-600/60 rounded-xl w-64 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm shadow-sm text-slate-900 dark:text-white"
               />
             </div>
           </div>
@@ -304,11 +304,11 @@ const Layout = () => {
           <div className="flex items-center gap-6 z-10">
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-900 flex items-center justify-end gap-1">
+                <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center justify-end gap-1">
                   {user?.fullName}
                   {user?.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={14} className="text-emerald-500 fill-emerald-100" /></span>}
                 </p>
-                <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role}</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
                 <img 
@@ -468,6 +468,7 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
 };
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './components/ThemeProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -491,96 +492,98 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-        <Router>
-          <BirdToy />
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/change-password" element={<ChangePassword />} />
-            
-            {/* Protected Routes with Persistent Layout */}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/activities" element={<Activities />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/nutrition" element={<Nutrition />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/queries" element={<Queries />} />
-              <Route path="/ai-insights" element={<AIInsights />} />
-              <Route path="/health-passport" element={<HealthPassport />} />
-              <Route path="/health-records" element={<HealthRecords />} />
-              <Route path="/tracking" element={<StudentTracking />} />
-              <Route path="/others" element={<Others />} />
-            </Route>
-            
-            <Route path="/health-passport/:id" element={<HealthPassport />} />
+      <ThemeProvider>
+        <AuthProvider>
+          {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+          <Router>
+            <BirdToy />
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/change-password" element={<ChangePassword />} />
+              
+              {/* Protected Routes with Persistent Layout */}
+              <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/activities" element={<Activities />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/nutrition" element={<Nutrition />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/queries" element={<Queries />} />
+                <Route path="/ai-insights" element={<AIInsights />} />
+                <Route path="/health-passport" element={<HealthPassport />} />
+                <Route path="/health-records" element={<HealthRecords />} />
+                <Route path="/tracking" element={<StudentTracking />} />
+                <Route path="/others" element={<Others />} />
+              </Route>
+              
+              <Route path="/health-passport/:id" element={<HealthPassport />} />
 
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
-              <Route path="/health-pass" element={<HealthPass />} />
-            </Route>
+              <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
+                <Route path="/health-pass" element={<HealthPass />} />
+              </Route>
 
-            {/* Teacher Only Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
-              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-              <Route path="/teacher/students" element={<TeacherStudents />} />
-              <Route path="/teacher/health-records" element={<TeacherHealthRecords />} />
-              <Route path="/teacher/activities" element={<TeacherActivities />} />
-              <Route path="/teacher/analytics" element={<TeacherAnalytics />} />
-              <Route path="/teacher/announcements" element={<TeacherAnnouncements />} />
-              <Route path="/teacher/queries" element={<TeacherQueries />} />
-            </Route>
+              {/* Teacher Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+                <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+                <Route path="/teacher/students" element={<TeacherStudents />} />
+                <Route path="/teacher/health-records" element={<TeacherHealthRecords />} />
+                <Route path="/teacher/activities" element={<TeacherActivities />} />
+                <Route path="/teacher/analytics" element={<TeacherAnalytics />} />
+                <Route path="/teacher/announcements" element={<TeacherAnnouncements />} />
+                <Route path="/teacher/queries" element={<TeacherQueries />} />
+              </Route>
 
-            {/* Coach Only Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['coach']} />}>
-              <Route path="/coach/dashboard" element={<CoachDashboard />} />
-              <Route path="/coach/attendance" element={<CoachAttendance />} />
-              <Route path="/coach/activities" element={<CoachActivities />} />
-            </Route>
+              {/* Coach Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['coach']} />}>
+                <Route path="/coach/dashboard" element={<CoachDashboard />} />
+                <Route path="/coach/attendance" element={<CoachAttendance />} />
+                <Route path="/coach/activities" element={<CoachActivities />} />
+              </Route>
 
-            {/* Organic Marketplace Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
-              <Route path="/marketplace" element={<VegetableMarketplace />} />
-              <Route path="/my-reservations" element={<MyReservations />} />
-            </Route>
+              {/* Organic Marketplace Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
+                <Route path="/marketplace" element={<VegetableMarketplace />} />
+                <Route path="/my-reservations" element={<MyReservations />} />
+              </Route>
 
-            {/* Healthy Canteen Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
-              <Route path="/breakfast" element={<BreakfastMarketplace />} />
-              <Route path="/my-breakfast" element={<MyBreakfastReservations />} />
-            </Route>
+              {/* Healthy Canteen Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
+                <Route path="/breakfast" element={<BreakfastMarketplace />} />
+                <Route path="/my-breakfast" element={<MyBreakfastReservations />} />
+              </Route>
 
-            {/* Organic Admin Only Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['organic-admin']} />}>
-              <Route path="/organic-admin-dashboard" element={<OrganicAdminDashboard />} />
-            </Route>
+              {/* Organic Admin Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['organic-admin']} />}>
+                <Route path="/organic-admin-dashboard" element={<OrganicAdminDashboard />} />
+              </Route>
 
-            {/* Healthy Canteen Admin Only Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['breakfast-admin']} />}>
-              <Route path="/breakfast-admin-dashboard" element={<HealthyCanteenAdmin />} />
-            </Route>
+              {/* Healthy Canteen Admin Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['breakfast-admin']} />}>
+                <Route path="/breakfast-admin-dashboard" element={<HealthyCanteenAdmin />} />
+              </Route>
 
-            {/* Admin Only Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="/organic-admin" element={<OrganicClubAdmin />} />
-              <Route path="/breakfast-admin" element={<HealthyCanteenAdmin />} />
-              <Route path="/admin/users" element={<UserManagement />} />
-              <Route path="/admin/student-management" element={<AdminStudentManagement />} />
-              <Route path="/students" element={<Students />} />
-              <Route path="/admin/teachers" element={<AdminTeachers />} />
-              <Route path="/admin/classrooms" element={<AdminClassrooms />} />
-              <Route path="/admin/sports" element={<AdminSports />} />
-              <Route path="/admin/badges" element={<AdminBadgeApplications />} />
-              <Route path="/admin/health-update" element={<AdminHealthUpdate />} />
-              <Route path="/stem-innovation" element={<STEMInnovation />} />
-              <Route path="/modules" element={<Modules />} />
-            </Route>
+              {/* Admin Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/organic-admin" element={<OrganicClubAdmin />} />
+                <Route path="/breakfast-admin" element={<HealthyCanteenAdmin />} />
+                <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/student-management" element={<AdminStudentManagement />} />
+                <Route path="/students" element={<Students />} />
+                <Route path="/admin/teachers" element={<AdminTeachers />} />
+                <Route path="/admin/classrooms" element={<AdminClassrooms />} />
+                <Route path="/admin/sports" element={<AdminSports />} />
+                <Route path="/admin/badges" element={<AdminBadgeApplications />} />
+                <Route path="/admin/health-update" element={<AdminHealthUpdate />} />
+                <Route path="/stem-innovation" element={<STEMInnovation />} />
+                <Route path="/modules" element={<Modules />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
