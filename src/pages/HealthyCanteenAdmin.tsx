@@ -245,13 +245,13 @@ export default function BreakfastClubAdmin() {
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-24">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Healthy Canteen Admin</h1>
-          <p className="text-sm md:text-base text-slate-500">Manage menu, settings, and student purchases.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Healthy Canteen Admin</h1>
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400">Manage menu, settings, and student purchases.</p>
         </div>
         <div className="flex gap-3">
           <button 
             onClick={() => setIsScannerOpen(true)}
-            className="w-full sm:w-auto px-4 py-2.5 bg-blue-50 text-blue-600 rounded-xl font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2"
           >
             <QrCode size={18} />
             Scan Passbook
@@ -260,20 +260,20 @@ export default function BreakfastClubAdmin() {
       </div>
       
       {/* Settings Section */}
-      <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border">
+      <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border dark:border-slate-800">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <Settings className="text-slate-400" size={20} />
-            <h2 className="text-lg md:text-xl font-bold">Canteen Settings</h2>
+            <h2 className="text-lg md:text-xl font-bold dark:text-white">Canteen Settings</h2>
           </div>
           {!isEditingSettings ? (
-            <button onClick={() => setIsEditingSettings(true)} className="text-blue-600 font-medium flex items-center gap-1 text-sm">
+            <button onClick={() => setIsEditingSettings(true)} className="text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1 text-sm">
               <Edit2 size={16} /> Edit
             </button>
           ) : (
             <div className="flex gap-3">
-              <button onClick={() => setIsEditingSettings(false)} className="text-slate-500 font-medium text-sm">Cancel</button>
-              <button onClick={updateSettings} className="text-emerald-600 font-medium flex items-center gap-1 text-sm">
+              <button onClick={() => setIsEditingSettings(false)} className="text-slate-500 dark:text-slate-400 font-medium text-sm">Cancel</button>
+              <button onClick={updateSettings} className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 text-sm">
                 <Save size={16} /> Save
               </button>
             </div>
@@ -281,46 +281,46 @@ export default function BreakfastClubAdmin() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Points Gained Per Entry</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Points Gained Per Entry</label>
             <input 
               type="number" 
               disabled={!isEditingSettings}
               value={settings.pointsPerEntry}
               onChange={(e) => setSettings({...settings, pointsPerEntry: parseInt(e.target.value)})}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-50"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:bg-slate-900 dark:text-white"
             />
-            <p className="text-xs text-slate-500 mt-2">Number of points awarded to a student for each breakfast purchase recorded.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Number of points awarded to a student for each breakfast purchase recorded.</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border">
-          <p className="text-sm text-slate-500 mb-1">Total Reservations</p>
-          <p className="text-2xl md:text-3xl font-bold">{analytics.totalReservations}</p>
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border dark:border-slate-800">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Total Reservations</p>
+          <p className="text-2xl md:text-3xl font-bold dark:text-white">{analytics.totalReservations}</p>
         </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border">
-          <p className="text-sm text-slate-500 mb-1">Total Revenue</p>
-          <p className="text-2xl md:text-3xl font-bold">Rs {analytics.totalRevenue}</p>
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border dark:border-slate-800">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Total Revenue</p>
+          <p className="text-2xl md:text-3xl font-bold dark:text-white">Rs {analytics.totalRevenue}</p>
         </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border sm:col-span-2 lg:col-span-1">
-          <p className="text-sm text-slate-500 mb-1">Total Purchase Records</p>
-          <p className="text-2xl md:text-3xl font-bold">{purchases.length}</p>
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border dark:border-slate-800 sm:col-span-2 lg:col-span-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Total Purchase Records</p>
+          <p className="text-2xl md:text-3xl font-bold dark:text-white">{purchases.length}</p>
         </div>
       </div>
 
       {/* Import/Export Section */}
-      <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border">
+      <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border dark:border-slate-800">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-          <h2 className="text-lg md:text-xl font-bold">Student Purchase Records</h2>
+          <h2 className="text-lg md:text-xl font-bold dark:text-white">Student Purchase Records</h2>
           <div className="flex flex-wrap gap-2">
             <button 
               onClick={exportPurchases}
-              className="flex-1 sm:flex-none px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="flex-1 sm:flex-none px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-sm"
             >
               <Download size={18} /> Export
             </button>
-            <label className="flex-1 sm:flex-none px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm">
+            <label className="flex-1 sm:flex-none px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm">
               <Upload size={18} /> Import
               <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
             </label>
@@ -331,21 +331,21 @@ export default function BreakfastClubAdmin() {
           <div className="inline-block min-w-full align-middle">
             <table className="min-w-full text-left">
               <thead>
-                <tr className="border-b text-slate-500 text-xs uppercase tracking-wider">
+                <tr className="border-b dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
                   <th className="px-5 pb-3 font-semibold">Index</th>
                   <th className="px-5 pb-3 font-semibold">Date</th>
                   <th className="px-5 pb-3 font-semibold">Points</th>
                   <th className="px-5 pb-3 font-semibold">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                 {purchases.slice(0, 5).map((p) => (
-                  <tr key={p.id} className="text-sm hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-4 font-medium text-slate-900">{p.indexNumber}</td>
-                    <td className="px-5 py-4 text-slate-600 whitespace-nowrap">{p.date}</td>
-                    <td className="px-5 py-4 text-emerald-600 font-bold">+{p.pointsAwarded}</td>
+                  <tr key={p.id} className="text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-5 py-4 font-medium text-slate-900 dark:text-white">{p.indexNumber}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">{p.date}</td>
+                    <td className="px-5 py-4 text-emerald-600 dark:text-emerald-400 font-bold">+{p.pointsAwarded}</td>
                     <td className="px-5 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${p.userId ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${p.userId ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
                         {p.userId ? 'Linked' : 'Pending'}
                       </span>
                     </td>
@@ -366,9 +366,9 @@ export default function BreakfastClubAdmin() {
       </div>
 
       {/* Menu Management */}
-      <div className="bg-white rounded-2xl shadow-sm border p-5 md:p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border dark:border-slate-800 p-5 md:p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-          <h2 className="text-lg md:text-xl font-bold">Healthy Canteen Menu</h2>
+          <h2 className="text-lg md:text-xl font-bold dark:text-white">Healthy Canteen Menu</h2>
           <button 
             onClick={() => setIsAddingItem(true)}
             className="w-full sm:w-auto px-4 py-2.5 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
@@ -378,76 +378,76 @@ export default function BreakfastClubAdmin() {
         </div>
 
         {isAddingItem && (
-          <form onSubmit={addItem} className="mb-8 p-5 md:p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+          <form onSubmit={addItem} className="mb-8 p-5 md:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Item Name</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">Item Name</label>
                 <input 
                   placeholder="e.g. Fresh Fruit Bowl" 
                   value={formData.name} 
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 dark:bg-slate-900 dark:text-white"
                   required
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Image URL</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">Image URL</label>
                 <input 
                   placeholder="https://..." 
                   value={formData.imageUrl} 
                   onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 dark:bg-slate-900 dark:text-white"
                   required
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Price (Rs)</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">Price (Rs)</label>
                 <input 
                   type="number" 
                   placeholder="0" 
                   value={formData.price} 
                   onChange={e => setFormData({...formData, price: parseInt(e.target.value)})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 dark:bg-slate-900 dark:text-white"
                   required
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Category</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">Category</label>
                 <input 
                   placeholder="e.g. Breakfast, Snack" 
                   value={formData.category} 
                   onChange={e => setFormData({...formData, category: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 dark:bg-slate-900 dark:text-white"
                 />
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 uppercase ml-1">Description</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">Description</label>
               <textarea 
                 placeholder="Brief description of the item..." 
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 dark:bg-slate-900 dark:text-white"
                 rows={2}
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setIsAddingItem(false)} className="px-4 py-2 text-slate-500 font-medium">Cancel</button>
-              <button type="submit" className="px-8 py-2.5 bg-emerald-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-100">Save Item</button>
+              <button type="button" onClick={() => setIsAddingItem(false)} className="px-4 py-2 text-slate-500 dark:text-slate-400 font-medium">Cancel</button>
+              <button type="submit" className="px-8 py-2.5 bg-emerald-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-100 dark:shadow-none">Save Item</button>
             </div>
           </form>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {items.map((i) => (
-            <div key={i.id} className="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors group">
+            <div key={i.id} className="flex items-center gap-4 p-4 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
               <img src={i.imageUrl} alt={i.name} className="w-14 h-14 md:w-16 md:h-16 object-cover rounded-xl shadow-sm" />
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-slate-900 truncate">{i.name}</h3>
-                <p className="text-sm text-slate-500">Rs {i.price} • {i.category}</p>
+                <h3 className="font-bold text-slate-900 dark:text-white truncate">{i.name}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Rs {i.price} • {i.category}</p>
               </div>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => deleteItem(i.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <button onClick={() => deleteItem(i.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                   <Trash2 size={18} />
                 </button>
               </div>
@@ -459,22 +459,22 @@ export default function BreakfastClubAdmin() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border p-5 md:p-6">
-        <h2 className="text-lg md:text-xl font-bold mb-6">Recent Reservations</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border dark:border-slate-800 p-5 md:p-6">
+        <h2 className="text-lg md:text-xl font-bold dark:text-white mb-6">Recent Reservations</h2>
         <div className="space-y-4">
           {reservations.slice(0, 10).map((r: any) => (
-            <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-50 last:border-0 gap-4">
+            <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-50 dark:border-slate-800/50 last:border-0 gap-4">
               <div>
-                <h3 className="font-bold text-slate-900">{r.itemName}</h3>
-                <p className="text-sm text-slate-600 font-medium">{r.userName}</p>
+                <h3 className="font-bold text-slate-900 dark:text-white">{r.itemName}</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{r.userName}</p>
                 <p className="text-xs text-slate-400 mt-1">{r.quantity} units • Rs {r.totalPrice}</p>
               </div>
               <div className="flex items-center justify-between sm:justify-end gap-4">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${r.status === 'Collected' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${r.status === 'Collected' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
                   {r.status}
                 </span>
                 {r.status === 'Reserved' && (
-                  <button onClick={() => markCollected(r.id)} className="bg-emerald-500 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md shadow-emerald-50 hover:bg-emerald-600 transition-colors">Collect</button>
+                  <button onClick={() => markCollected(r.id)} className="bg-emerald-500 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md shadow-emerald-50 dark:shadow-none hover:bg-emerald-600 transition-colors">Collect</button>
                 )}
               </div>
             </div>

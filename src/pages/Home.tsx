@@ -65,30 +65,30 @@ const FeatureCard = ({ icon: Icon, title, description, delay }: any) => (
     viewport={{ once: true }}
     transition={{ delay }}
     whileHover={{ y: -10, scale: 1.02 }}
-    className="bg-white/30 backdrop-blur-xl p-8 rounded-[32px] border border-white/50 shadow-xl shadow-slate-200/20 group"
+    className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl p-8 rounded-[32px] border border-white/50 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none group"
   >
     <div className="w-14 h-14 bg-brand-blue rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-blue/20 group-hover:rotate-12 transition-transform">
       <Icon size={28} className="text-white" />
     </div>
-    <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
-    <p className="text-slate-500 text-sm leading-relaxed">{description}</p>
+    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{title}</h3>
+    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{description}</p>
   </motion.div>
 );
 
 const StepItem = ({ number, title, description, icon: Icon }: any) => (
   <div className="flex gap-6 items-start">
     <div className="relative">
-      <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-bold text-lg z-10 relative">
+      <div className="w-12 h-12 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-lg z-10 relative">
         {number}
       </div>
-      {number !== 5 && <div className="absolute top-12 left-1/2 -translate-x-1/2 w-0.5 h-full bg-slate-200" />}
+      {number !== 5 && <div className="absolute top-12 left-1/2 -translate-x-1/2 w-0.5 h-full bg-slate-200 dark:bg-slate-700" />}
     </div>
     <div className="pt-1">
       <div className="flex items-center gap-3 mb-2">
         <Icon size={18} className="text-brand-blue" />
-        <h4 className="font-bold text-slate-900">{title}</h4>
+        <h4 className="font-bold text-slate-900 dark:text-white">{title}</h4>
       </div>
-      <p className="text-sm text-slate-500">{description}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
     </div>
   </div>
 );
@@ -265,21 +265,21 @@ export default function Home() {
         <div className="absolute top-[40%] right-[10%] w-[30%] h-[30%] bg-emerald-400/10 rounded-full blur-[100px]" />
       </div>
       {/* Navigation */}
-      <nav className="fixed top-[calc(1.5rem+env(safe-area-inset-top))] left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl shadow-slate-200/20">
+      <nav className="fixed top-[calc(1.5rem+env(safe-area-inset-top))] left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 dark:bg-slate-900/30 backdrop-blur-xl border border-white/50 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-200/20 dark:shadow-none">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 justify-start">
             <div className="w-8 h-8 bg-brand-blue rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20">
               <Heart className="text-white" size={18} />
             </div>
             <div>
-              <span className="text-base font-bold text-slate-900 tracking-tight block leading-tight">Health Guard</span>
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Jaffna Hindu College</span>
+              <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight block leading-tight">Health Guard</span>
+              <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Jaffna Hindu College</span>
             </div>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-xs font-bold text-slate-700 hover:text-brand-blue transition-colors uppercase tracking-wide">Features</a>
-            <a href="#how-it-works" className="text-xs font-bold text-slate-700 hover:text-brand-blue transition-colors uppercase tracking-wide">How it Works</a>
-            <a href="#leaderboard" className="text-xs font-bold text-slate-700 hover:text-brand-blue transition-colors uppercase tracking-wide">Leaderboard</a>
+            <a href="#features" className="text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-brand-blue transition-colors uppercase tracking-wide">Features</a>
+            <a href="#how-it-works" className="text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-brand-blue transition-colors uppercase tracking-wide">How it Works</a>
+            <a href="#leaderboard" className="text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-brand-blue transition-colors uppercase tracking-wide">Leaderboard</a>
           </div>
           <div className="flex items-center gap-3">
             <button 
@@ -308,11 +308,11 @@ export default function Home() {
               <Zap size={14} />
               JAFFNA HINDU COLLEGE • AI-POWERED STUDENT WELLNESS
             </div>
-            <h1 className="text-6xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-8 tracking-tight">
+            <h1 className="text-6xl md:text-7xl font-extrabold text-slate-900 dark:text-white leading-[1.1] mb-8 tracking-tight">
               Smart Student <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-blue-700">Health Monitoring</span>
             </h1>
-            <p className="text-xl text-slate-500 mb-10 leading-relaxed max-w-xl">
+            <p className="text-xl text-slate-500 dark:text-slate-400 mb-10 leading-relaxed max-w-xl">
               AI-powered health tracking, nutrition guidance, and fitness analytics designed to build a healthier future for schools.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -324,21 +324,21 @@ export default function Home() {
               </button>
               <button 
                 onClick={handleGoogleLogin}
-                className="px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-lg flex items-center gap-3"
+                className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-lg flex items-center gap-3"
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
                 Sign in with Google
               </button>
               <button 
                 onClick={() => setIsScannerOpen(true)}
-                className="px-8 py-4 bg-white/30 backdrop-blur-md text-slate-900 border border-white/50 rounded-2xl font-bold hover:bg-white/50 transition-all shadow-lg shadow-slate-200/20 flex items-center gap-3"
+                className="px-8 py-4 bg-white/30 dark:bg-slate-800/30 backdrop-blur-md text-slate-900 dark:text-white border border-white/50 dark:border-slate-700 rounded-2xl font-bold hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all shadow-lg shadow-slate-200/20 dark:shadow-none flex items-center gap-3"
               >
                 <QrCode size={20} />
                 Scan Health Passport
               </button>
               <button 
                 onClick={() => navigate('/login')}
-                className="px-8 py-4 bg-white/30 backdrop-blur-md text-slate-900 border border-white/50 rounded-2xl font-bold hover:bg-white/50 transition-all shadow-lg shadow-slate-200/20"
+                className="px-8 py-4 bg-white/30 dark:bg-slate-800/30 backdrop-blur-md text-slate-900 dark:text-white border border-white/50 dark:border-slate-700 rounded-2xl font-bold hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all shadow-lg shadow-slate-200/20 dark:shadow-none"
               >
                 Admin Access
               </button>
@@ -346,13 +346,13 @@ export default function Home() {
             <div className="mt-12 flex items-center gap-6">
               <div className="flex -space-x-3">
                 {[1,2,3,4].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center">
-                    <Users size={16} className="text-slate-500" />
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                    <Users size={16} className="text-slate-500 dark:text-slate-400" />
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-slate-500 font-medium">
-                Joined by <span className="text-slate-900 font-bold">3,000+</span> students this month
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                Joined by <span className="text-slate-900 dark:text-white font-bold">3,000+</span> students this month
               </p>
             </div>
           </motion.div>
@@ -420,8 +420,8 @@ export default function Home() {
       <section id="features" className="py-32 px-6 bg-transparent relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Powerful Features for Modern Schools</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto">Everything you need to monitor, analyze, and improve student health in one unified platform.</p>
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Powerful Features for Modern Schools</h2>
+            <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Everything you need to monitor, analyze, and improve student health in one unified platform.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard 
@@ -486,7 +486,7 @@ export default function Home() {
       <section id="how-it-works" className="py-32 px-6 bg-transparent relative z-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div>
-            <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">Simple Steps to a <br />Healthier School</h2>
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-8 leading-tight">Simple Steps to a <br />Healthier School</h2>
             <div className="space-y-10">
               <StepItem 
                 number={1} 
@@ -521,7 +521,7 @@ export default function Home() {
             </div>
           </div>
           <div className="relative">
-            <div className="bg-slate-900 rounded-[48px] p-10 text-white shadow-2xl relative z-10">
+            <div className="bg-slate-900 dark:bg-slate-800 rounded-[48px] p-10 text-white shadow-2xl relative z-10">
               <div className="flex items-center gap-4 mb-10">
                 <div className="w-12 h-12 bg-brand-blue rounded-2xl flex items-center justify-center">
                   <ShieldCheck size={24} />
@@ -589,8 +589,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-16">
             <div>
-              <h2 className="text-4xl font-bold text-slate-900 mb-4">Health Learning Center</h2>
-              <p className="text-slate-500">Expert-curated resources for a better lifestyle.</p>
+              <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Health Learning Center</h2>
+              <p className="text-slate-500 dark:text-slate-400">Expert-curated resources for a better lifestyle.</p>
             </div>
             <button className="hidden md:flex items-center gap-2 text-brand-blue font-bold hover:gap-4 transition-all">
               View All Modules <ChevronRight size={20} />
@@ -601,17 +601,17 @@ export default function Home() {
               <motion.div 
                 key={i}
                 whileHover={{ y: -10 }}
-                className="bg-white/30 backdrop-blur-xl rounded-[32px] overflow-hidden border border-white/50 shadow-xl shadow-slate-200/20 group"
+                className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl rounded-[32px] overflow-hidden border border-white/50 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none group"
               >
                 <div className="h-48 overflow-hidden">
                   <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
                 </div>
                 <div className="p-6">
-                  <h4 className="font-bold text-slate-900 mb-2">{item.title}</h4>
-                  <p className="text-xs text-slate-500 mb-6 leading-relaxed line-clamp-2">{item.description}</p>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">{item.title}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed line-clamp-2">{item.description}</p>
                   <button 
                     onClick={() => item.link && window.open(item.link, '_blank')}
-                    className="w-full py-3 bg-white/30 backdrop-blur-md border border-white/50 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-white/30 dark:bg-slate-700/30 backdrop-blur-md border border-white/50 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white transition-all flex items-center justify-center gap-2"
                   >
                     {item.link ? <ExternalLink size={14} /> : null}
                     View Module
@@ -624,31 +624,31 @@ export default function Home() {
       </section>
 
       {/* Live Selling Section */}
-      <section className="py-32 px-6 bg-white/50 relative z-10">
+      <section className="py-32 px-6 bg-white/50 dark:bg-slate-950/50 relative z-10">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-slate-900 mb-16">Live Selling</h2>
+          <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-16">Live Selling</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <div>
-              <h3 className="text-2xl font-bold mb-8">Fresh Veggies & Fruits</h3>
+              <h3 className="text-2xl font-bold mb-8 dark:text-white">Fresh Veggies & Fruits</h3>
               <div className="grid grid-cols-2 gap-4">
                 {vegetables.map((v: any) => (
-                  <div key={v.id} className="bg-white p-4 rounded-2xl border shadow-sm">
+                  <div key={v.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700 shadow-sm">
                     <img src={v.imageUrl} alt={v.name} className="w-full h-32 object-cover rounded-xl mb-2" />
-                    <p className="font-bold">{v.name}</p>
-                    <p className="text-sm text-slate-500">Rs {v.price} / {v.quantity} left</p>
+                    <p className="font-bold dark:text-white">{v.name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Rs {v.price} / {v.quantity} left</p>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold mb-8">Ready Breakfast</h3>
+              <h3 className="text-2xl font-bold mb-8 dark:text-white">Ready Breakfast</h3>
               <div className="grid grid-cols-2 gap-4">
                 {breakfastItems.map((b: any) => (
-                  <div key={b.id} className="bg-white p-4 rounded-2xl border shadow-sm">
+                  <div key={b.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700 shadow-sm">
                     <img src={b.imageUrl} alt={b.name} className="w-full h-32 object-cover rounded-xl mb-2" />
-                    <p className="font-bold">{b.name}</p>
-                    <p className="text-sm text-slate-500">Rs {b.price} / {b.quantity} left</p>
+                    <p className="font-bold dark:text-white">{b.name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Rs {b.price} / {b.quantity} left</p>
                   </div>
                 ))}
               </div>
@@ -672,16 +672,16 @@ export default function Home() {
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white/30 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-white/50"
+                  className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-white/50 dark:border-slate-700"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-slate-200 rounded-full" />
+                    <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full" />
                     <div>
-                      <p className="text-sm font-bold text-slate-900">{post.user}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{post.user}</p>
                       <p className="text-[10px] text-slate-400">2 hours ago</p>
                     </div>
                   </div>
-                  <p className="text-slate-600 text-sm mb-4">{post.text}</p>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">{post.text}</p>
                   <div className="flex items-center gap-6 text-slate-400">
                     <div className="flex items-center gap-1.5 text-xs font-bold">
                       <Heart size={16} /> {post.likes}
@@ -699,8 +699,8 @@ export default function Home() {
             <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-indigo-600 rounded-full blur-[100px] opacity-10" />
           </div>
           <div>
-            <h2 className="text-4xl font-bold text-slate-900 mb-6">Engage with the <br />Health Community</h2>
-            <p className="text-slate-500 mb-10 leading-relaxed">Share tips, celebrate achievements, and participate in school-wide health challenges. Building healthy habits is better together.</p>
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-6">Engage with the <br />Health Community</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-10 leading-relaxed">Share tips, celebrate achievements, and participate in school-wide health challenges. Building healthy habits is better together.</p>
             <button 
               onClick={() => navigate('/login')}
               className="px-8 py-4 bg-brand-blue text-white rounded-2xl font-bold shadow-xl shadow-brand-blue/20 hover:bg-blue-700 transition-all"
@@ -715,24 +715,24 @@ export default function Home() {
       <section id="leaderboard" className="py-32 px-6 bg-transparent relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Top Health Champions</h2>
-            <p className="text-slate-500">Celebrating the most active and health-conscious students.</p>
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Top Health Champions</h2>
+            <p className="text-slate-500 dark:text-slate-400">Celebrating the most active and health-conscious students.</p>
           </div>
-          <div className="bg-white/30 backdrop-blur-xl rounded-[40px] p-8 border border-white/50 shadow-xl shadow-slate-200/20">
+          <div className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl rounded-[40px] p-8 border border-white/50 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none">
             <div className="space-y-4">
               {leaderboard.length > 0 ? leaderboard.map((student, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-white/40 backdrop-blur-md rounded-2xl shadow-sm border border-white/50">
+                <div key={i} className="flex items-center justify-between p-4 bg-white/40 dark:bg-slate-700/40 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 dark:border-slate-600">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
                       i === 0 ? 'bg-amber-100 text-amber-600' : 
-                      i === 1 ? 'bg-slate-200 text-slate-600' :
+                      i === 1 ? 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300' :
                       i === 2 ? 'bg-orange-100 text-orange-600' :
-                      'bg-slate-100 text-slate-400'
+                      'bg-slate-100 dark:bg-slate-700 text-slate-400'
                     }`}>
                       #{student.rank}
                     </div>
                     <img src={student.avatar} alt={student.name} className="w-12 h-12 rounded-xl object-cover" />
-                    <span className="font-bold text-slate-900">{student.name}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{student.name}</span>
                   </div>
                   <div className="text-right">
                     <p className="text-brand-blue font-bold">{student.points}</p>
@@ -740,14 +740,14 @@ export default function Home() {
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-10 text-slate-400">
+                <div className="text-center py-10 text-slate-400 dark:text-slate-500">
                   No leaderboard data available.
                 </div>
               )}
             </div>
             <button 
               onClick={() => navigate('/login')}
-              className="w-full mt-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all"
+              className="w-full mt-8 py-4 bg-slate-900 dark:bg-slate-700 text-white rounded-2xl font-bold hover:bg-slate-800 dark:hover:bg-slate-600 transition-all"
             >
               View Full Leaderboard
             </button>
@@ -756,7 +756,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 pt-24 pb-12 px-6 text-white">
+      <footer className="bg-slate-900 dark:bg-slate-950 pt-24 pb-12 px-6 text-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
             <div className="space-y-6">

@@ -524,18 +524,18 @@ export default function Students() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Student Management</h1>
-          <p className="text-slate-500">Register and monitor student health profiles</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Student Management</h1>
+          <p className="text-slate-500 dark:text-slate-400">Register and monitor student health profiles</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
           >
             <FileDown size={18} />
             Export
           </button>
-          <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-all shadow-sm cursor-pointer">
+          <label className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm cursor-pointer">
             <FileUp size={18} />
             Import
             <input type="file" accept=".csv, .xlsx, .xls" onChange={handleImportFile} className="hidden" />
@@ -550,8 +550,8 @@ export default function Students() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
@@ -559,7 +559,7 @@ export default function Students() {
               placeholder="Search by name or index number..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-900 dark:text-white"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -573,16 +573,16 @@ export default function Students() {
         </div>
         
         {showFilters && (
-          <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-4">
-            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 rounded-xl text-sm">
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 flex flex-wrap gap-4">
+            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
               <option value="">All Classes</option>
               {Array.from(new Set(students.map(s => s.class).filter(Boolean))).map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 rounded-xl text-sm">
+            <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
               <option value="">All Divisions</option>
               {Array.from(new Set(students.map(s => s.division).filter(Boolean))).map(d => <option key={d} value={d}>{d}</option>)}
             </select>
-            <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="p-2 border border-slate-200 rounded-xl text-sm">
+            <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
               <option value="">All Genders</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>

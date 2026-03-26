@@ -137,14 +137,14 @@ export default function HealthPassport() {
   if (!student) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+        <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500">
           <User size={48} />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">Student Not Found</h2>
-        <p className="text-slate-500">The health passport you are looking for does not exist or you do not have permission to view it.</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Student Not Found</h2>
+        <p className="text-slate-500 dark:text-slate-400">The health passport you are looking for does not exist or you do not have permission to view it.</p>
         <button 
           onClick={() => navigate(-1)}
-          className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200"
+          className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
         >
           Go Back
         </button>
@@ -161,26 +161,26 @@ export default function HealthPassport() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-slate-100 rounded-xl transition-all"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
           >
-            <ChevronLeft size={24} className="text-slate-600" />
+            <ChevronLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Digital Health Passport</h1>
-            <p className="text-slate-500">Official student health record</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Digital Health Passport</h1>
+            <p className="text-slate-500 dark:text-slate-400">Official student health record</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={() => handlePrint()}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-all shadow-sm"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
           >
             <Printer size={18} />
             <span className="whitespace-nowrap">Print Report</span>
           </button>
           <button 
             onClick={handleDownloadPDF}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
           >
             <Download size={18} />
             <span className="whitespace-nowrap">Download Card</span>
@@ -243,56 +243,56 @@ export default function HealthPassport() {
           {/* Left Column: Health Metrics & History */}
           <div className="lg:col-span-2 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center">
                     <Scale size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-500">Weight</span>
+                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Weight</span>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">{latestRecord?.weight || 0} kg</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.weight || 0} kg</p>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 dark:text-indigo-400 rounded-xl flex items-center justify-center">
                     <Ruler size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-500">Height</span>
+                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Height</span>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">{latestRecord?.height || 0} cm</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.height || 0} cm</p>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400 rounded-xl flex items-center justify-center">
                     <Ruler size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-500">Hip/Waist</span>
+                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Hip/Waist</span>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">{latestRecord?.hip || 0} / {latestRecord?.waist || 0} cm</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.hip || 0} / {latestRecord?.waist || 0} cm</p>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400 rounded-xl flex items-center justify-center">
                     <Activity size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-500">Grip</span>
+                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Grip</span>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">{latestRecord?.gripStrength || 0} kg</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.gripStrength || 0} kg</p>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-violet-50 text-violet-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-violet-50 dark:bg-violet-900/20 text-violet-500 dark:text-violet-400 rounded-xl flex items-center justify-center">
                     <Activity size={20} />
                   </div>
-                  <span className="text-sm font-bold text-slate-500">BMI</span>
+                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">BMI</span>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">{latestRecord?.bmi?.toFixed(1) || '0.0'}</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.bmi?.toFixed(1) || '0.0'}</p>
               </div>
             </div>
 
             {/* Growth Charts */}
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-2">
                 <TrendingUp size={20} className="text-blue-500" />
                 Growth Pattern Analysis
               </h3>
@@ -316,25 +316,25 @@ export default function HealthPassport() {
             </div>
 
             {/* Activity History */}
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                 <Award size={20} className="text-amber-500" />
                 Activity & Achievement Records
               </h3>
               <div className="space-y-4">
                 {activities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                  <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                      <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
                         <Activity className="text-blue-500" size={20} />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900">{activity.name}</p>
-                        <p className="text-xs text-slate-500">{new Date(activity.date).toLocaleDateString()}</p>
+                        <p className="font-bold text-slate-900 dark:text-white">{activity.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-blue-600 font-bold">+{activity.points} pts</p>
+                      <p className="text-blue-600 dark:text-blue-400 font-bold">+{activity.points} pts</p>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activity.type}</p>
                     </div>
                   </div>
@@ -346,28 +346,28 @@ export default function HealthPassport() {
           {/* Right Column: AI Insights & Nutrition */}
           <div className="space-y-8">
             {/* Contact Info */}
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Emergency Contact</h3>
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Emergency Contact</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <User size={18} className="text-slate-400" />
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parent/Guardian</p>
-                    <p className="text-sm font-bold text-slate-900">{student?.parentName}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.parentName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone size={18} className="text-slate-400" />
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Number</p>
-                    <p className="text-sm font-bold text-slate-900">{student?.parentContact}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.parentContact}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin size={18} className="text-slate-400" />
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Address</p>
-                    <p className="text-sm font-bold text-slate-900">{student?.address}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.address}</p>
                   </div>
                 </div>
               </div>
@@ -375,7 +375,7 @@ export default function HealthPassport() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-slate-100 text-center text-slate-400 text-xs">
+        <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 text-center text-slate-400 text-xs">
           <p>This is an official Digital Health Passport issued by Jaffna Hindu College.</p>
           <p className="mt-1">Verification Code: {student?.indexNumber}-{student?.id}-{new Date().getFullYear()}</p>
         </div>

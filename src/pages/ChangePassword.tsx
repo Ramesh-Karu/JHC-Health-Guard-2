@@ -75,24 +75,24 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 pt-safe pb-safe">
-      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md border border-slate-100">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6 text-center">Change Password</h2>
-        <p className="text-slate-500 text-sm mb-6 text-center">Please change your password to continue.</p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 pt-safe pb-safe">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl dark:shadow-none p-8 w-full max-w-md border border-slate-100 dark:border-slate-800">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">Change Password</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 text-center">Please change your password to continue.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 text-red-500 bg-red-50 p-3 rounded-xl text-sm">
+            <div className="flex items-center gap-2 text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl text-sm">
               <AlertCircle size={16} />
               <span>{error}</span>
             </div>
           )}
           <div className="relative">
-            <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
-            <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" required />
+            <Lock className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" size={20} />
+            <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white" required />
           </div>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
-            <input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" required />
+            <Lock className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" size={20} />
+            <input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white" required />
           </div>
           <button type="submit" disabled={loading} className="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600">Update Password</button>
         </form>

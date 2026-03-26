@@ -174,28 +174,28 @@ export default function AdminHealthUpdate() {
     <div className="w-full max-w-2xl mx-auto p-4 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Health Data Update</h1>
-          <p className="text-slate-500">Update student health metrics</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Health Data Update</h1>
+          <p className="text-slate-500 dark:text-slate-400">Update student health metrics</p>
         </div>
-        <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 cursor-pointer w-full sm:w-auto justify-center">
+        <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer w-full sm:w-auto justify-center transition-colors">
           <FileUp size={18} /> Import
           <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
         </label>
       </div>
 
-      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+      <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             placeholder="Index Number"
             value={indexNumber}
             onChange={(e) => setIndexNumber(e.target.value)}
-            className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+            className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
           />
           <button 
             onClick={searchStudent}
             disabled={loading}
-            className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95"
           >
             <Search size={18} />
             {loading ? '...' : 'Search'}
@@ -203,13 +203,13 @@ export default function AdminHealthUpdate() {
         </div>
 
         {student && (
-          <div className="p-4 bg-blue-50 rounded-2xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center gap-4 border border-blue-100 dark:border-blue-800/30">
+            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
               <User size={24} />
             </div>
             <div>
-              <p className="font-bold text-slate-900">{student.fullName}</p>
-              <p className="text-sm text-slate-500">Class: {student.class}</p>
+              <p className="font-bold text-slate-900 dark:text-white">{student.fullName}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Class: {student.class}</p>
             </div>
           </div>
         )}
@@ -225,13 +225,13 @@ export default function AdminHealthUpdate() {
                 { label: 'Grip Strength (kg)', key: 'gripStrength' },
               ].map((field) => (
                 <div key={field.key} className="space-y-1">
-                  <label className="text-sm font-bold text-slate-700">{field.label}</label>
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">{field.label}</label>
                   <input
                     type="number"
                     required={field.key === 'height' || field.key === 'weight'}
                     value={formData[field.key as keyof typeof formData]}
                     onChange={(e) => setFormData({...formData, [field.key]: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
                   />
                 </div>
               ))}
@@ -239,7 +239,7 @@ export default function AdminHealthUpdate() {
             <button 
               type="submit"
               disabled={saving}
-              className="w-full px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+              className="w-full px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none active:scale-95 mt-4"
             >
               <Save size={20} />
               {saving ? 'Updating...' : 'Update Health Data'}

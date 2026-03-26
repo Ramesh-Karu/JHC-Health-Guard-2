@@ -41,7 +41,7 @@ import { HealthRecord, Activity as ActivityType } from '../types';
 const StatCard = ({ icon: Icon, label, value, trend, trendValue, color }: any) => (
   <motion.div 
     whileHover={{ y: -5 }}
-    className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"
+    className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
   >
     <div className="flex items-start justify-between mb-4">
       <div className={cn("p-3 rounded-2xl", color)}>
@@ -57,8 +57,8 @@ const StatCard = ({ icon: Icon, label, value, trend, trendValue, color }: any) =
         </div>
       )}
     </div>
-    <p className="text-slate-500 text-sm font-medium mb-1">{label}</p>
-    <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
+    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">{label}</p>
+    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{value}</h3>
   </motion.div>
 );
 
@@ -211,8 +211,8 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">BMI Distribution</h3>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">BMI Distribution</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -238,14 +238,14 @@ export default function Dashboard() {
               {analytics?.bmiStats?.map((entry: any, index: number) => (
                 <div key={entry.category} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                  <span className="text-xs font-medium text-slate-500">{entry.category}</span>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{entry.category}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">Average BMI by Class</h3>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Average BMI by Class</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={analytics?.classStats || []}>
@@ -278,25 +278,25 @@ export default function Dashboard() {
     <div className="space-y-8 px-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3 justify-start">
-          <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+          <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-blue-900/20">
             <Heart className="text-white" size={18} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Hello, {user?.fullName}! 👋</h1>
-            <p className="text-slate-500">Here's your health summary for today.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Hello, {user?.fullName}! 👋</h1>
+            <p className="text-slate-500 dark:text-slate-400">Here's your health summary for today.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={() => window.location.href = '/health-pass'}
-            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center gap-2"
           >
             View Profile
             <ChevronRight size={18} />
           </button>
-          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
             <Calendar size={18} className="text-blue-500" />
-            <span className="text-sm font-bold text-slate-700">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
           </div>
         </div>
       </div>
@@ -337,43 +337,43 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold mt-1">Level {Math.floor((user?.points || 0) / 100) + 1}</h2>
           <p className="text-blue-100 text-sm mt-2">{100 - ((user?.points || 0) % 100)} points to next level</p>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-slate-500 text-sm font-bold uppercase">Daily Streak</p>
-            <h2 className="text-3xl font-bold text-slate-900 mt-1">5 Days</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase">Daily Streak</p>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mt-1">5 Days</h2>
           </div>
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
+          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-500 dark:text-orange-400">
             <Zap size={32} />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <p className="text-slate-500 text-sm font-bold uppercase mb-4">Badges</p>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase mb-4">Badges</p>
           <div className="flex gap-2">
-            <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold">🥇</div>
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">🏃</div>
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold">🍎</div>
+            <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center text-yellow-600 dark:text-yellow-400 font-bold">🥇</div>
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">🏃</div>
+            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 font-bold">🍎</div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-lg font-bold text-slate-900">BMI Trend</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">BMI Trend</h3>
               <div className="flex gap-2">
-                <button className="px-3 py-1 text-xs font-bold bg-blue-50 text-blue-600 rounded-lg">Weight</button>
-                <button className="px-3 py-1 text-xs font-bold text-slate-400 hover:bg-slate-50 rounded-lg">Height</button>
+                <button className="px-3 py-1 text-xs font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">Weight</button>
+                <button className="px-3 py-1 text-xs font-bold text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg">Height</button>
               </div>
             </div>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-700" />
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                   <Tooltip 
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', backgroundColor: '#1e293b', color: '#f1f5f9' }}
                   />
                   <Line 
                     type="monotone" 
@@ -388,29 +388,29 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">Recent Activities</h3>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Recent Activities</h3>
             <div className="space-y-4">
               {activities.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
                       <Activity className="text-blue-500" size={20} />
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">{activity.name}</p>
-                      <p className="text-xs text-slate-500">{new Date(activity.date).toLocaleDateString()}</p>
+                      <p className="font-bold text-slate-900 dark:text-white">{activity.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-blue-600 font-bold">+{activity.points} pts</p>
-                    <p className="text-xs text-slate-400 capitalize">{activity.type}</p>
+                    <p className="text-blue-600 dark:text-blue-400 font-bold">+{activity.points} pts</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">{activity.type}</p>
                   </div>
                 </div>
               ))}
               {activities.length === 0 && (
                 <div className="text-center py-10">
-                  <p className="text-slate-400">No activities recorded yet.</p>
+                  <p className="text-slate-400 dark:text-slate-500">No activities recorded yet.</p>
                 </div>
               )}
             </div>
@@ -420,19 +420,19 @@ export default function Dashboard() {
         <div className="space-y-8">
           {/* Announcements */}
           {announcements.length > 0 && (
-            <div className="bg-white p-6 rounded-3xl border border-blue-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-slate-700 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center">
                   <MessageSquare size={20} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Class Announcements</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Class Announcements</h3>
               </div>
               <div className="space-y-3">
                 {announcements.slice(0, 3).map((announcement, i) => (
-                  <div key={i} className="p-3 bg-blue-50/50 rounded-xl border border-blue-50">
-                    <p className="text-sm font-bold text-blue-900">{announcement.title}</p>
-                    <p className="text-xs text-blue-700 mt-1 line-clamp-2">{announcement.content}</p>
-                    <p className="text-[10px] text-blue-500 mt-2 font-medium">From: {announcement.teacherName}</p>
+                  <div key={i} className="p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-50 dark:border-blue-800">
+                    <p className="text-sm font-bold text-blue-900 dark:text-blue-100">{announcement.title}</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1 line-clamp-2">{announcement.content}</p>
+                    <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-2 font-medium">From: {announcement.teacherName}</p>
                   </div>
                 ))}
               </div>
@@ -446,8 +446,8 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">Health Goals</h3>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Health Goals</h3>
             <div className="space-y-6">
               {[
                 { label: 'Daily Steps', current: 6500, target: 10000, color: 'bg-blue-500' },
@@ -456,10 +456,10 @@ export default function Dashboard() {
               ].map((goal) => (
                 <div key={goal.label}>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="font-medium text-slate-700">{goal.label}</span>
-                    <span className="text-slate-500">{goal.current}/{goal.target}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{goal.label}</span>
+                    <span className="text-slate-500 dark:text-slate-400">{goal.current}/{goal.target}</span>
                   </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${(goal.current / goal.target) * 100}%` }}

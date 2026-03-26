@@ -109,68 +109,82 @@ export default function OrganicClubAdmin() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Organic Club Admin Panel</h1>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto pb-24">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Organic Club Admin Panel</h1>
         <button 
           onClick={() => setIsScannerOpen(true)}
-          className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold hover:bg-blue-100 transition-colors flex items-center gap-2"
+          className="w-full sm:w-auto px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2"
         >
           <QrCode size={18} />
           Scan Passbook
         </button>
       </div>
       
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-slate-500">Total Reservations</p>
-          <p className="text-3xl font-bold">{analytics.totalReservations}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Total Reservations</p>
+          <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">{analytics.totalReservations}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-slate-500">Total Revenue</p>
-          <p className="text-3xl font-bold">Rs {analytics.totalRevenue}</p>
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Total Revenue</p>
+          <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Rs {analytics.totalRevenue}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-slate-500">Popular Vegetable</p>
-          <p className="text-xl font-bold">{analytics.popularVegetables[0]?.name || 'N/A'}</p>
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Popular Vegetable</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white truncate">{analytics.popularVegetables[0]?.name || 'N/A'}</p>
         </div>
       </div>
-      <div className="bg-white rounded-2xl shadow-sm border p-6 mb-8">
-        <h2 className="text-xl font-bold mb-4">Vegetables</h2>
-        {vegetables.map((v: any) => (
-          <div key={v.id} className="flex items-center justify-between py-3 border-b">
-            <div>
-              <h3 className="font-bold">{v.name}</h3>
-              <p className="text-sm text-slate-500">Rs {v.price} | {v.quantity} units</p>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 md:p-6 mb-8">
+        <h2 className="text-lg md:text-xl font-bold mb-4 text-slate-900 dark:text-white">Vegetables</h2>
+        <div className="space-y-4">
+          {vegetables.map((v: any) => (
+            <div key={v.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800 last:border-0 gap-4">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white">{v.name}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Rs {v.price} | {v.quantity} units</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => editVegetable(v.id, { ...v, price: v.price + 10 })} className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">Edit</button>
+                <button onClick={() => deleteVegetable(v.id)} className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">Delete</button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => editVegetable(v.id, { ...v, price: v.price + 10 })} className="text-blue-500">Edit</button>
-              <button onClick={() => deleteVegetable(v.id)} className="text-red-500">Delete</button>
-            </div>
-          </div>
-        ))}
+          ))}
+          {vegetables.length === 0 && (
+            <p className="text-center text-slate-500 dark:text-slate-400 italic py-4">No vegetables found.</p>
+          )}
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border p-6">
-        <h2 className="text-xl font-bold mb-4">Reservations</h2>
-        {reservations.map((r: any) => (
-          <div key={r.id} className="flex items-center justify-between py-3 border-b">
-            <div>
-              <h3 className="font-bold">{r.vegetableName} - {r.userName}</h3>
-              <p className="text-sm text-slate-500">{r.quantity} units</p>
-            </div>
-            {r.status === 'Reserved' && (
-              <div className="flex gap-2">
-                <input type="number" placeholder="Weight" onChange={e => setWeight(e.target.value)} className="p-2 border rounded-xl w-20" />
-                <select onChange={e => setUnit(e.target.value)} className="p-2 border rounded-xl">
-                  <option value="g">g</option>
-                  <option value="kg">kg</option>
-                </select>
-                <button onClick={() => markCollected(r.id)} className="bg-emerald-500 text-white px-4 py-2 rounded-xl">Mark Collected</button>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 md:p-6">
+        <h2 className="text-lg md:text-xl font-bold mb-4 text-slate-900 dark:text-white">Reservations</h2>
+        <div className="space-y-4">
+          {reservations.map((r: any) => (
+            <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800 last:border-0 gap-4">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white">{r.vegetableName} - {r.userName}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{r.quantity} units</p>
               </div>
-            )}
-          </div>
-        ))}
+              {r.status === 'Reserved' ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <input type="number" placeholder="Weight" onChange={e => setWeight(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl w-24 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+                  <select onChange={e => setUnit(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="g">g</option>
+                    <option value="kg">kg</option>
+                  </select>
+                  <button onClick={() => markCollected(r.id)} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-colors shadow-sm">Mark Collected</button>
+                </div>
+              ) : (
+                <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-wider self-start sm:self-auto">
+                  {r.status}
+                </span>
+              )}
+            </div>
+          ))}
+          {reservations.length === 0 && (
+            <p className="text-center text-slate-500 dark:text-slate-400 italic py-4">No reservations found.</p>
+          )}
+        </div>
       </div>
       {isScannerOpen && <QRScanner onClose={() => setIsScannerOpen(false)} />}
       {toast && (

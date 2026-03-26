@@ -32,13 +32,13 @@ const InsightCard = ({ icon: Icon, title, children, color = "blue" }: any) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
+    className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all"
   >
     <div className="flex items-center gap-3 mb-6">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${color}-50 text-${color}-500`}>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${color}-50 dark:bg-${color}-900/30 text-${color}-500 dark:text-${color}-400`}>
         <Icon size={20} />
       </div>
-      <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
     </div>
     {children}
   </motion.div>
@@ -104,7 +104,7 @@ export default function AIInsights() {
           transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
           className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
         />
-        <p className="text-slate-500 font-medium animate-pulse">AI is analyzing health patterns...</p>
+        <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">AI is analyzing health patterns...</p>
       </div>
     );
   }
@@ -114,41 +114,41 @@ export default function AIInsights() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">AI Health Intelligence</h1>
-            <p className="text-slate-500">School-wide predictive analytics and insights</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AI Health Intelligence</h1>
+            <p className="text-slate-500 dark:text-slate-400">School-wide predictive analytics and insights</p>
           </div>
-          <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold flex items-center gap-2">
+          <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-sm font-bold flex items-center gap-2">
             <Brain size={16} />
             AI Engine Active
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-2xl flex items-center justify-center">
               <ShieldAlert size={24} />
             </div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Students at Risk</p>
-              <p className="text-2xl font-bold text-slate-900">{adminInsights?.studentsAtRiskCount}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Students at Risk</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{adminInsights?.studentsAtRiskCount}</p>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 text-amber-500 dark:text-amber-400 rounded-2xl flex items-center justify-center">
               <TrendingUp size={24} />
             </div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Abnormal Growth</p>
-              <p className="text-2xl font-bold text-slate-900">{adminInsights?.abnormalGrowthCount}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Abnormal Growth</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{adminInsights?.abnormalGrowthCount}</p>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400 rounded-2xl flex items-center justify-center">
               <CheckCircle2 size={24} />
             </div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Most Improved</p>
-              <p className="text-2xl font-bold text-slate-900">{adminInsights?.mostImprovedCount}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Most Improved</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{adminInsights?.mostImprovedCount}</p>
             </div>
           </div>
         </div>
@@ -157,9 +157,9 @@ export default function AIInsights() {
           <InsightCard icon={AlertTriangle} title="Top Health Risks Detected" color="red">
             <div className="space-y-4">
               {adminInsights?.topRisks?.map((risk: string, i: number) => (
-                <div key={i} className="flex items-center gap-3 p-4 bg-red-50/50 rounded-2xl border border-red-100">
-                  <div className="w-2 h-2 rounded-full bg-red-500" />
-                  <p className="text-sm font-medium text-red-900">{risk}</p>
+                <div key={i} className="flex items-center gap-3 p-4 bg-red-50/50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-900/30">
+                  <div className="w-2 h-2 rounded-full bg-red-500 dark:bg-red-400" />
+                  <p className="text-sm font-medium text-red-900 dark:text-red-300">{risk}</p>
                 </div>
               ))}
             </div>
@@ -168,22 +168,22 @@ export default function AIInsights() {
           <InsightCard icon={BarChart3} title="Class-Level Predictions" color="blue">
             <div className="space-y-4">
               {adminInsights?.classLevelPredictions?.map((p: any, i: number) => (
-                <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-slate-900">{p.className}</span>
-                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">Prediction</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{p.className}</span>
+                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-lg">Prediction</span>
                   </div>
-                  <p className="text-sm text-slate-600 mb-2">{p.prediction}</p>
-                  <p className="text-xs text-slate-400 italic">Recommendation: {p.recommendation}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{p.prediction}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 italic">Recommendation: {p.recommendation}</p>
                 </div>
               ))}
             </div>
           </InsightCard>
         </div>
 
-        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">AI Summary</h3>
-          <p className="text-slate-600 leading-relaxed">{adminInsights?.summary}</p>
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">AI Summary</h3>
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{adminInsights?.summary}</p>
         </div>
       </div>
     );
@@ -193,10 +193,10 @@ export default function AIInsights() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Personal AI Health Insights</h1>
-          <p className="text-slate-500">Intelligent analysis of your health patterns</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Personal AI Health Insights</h1>
+          <p className="text-slate-500 dark:text-slate-400">Intelligent analysis of your health patterns</p>
         </div>
-        <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold flex items-center gap-2">
+        <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-sm font-bold flex items-center gap-2">
           <Brain size={16} />
           AI Analysis Complete
         </div>
@@ -205,25 +205,25 @@ export default function AIInsights() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           {/* Growth Pattern Detection */}
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 flex items-center justify-center">
                   <TrendingUp size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Growth Pattern Analysis</h3>
-                  <p className="text-sm text-slate-500">Height & Weight vs Standard Charts</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Growth Pattern Analysis</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Height & Weight vs Standard Charts</p>
                 </div>
               </div>
-              <div className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold">
+              <div className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold">
                 {analysis?.growthStatus.status}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="h-64">
-                <p className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">Height vs Age</p>
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4 uppercase tracking-wider">Height vs Age</p>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={healthHistory.slice().reverse()}>
                     <defs>
@@ -232,7 +232,7 @@ export default function AIInsights() {
                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-700" />
                     <XAxis dataKey="date" hide />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
                     <Tooltip />
@@ -241,7 +241,7 @@ export default function AIInsights() {
                 </ResponsiveContainer>
               </div>
               <div className="h-64">
-                <p className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">Weight vs Age</p>
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4 uppercase tracking-wider">Weight vs Age</p>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={healthHistory.slice().reverse()}>
                     <defs>
@@ -250,7 +250,7 @@ export default function AIInsights() {
                         <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-700" />
                     <XAxis dataKey="date" hide />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
                     <Tooltip />
@@ -260,11 +260,11 @@ export default function AIInsights() {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-sm text-slate-600 mb-4">{analysis?.growthStatus.description}</p>
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{analysis?.growthStatus.description}</p>
               <div className="flex flex-wrap gap-2">
                 {analysis?.growthStatus.suggestions.map((s, i) => (
-                  <span key={i} className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs text-slate-500">
+                  <span key={i} className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-xs text-slate-500 dark:text-slate-400">
                     {s}
                   </span>
                 ))}
@@ -277,19 +277,19 @@ export default function AIInsights() {
             <InsightCard icon={AlertTriangle} title="Health Risk Detection" color="amber">
               <div className="space-y-4">
                 {analysis?.risks.map((risk, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-slate-900 text-sm">{risk.type}</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">{risk.type}</span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        risk.level === 'High' ? 'bg-red-50 text-red-600' :
-                        risk.level === 'Medium' ? 'bg-amber-50 text-amber-600' :
-                        'bg-emerald-50 text-emerald-600'
+                        risk.level === 'High' ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+                        risk.level === 'Medium' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
+                        'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                       }`}>
                         {risk.level} Risk
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mb-2">{risk.description}</p>
-                    <p className="text-xs font-bold text-blue-600">Rec: {risk.recommendation}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{risk.description}</p>
+                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400">Rec: {risk.recommendation}</p>
                   </div>
                 ))}
               </div>
@@ -298,15 +298,15 @@ export default function AIInsights() {
             <InsightCard icon={Apple} title="Smart Nutrition" color="emerald">
               <div className="space-y-4">
                 {analysis?.nutritionRecommendations.map((rec, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-slate-900 text-sm">{rec.food}</span>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">{rec.food}</span>
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
                         {rec.calories} kcal
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mb-2">{rec.benefits}</p>
-                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{rec.benefits}</p>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
                       <span>Portion: {rec.portion}</span>
                       <ChevronRight size={12} />
                     </div>
@@ -319,7 +319,7 @@ export default function AIInsights() {
 
         <div className="space-y-8">
           {/* Daily AI Tips */}
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-8 rounded-3xl text-white shadow-lg shadow-blue-200">
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-8 rounded-3xl text-white shadow-lg shadow-blue-200 dark:shadow-none">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <Lightbulb size={20} />
@@ -343,9 +343,9 @@ export default function AIInsights() {
           </div>
 
           {/* Summary */}
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">AI Summary</h3>
-            <p className="text-sm text-slate-600 leading-relaxed italic">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">AI Summary</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">
               "{analysis?.summary}"
             </p>
           </div>

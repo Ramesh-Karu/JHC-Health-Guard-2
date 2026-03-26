@@ -13,7 +13,7 @@
 
 @layer base {
   body {
-    @apply text-slate-900 antialiased;
+    @apply text-slate-900 antialiased bg-[#F2F2F7] dark:bg-slate-950 dark:text-slate-100;
   }
 }
 

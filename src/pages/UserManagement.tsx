@@ -486,9 +486,9 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="space-y-8 px-4">
+    <div className="space-y-8 px-4 pb-24">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">User Management</h1>
         <div className="flex flex-wrap gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -497,38 +497,38 @@ export default function UserManagement() {
               placeholder="Search users..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl"
+              className="pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold cursor-pointer">
+          <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold cursor-pointer">
             <input 
               type="checkbox" 
               checked={showOnlyLazy} 
               onChange={(e) => setShowOnlyLazy(e.target.checked)}
-              className="w-4 h-4"
+              className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 dark:bg-slate-800"
             />
             Show Lazy Accounts
           </label>
-          <button onClick={handleDeleteAllStudents} className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 rounded-xl text-red-600 font-bold hover:bg-red-50">
+          <button onClick={handleDeleteAllStudents} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/50 rounded-xl text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <Trash2 size={18} /> Delete All Students
           </button>
-          <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50">
+          <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
             <FileDown size={18} /> Export CSV
           </button>
-          <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 cursor-pointer">
+          <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
             <FileUp size={18} /> Import File
             <input type="file" accept=".csv, .xlsx, .xls" onChange={handleImportFile} className="hidden" />
           </label>
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600">
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors">
             <UserPlus size={18} /> Add User
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-x-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-x-auto">
         <table className="w-full text-left min-w-[600px]">
           <thead>
-            <tr className="bg-slate-50/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+            <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
               <th className="px-6 py-4">Name</th>
               <th className="px-6 py-4">Username</th>
               <th className="px-6 py-4">Email</th>
@@ -536,25 +536,32 @@ export default function UserManagement() {
               <th className="px-6 py-4">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
             {users.map((u) => (
-              <tr key={u.id}>
-                <td className="px-6 py-4 font-bold">
+              <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
                   {u.fullName}
                   {u.authCreated === false && (
-                    <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-full">Lazy</span>
+                    <span className="ml-2 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase rounded-full">Lazy</span>
                   )}
                 </td>
-                <td className="px-6 py-4">{u.username}</td>
-                <td className="px-6 py-4">{u.email}</td>
-                <td className="px-6 py-4 capitalize">{u.role}</td>
+                <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{u.username}</td>
+                <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{u.email}</td>
+                <td className="px-6 py-4 capitalize text-slate-600 dark:text-slate-300">{u.role}</td>
                 <td className="px-6 py-4 flex gap-2">
-                  <button onClick={() => { setEditingUser(u); setIsEditModalOpen(true); }} className="text-blue-500 hover:text-blue-700" title="Edit User"><Edit2 size={18} /></button>
-                  <button onClick={() => handleResetAccount(u)} className="text-amber-500 hover:text-amber-700" title="Reset Account (Fix Login Issues)"><UserPlus size={18} /></button>
-                  <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-700" title="Delete User"><Trash2 size={18} /></button>
+                  <button onClick={() => { setEditingUser(u); setIsEditModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Edit User"><Edit2 size={18} /></button>
+                  <button onClick={() => handleResetAccount(u)} className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors" title="Reset Account (Fix Login Issues)"><UserPlus size={18} /></button>
+                  <button onClick={() => handleDeleteUser(u.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Delete User"><Trash2 size={18} /></button>
                 </td>
               </tr>
             ))}
+            {users.length === 0 && !loading && (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400 italic">
+                  No users found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -564,17 +571,17 @@ export default function UserManagement() {
           <button 
             disabled={currentPage === 1 || loading}
             onClick={() => fetchUsers('prev')}
-            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
+            className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-50 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             Previous
           </button>
-          <span className="text-sm font-bold text-slate-700">
+          <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
             Page {currentPage} {totalUsers > 0 && `of ${totalPages}`}
           </span>
           <button 
             disabled={users.length < usersPerPage || loading}
             onClick={() => fetchUsers('next')}
-            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
+            className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-50 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             Next
           </button>
@@ -583,14 +590,14 @@ export default function UserManagement() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
-            <h2 className="text-xl font-bold mb-6">Add New User</h2>
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border dark:border-slate-800">
+            <h2 className="text-xl font-bold mb-6 text-slate-900 dark:text-white">Add New User</h2>
             <form onSubmit={handleCreateUser} className="space-y-4">
-              <input type="text" placeholder="Full Name" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
-              <input type="text" placeholder="Username" required value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
-              <input type="email" placeholder="Email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
-              <input type="password" placeholder="Password" required value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
-              <select value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+              <input type="text" placeholder="Full Name" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <input type="text" placeholder="Username" required value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <input type="email" placeholder="Email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <input type="password" placeholder="Password" required value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <select value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="student">Student</option>
                 <option value="teacher">Teacher</option>
                 <option value="coach">Coach</option>
@@ -599,8 +606,8 @@ export default function UserManagement() {
                 <option value="breakfast-admin">Healthy Canteen Admin</option>
               </select>
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-slate-600 font-bold">Cancel</button>
-                <button type="submit" className="px-8 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600">Add User</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" className="px-8 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 shadow-lg shadow-blue-200 dark:shadow-none transition-colors">Add User</button>
               </div>
             </form>
           </motion.div>
@@ -609,11 +616,11 @@ export default function UserManagement() {
 
       {isEditModalOpen && editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
-            <h2 className="text-xl font-bold mb-6">Edit User</h2>
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border dark:border-slate-800">
+            <h2 className="text-xl font-bold mb-6 text-slate-900 dark:text-white">Edit User</h2>
             <form onSubmit={handleEditUser} className="space-y-4">
-              <input type="text" placeholder="Full Name" required value={editingUser.fullName || ''} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" />
-              <select value={editingUser.role} onChange={(e) => setEditingUser({...editingUser, role: e.target.value as any})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+              <input type="text" placeholder="Full Name" required value={editingUser.fullName || ''} onChange={(e) => setEditingUser({...editingUser, fullName: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <select value={editingUser.role} onChange={(e) => setEditingUser({...editingUser, role: e.target.value as any})} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="student">Student</option>
                 <option value="teacher">Teacher</option>
                 <option value="coach">Coach</option>
@@ -622,8 +629,8 @@ export default function UserManagement() {
                 <option value="breakfast-admin">Healthy Canteen Admin</option>
               </select>
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={() => { setIsEditModalOpen(false); setEditingUser(null); }} className="px-6 py-2.5 text-slate-600 font-bold">Cancel</button>
-                <button type="submit" className="px-8 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600">Save Changes</button>
+                <button type="button" onClick={() => { setIsEditModalOpen(false); setEditingUser(null); }} className="px-6 py-2.5 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" className="px-8 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 shadow-lg shadow-blue-200 dark:shadow-none transition-colors">Save Changes</button>
               </div>
             </form>
           </motion.div>
@@ -636,17 +643,17 @@ export default function UserManagement() {
           <motion.div 
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            className="bg-white rounded-[2rem] w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col"
+            className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col border dark:border-slate-800"
           >
-            <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Import Preview</h2>
-                <p className="text-slate-500 font-medium">Review the data before updating the database</p>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Import Preview</h2>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Review the data before updating the database</p>
               </div>
               {!isImporting && (
                 <button 
                   onClick={() => setIsImportPreviewOpen(false)} 
-                  className="p-3 hover:bg-slate-100 rounded-2xl text-slate-400 transition-colors"
+                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl text-slate-400 transition-colors"
                 >
                   <X size={24} />
                 </button>
@@ -665,7 +672,7 @@ export default function UserManagement() {
                         stroke="currentColor"
                         strokeWidth="12"
                         fill="transparent"
-                        className="text-slate-100"
+                        className="text-slate-100 dark:text-slate-800"
                       />
                       <circle
                         cx="96"
@@ -681,41 +688,41 @@ export default function UserManagement() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-4xl font-black text-slate-900">{importProgress}%</span>
+                      <span className="text-4xl font-black text-slate-900 dark:text-white">{importProgress}%</span>
                     </div>
                   </div>
                   <div className="text-center space-y-2">
-                    <h3 className="text-xl font-bold text-slate-900">Importing Data...</h3>
-                    <p className="text-slate-500">Please do not close this window until the process is complete.</p>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Importing Data...</h3>
+                    <p className="text-slate-500 dark:text-slate-400">Please do not close this window until the process is complete.</p>
                   </div>
                 </div>
               ) : (
-                <div className="border border-slate-200 rounded-[1.5rem] overflow-hidden">
+                <div className="border border-slate-200 dark:border-slate-700 rounded-[1.5rem] overflow-hidden">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Full Name</th>
-                        <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Username</th>
-                        <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Role</th>
-                        <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">DOB</th>
+                      <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                        <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Full Name</th>
+                        <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Username</th>
+                        <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">DOB</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                       {importPreviewData.slice(0, 10).map((row, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-4 text-sm font-bold text-slate-900">{row.fullName || '-'}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.username || '-'}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.role || '-'}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.email || '-'}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">{row.dob || '-'}</td>
+                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">{row.fullName || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.username || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.role || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.email || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.dob || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                   {importPreviewData.length > 10 && (
-                    <div className="p-4 bg-slate-50 text-center border-t border-slate-200">
-                      <p className="text-sm font-bold text-slate-500 italic">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/30 text-center border-t border-slate-200 dark:border-slate-700">
+                      <p className="text-sm font-bold text-slate-500 dark:text-slate-400 italic">
                         Showing first 10 of {importPreviewData.length} records...
                       </p>
                     </div>
@@ -725,16 +732,16 @@ export default function UserManagement() {
             </div>
 
             {!isImporting && (
-              <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-4">
+              <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-end gap-4">
                 <button 
                   onClick={() => setIsImportPreviewOpen(false)} 
-                  className="px-8 py-3 text-slate-600 font-black hover:text-slate-900 transition-colors"
+                  className="px-8 py-3 text-slate-600 dark:text-slate-400 font-black hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleConfirmImport} 
-                  className="px-10 py-3 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-xl shadow-blue-200 transition-all active:scale-95"
+                  className="px-10 py-3 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-xl shadow-blue-200 dark:shadow-none transition-all active:scale-95"
                 >
                   Verify & Import
                 </button>

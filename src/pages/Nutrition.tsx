@@ -117,17 +117,17 @@ export default function Nutrition() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Healthy Food Explorer</h1>
-          <p className="text-slate-500">Discover nutritious foods for a better lifestyle</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Healthy Food Explorer</h1>
+          <p className="text-slate-500 dark:text-slate-400">Discover nutritious foods for a better lifestyle</p>
         </div>
         <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
           <input 
             type="text" 
             placeholder="Search foods..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function Nutrition() {
           onClick={() => setSelectedCategory('All')}
           className={cn(
             "flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all whitespace-nowrap",
-            selectedCategory === 'All' ? "bg-blue-500 text-white shadow-lg shadow-blue-200" : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"
+            selectedCategory === 'All' ? "bg-blue-500 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/20" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
           )}
         >
           <span>All</span>
@@ -149,7 +149,7 @@ export default function Nutrition() {
             onClick={() => setSelectedCategory(cat.id)}
             className={cn(
               "flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all whitespace-nowrap",
-              selectedCategory === cat.id ? "bg-blue-500 text-white shadow-lg shadow-blue-200" : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"
+              selectedCategory === cat.id ? "bg-blue-500 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/20" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
             )}
           >
             <span>{cat.icon}</span>
@@ -165,7 +165,7 @@ export default function Nutrition() {
             key={food.id}
             layoutId={food.id}
             onClick={() => setSelectedFood(food)}
-            className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-slate-200/50 transition-all group"
+            className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all group"
           >
             <div className="aspect-[4/3] overflow-hidden">
               <img 
@@ -177,19 +177,19 @@ export default function Nutrition() {
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{food.category}</span>
-                <span className="text-xs font-medium text-slate-400">{food.calories}</span>
+                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">{food.category}</span>
+                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{food.calories}</span>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4">{food.name}</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{food.name}</h3>
               <div className="flex items-center justify-between">
                 <div className="flex -space-x-2">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="w-6 h-6 rounded-full bg-blue-50 border-2 border-white flex items-center justify-center">
-                      <Heart size={10} className="text-blue-500 fill-blue-500" />
+                    <div key={i} className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-white dark:border-slate-800 flex items-center justify-center">
+                      <Heart size={10} className="text-blue-500 dark:text-blue-400 fill-blue-500 dark:fill-blue-400" />
                     </div>
                   ))}
                 </div>
-                <button className="p-2 bg-slate-50 rounded-xl text-slate-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                <button className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 dark:text-slate-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
                   <ChevronRight size={18} />
                 </button>
               </div>
@@ -201,14 +201,14 @@ export default function Nutrition() {
       {/* Food Detail Modal */}
       <AnimatePresence>
         {selectedFood && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm">
             <motion.div 
               layoutId={selectedFood.id}
-              className="bg-white rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl relative"
+              className="bg-white dark:bg-slate-800 rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl relative"
             >
               <button 
                 onClick={() => setSelectedFood(null)}
-                className="absolute top-6 right-6 z-10 p-2 bg-white/20 backdrop-blur-md hover:bg-white/40 rounded-full text-white transition-all"
+                className="absolute top-6 right-6 z-10 p-2 bg-white/20 dark:bg-black/20 backdrop-blur-md hover:bg-white/40 dark:hover:bg-black/40 rounded-full text-white transition-all"
               >
                 <X size={20} />
               </button>
@@ -224,53 +224,53 @@ export default function Nutrition() {
                 </div>
                 <div className="p-10 space-y-8">
                   <div>
-                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-block">
+                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-block">
                       {selectedFood.category}
                     </span>
-                    <h2 className="text-3xl font-bold text-slate-900">{selectedFood.name}</h2>
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{selectedFood.name}</h2>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 p-4 rounded-2xl">
-                      <div className="flex items-center gap-2 text-slate-400 mb-1">
+                    <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl">
+                      <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
                         <Flame size={16} />
                         <span className="text-xs font-bold uppercase tracking-wider">Calories</span>
                       </div>
-                      <p className="font-bold text-slate-900">{selectedFood.calories}</p>
+                      <p className="font-bold text-slate-900 dark:text-white">{selectedFood.calories}</p>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl">
-                      <div className="flex items-center gap-2 text-slate-400 mb-1">
+                    <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl">
+                      <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
                         <Scale size={16} />
                         <span className="text-xs font-bold uppercase tracking-wider">Serving</span>
                       </div>
-                      <p className="font-bold text-slate-900 truncate">{selectedFood.serving}</p>
+                      <p className="font-bold text-slate-900 dark:text-white truncate">{selectedFood.serving}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="mt-1 p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                      <div className="mt-1 p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                         <Info size={16} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900 mb-1">Nutritional Value</h4>
-                        <p className="text-sm text-slate-500">{selectedFood.nutrition}</p>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Nutritional Value</h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{selectedFood.nutrition}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="mt-1 p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                      <div className="mt-1 p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                         <Heart size={16} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900 mb-1">Health Benefits</h4>
-                        <p className="text-sm text-slate-500">{selectedFood.benefits}</p>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Health Benefits</h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{selectedFood.benefits}</p>
                       </div>
                     </div>
                   </div>
 
                   <button 
                     onClick={() => setSelectedFood(null)}
-                    className="w-full py-4 bg-blue-500 text-white rounded-2xl font-bold hover:bg-blue-600 shadow-lg shadow-blue-200 transition-all"
+                    className="w-full py-4 bg-blue-500 text-white rounded-2xl font-bold hover:bg-blue-600 shadow-lg shadow-blue-200 dark:shadow-blue-900/20 transition-all"
                   >
                     Close Details
                   </button>

@@ -157,17 +157,17 @@ export default function AdminStudentManagement() {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 transition-colors"
             >
               <ArrowLeft size={20} />
             </button>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Admin Student Management</h1>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Admin Student Management</h1>
           </div>
-          <p className="text-slate-500 font-medium ml-10">Search, edit, and manage student profiles and points.</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium ml-10">Search, edit, and manage student profiles and points.</p>
         </div>
         <button 
           onClick={clearSearch}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+          className="flex items-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
         >
           <RotateCcw size={18} />
           Clear Search
@@ -175,7 +175,7 @@ export default function AdminStudentManagement() {
       </div>
 
       {/* Search Section */}
-      <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/20">
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none">
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -184,13 +184,13 @@ export default function AdminStudentManagement() {
               placeholder="Enter Name, Index Number, or Admission Number..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium"
+              className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium dark:text-white"
             />
             {searchTerm && (
               <button 
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 rounded-full text-slate-400"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400"
               >
                 <X size={16} />
               </button>
@@ -199,7 +199,7 @@ export default function AdminStudentManagement() {
           <button 
             type="submit"
             disabled={loading}
-            className="px-10 py-4 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50"
+            className="px-10 py-4 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
           >
             {loading ? 'Searching...' : 'Search Student'}
           </button>
@@ -216,12 +216,12 @@ export default function AdminStudentManagement() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-lg hover:shadow-xl transition-all group relative overflow-hidden"
+              className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-lg hover:shadow-xl transition-all group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   onClick={() => handleDeleteStudent(student.id)}
-                  className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
+                  className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                   title="Delete Student"
                 >
                   <Trash2 size={18} />
@@ -229,7 +229,7 @@ export default function AdminStudentManagement() {
               </div>
 
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden border-2 border-white shadow-sm">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
                   <img 
                     src={student.photoUrl || `https://ui-avatars.com/api/?name=${student.fullName}&background=3b82f6&color=fff`} 
                     alt={student.fullName} 
@@ -237,21 +237,21 @@ export default function AdminStudentManagement() {
                   />
                 </div>
                 <div>
-                  <h3 className="font-black text-slate-900 leading-tight">{student.fullName}</h3>
+                  <h3 className="font-black text-slate-900 dark:text-white leading-tight">{student.fullName}</h3>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{student.class} - {student.division}</p>
                 </div>
               </div>
 
               <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-2 text-sm text-slate-600">
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <ShieldCheck size={16} className="text-blue-500" />
                   <span className="font-bold">Index:</span> {student.indexNumber || 'N/A'}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600">
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <ShieldCheck size={16} className="text-indigo-500" />
                   <span className="font-bold">Admission:</span> {student.admissionNumber || 'N/A'}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600">
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <Award size={16} className="text-amber-500" />
                   <span className="font-bold">Points:</span> {student.points || 0}
                 </div>
@@ -259,7 +259,7 @@ export default function AdminStudentManagement() {
 
               <button 
                 onClick={() => openEditModal(student)}
-                className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95"
               >
                 <Edit size={18} />
                 Edit Profile
@@ -277,21 +277,21 @@ export default function AdminStudentManagement() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col"
+              className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col border border-slate-100 dark:border-slate-800"
             >
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                  <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none">
                     <UserCircle className="text-white" size={24} />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Edit Student Profile</h2>
-                    <p className="text-slate-500 font-medium">Managing {selectedStudent.fullName}</p>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Edit Student Profile</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Managing {selectedStudent.fullName}</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsEditModalOpen(false)} 
-                  className="p-3 hover:bg-slate-100 rounded-2xl text-slate-400 transition-colors"
+                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl text-slate-400 transition-colors"
                 >
                   <X size={24} />
                 </button>
@@ -299,18 +299,18 @@ export default function AdminStudentManagement() {
 
               <form onSubmit={handleUpdateStudent} className="flex-1 overflow-y-auto p-8 space-y-10">
                 {/* Points Management Section */}
-                <div className="bg-amber-50 rounded-3xl p-6 border border-amber-100">
+                <div className="bg-amber-50 dark:bg-amber-900/10 rounded-3xl p-6 border border-amber-100 dark:border-amber-900/30">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">
                         <Award className="text-white" size={20} />
                       </div>
                       <div>
-                        <h3 className="font-black text-slate-900">Points Management</h3>
-                        <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Current: {selectedStudent.points || 0}</p>
+                        <h3 className="font-black text-slate-900 dark:text-white">Points Management</h3>
+                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Current: {selectedStudent.points || 0}</p>
                       </div>
                     </div>
-                    <div className="text-2xl font-black text-slate-900">
+                    <div className="text-2xl font-black text-slate-900 dark:text-white">
                       New Total: {(selectedStudent.points || 0) + pointAdjustment}
                     </div>
                   </div>
@@ -318,31 +318,31 @@ export default function AdminStudentManagement() {
                     <button 
                       type="button"
                       onClick={() => adjustPoints(-10)}
-                      className="flex-1 py-3 bg-white border-2 border-amber-200 text-amber-600 rounded-2xl font-black hover:bg-amber-100 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-3 bg-white dark:bg-slate-800 border-2 border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-400 rounded-2xl font-black hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all flex items-center justify-center gap-2"
                     >
                       <Minus size={20} /> 10
                     </button>
                     <button 
                       type="button"
                       onClick={() => adjustPoints(-1)}
-                      className="flex-1 py-3 bg-white border-2 border-amber-200 text-amber-600 rounded-2xl font-black hover:bg-amber-100 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-3 bg-white dark:bg-slate-800 border-2 border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-400 rounded-2xl font-black hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all flex items-center justify-center gap-2"
                     >
                       <Minus size={20} /> 1
                     </button>
-                    <div className="w-20 text-center text-xl font-black text-slate-900">
+                    <div className="w-20 text-center text-xl font-black text-slate-900 dark:text-white">
                       {pointAdjustment > 0 ? `+${pointAdjustment}` : pointAdjustment}
                     </div>
                     <button 
                       type="button"
                       onClick={() => adjustPoints(1)}
-                      className="flex-1 py-3 bg-white border-2 border-blue-200 text-blue-600 rounded-2xl font-black hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-3 bg-white dark:bg-slate-800 border-2 border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 rounded-2xl font-black hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={20} /> 1
                     </button>
                     <button 
                       type="button"
                       onClick={() => adjustPoints(10)}
-                      className="flex-1 py-3 bg-white border-2 border-blue-200 text-blue-600 rounded-2xl font-black hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-3 bg-white dark:bg-slate-800 border-2 border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 rounded-2xl font-black hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={20} /> 10
                     </button>
@@ -351,7 +351,7 @@ export default function AdminStudentManagement() {
 
                 {/* Basic Information */}
                 <div className="space-y-6">
-                  <div className="flex items-center gap-2 text-slate-900">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                     <User size={20} className="text-blue-500" />
                     <h3 className="font-black uppercase tracking-wider text-sm">Basic Information</h3>
                   </div>
@@ -363,7 +363,7 @@ export default function AdminStudentManagement() {
                         required
                         value={formData.fullName || ''}
                         onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -372,7 +372,7 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.indexNumber || ''}
                         onChange={(e) => setFormData({...formData, indexNumber: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -381,7 +381,7 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.admissionNumber || ''}
                         onChange={(e) => setFormData({...formData, admissionNumber: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -392,7 +392,7 @@ export default function AdminStudentManagement() {
                           type="date" 
                           value={formData.dob || ''}
                           onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                          className="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                          className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                         />
                       </div>
                     </div>
@@ -402,7 +402,7 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.class || ''}
                         onChange={(e) => setFormData({...formData, class: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -411,7 +411,7 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.division || ''}
                         onChange={(e) => setFormData({...formData, division: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                   </div>
@@ -419,7 +419,7 @@ export default function AdminStudentManagement() {
 
                 {/* Contact & Address */}
                 <div className="space-y-6">
-                  <div className="flex items-center gap-2 text-slate-900">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                     <MapPin size={20} className="text-emerald-500" />
                     <h3 className="font-black uppercase tracking-wider text-sm">Contact & Address</h3>
                   </div>
@@ -430,7 +430,7 @@ export default function AdminStudentManagement() {
                         rows={3}
                         value={formData.address || ''}
                         onChange={(e) => setFormData({...formData, address: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold resize-none"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold resize-none dark:text-white"
                       />
                     </div>
                   </div>
@@ -438,7 +438,7 @@ export default function AdminStudentManagement() {
 
                 {/* Guardian Information */}
                 <div className="space-y-6">
-                  <div className="flex items-center gap-2 text-slate-900">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                     <Phone size={20} className="text-indigo-500" />
                     <h3 className="font-black uppercase tracking-wider text-sm">Guardian Information</h3>
                   </div>
@@ -449,7 +449,7 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.parentName || ''}
                         onChange={(e) => setFormData({...formData, parentName: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -458,7 +458,7 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.parentContact || ''}
                         onChange={(e) => setFormData({...formData, parentContact: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -467,7 +467,7 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.guardianName || ''}
                         onChange={(e) => setFormData({...formData, guardianName: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -476,28 +476,28 @@ export default function AdminStudentManagement() {
                         type="text" 
                         value={formData.guardianContact || ''}
                         onChange={(e) => setFormData({...formData, guardianContact: e.target.value})}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold"
+                        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Danger Zone */}
-                <div className="pt-10 border-t border-slate-100">
-                  <div className="bg-red-50 rounded-3xl p-6 border border-red-100 flex items-center justify-between">
+                <div className="pt-10 border-t border-slate-100 dark:border-slate-800">
+                  <div className="bg-red-50 dark:bg-red-900/10 rounded-3xl p-6 border border-red-100 dark:border-red-900/30 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center text-red-600">
+                      <div className="w-12 h-12 bg-red-100 dark:bg-red-900/50 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400">
                         <AlertCircle size={24} />
                       </div>
                       <div>
-                        <h4 className="font-black text-red-900">Danger Zone</h4>
-                        <p className="text-sm text-red-600 font-medium">Permanently remove this student from the system.</p>
+                        <h4 className="font-black text-red-900 dark:text-red-400">Danger Zone</h4>
+                        <p className="text-sm text-red-600 dark:text-red-500 font-medium">Permanently remove this student from the system.</p>
                       </div>
                     </div>
                     <button 
                       type="button"
                       onClick={() => handleDeleteStudent(selectedStudent.id)}
-                      className="px-6 py-3 bg-red-600 text-white rounded-xl font-black hover:bg-red-700 transition-all shadow-lg shadow-red-200"
+                      className="px-6 py-3 bg-red-600 text-white rounded-xl font-black hover:bg-red-700 transition-all shadow-lg shadow-red-200 dark:shadow-none active:scale-95"
                     >
                       Delete Account
                     </button>
@@ -505,17 +505,17 @@ export default function AdminStudentManagement() {
                 </div>
               </form>
 
-              <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-4">
+              <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-end gap-4">
                 <button 
                   type="button"
                   onClick={() => setIsEditModalOpen(false)} 
-                  className="px-8 py-3 text-slate-600 font-black hover:text-slate-900 transition-colors"
+                  className="px-8 py-3 text-slate-600 dark:text-slate-400 font-black hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleUpdateStudent}
-                  className="px-10 py-3 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center gap-2"
+                  className="px-10 py-3 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-xl shadow-blue-200 dark:shadow-none transition-all active:scale-95 flex items-center gap-2"
                 >
                   <Save size={20} />
                   Save Changes

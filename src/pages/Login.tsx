@@ -279,10 +279,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-blue-light flex flex-col items-center justify-center p-6 font-sans relative pt-safe pb-safe">
+    <div className="min-h-screen bg-brand-blue-light dark:bg-slate-950 flex flex-col items-center justify-center p-6 font-sans relative pt-safe pb-safe">
       <Link 
         to="/" 
-        className="absolute top-4 left-4 md:top-8 md:left-8 flex items-center gap-2 text-slate-500 hover:text-brand-blue font-bold transition-colors"
+        className="absolute top-4 left-4 md:top-8 md:left-8 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue font-bold transition-colors"
       >
         <ArrowLeft size={20} />
         Back to Home
@@ -296,31 +296,31 @@ export default function Login() {
           >
             <Heart className="text-white" size={40} />
           </motion.div>
-          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Health Guard</h1>
-          <p className="text-slate-500 mt-2 text-sm font-medium">Jaffna Hindu College</p>
+          <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">Health Guard</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm font-medium">Jaffna Hindu College</p>
         </div>
 
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100"
+          className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none p-8 border border-slate-100 dark:border-slate-800"
         >
-          <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Welcome Back</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">Welcome Back</h2>
           
           <form onSubmit={handleUsernameLogin} className="space-y-6">
             {error && (
-              <div className="flex items-center gap-2 text-red-500 bg-red-50 p-3 rounded-xl text-sm">
+              <div className="flex items-center gap-2 text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl text-sm">
                 <AlertCircle size={16} />
                 <span>{error}</span>
               </div>
             )}
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input type="text" placeholder="Username or Email" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-10 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none" required />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
+              <input type="text" placeholder="Username or Email" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-10 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none text-slate-900 dark:text-white" required />
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none" required />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none text-slate-900 dark:text-white" required />
             </div>
             <button type="submit" disabled={loading} className="w-full bg-brand-blue text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-brand-blue/20">
               {loading ? 'Signing in...' : 'Sign In'}
@@ -328,10 +328,10 @@ export default function Login() {
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
+                <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-500 font-medium">Or continue with</span>
+                <span className="px-2 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-medium">Or continue with</span>
               </div>
             </div>
 
@@ -339,7 +339,7 @@ export default function Login() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+              className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" referrerPolicy="no-referrer" />
               {loading ? 'Connecting...' : 'Sign in with Google'}

@@ -116,13 +116,13 @@ const SidebarItem = ({ icon: Icon, label, path, onClick }: any) => (
     className={({ isActive }) => cn(
       "flex items-center w-full gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
       isActive 
-        ? "bg-blue-500 text-white shadow-lg shadow-blue-200" 
-        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
+        ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20" 
+        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
     )}
   >
     {({ isActive }) => (
       <>
-        <Icon size={20} className={cn(isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900")} />
+        <Icon size={20} className={cn(isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white")} />
         <span className="font-medium">{label}</span>
         {isActive && <motion.div layoutId="active-pill" className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
       </>

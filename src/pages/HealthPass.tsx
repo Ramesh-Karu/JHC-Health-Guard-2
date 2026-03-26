@@ -117,7 +117,7 @@ export default function HealthPass() {
 
       {/* Passport Info Card */}
       <div className="relative -mt-24 px-4 md:px-8">
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-8">
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Avatar Section */}
             <div className="relative group">
@@ -127,7 +127,7 @@ export default function HealthPass() {
                 onUpload={handleImageUpload} 
               />
               {uploading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-2xl">
+                <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 rounded-2xl">
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
@@ -137,11 +137,11 @@ export default function HealthPass() {
             <div className="flex-1 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     {user.fullName}
-                    {user.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={28} className="text-emerald-500 fill-emerald-100" /></span>}
+                    {user.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={28} className="text-emerald-500 fill-emerald-100 dark:fill-emerald-900/30" /></span>}
                   </h1>
-                  <p className="text-slate-500 font-medium flex items-center gap-2">
+                  <p className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
                     <Shield size={16} className="text-blue-500" />
                     {user.role === 'admin' ? 'System Administrator' : `Student • Class ${user.class}`}
                   </p>
@@ -152,7 +152,7 @@ export default function HealthPass() {
                       {!user.profileCompleted ? null : (
                         <button 
                           onClick={() => setIsEditing(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-slate-600 font-bold hover:bg-slate-50 rounded-xl transition-all"
+                          className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
                         >
                           <X size={18} />
                           Cancel
@@ -161,7 +161,7 @@ export default function HealthPass() {
                       <button 
                         onClick={handleSave}
                         disabled={loading}
-                        className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-600 transition-all disabled:opacity-70"
+                        className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-600 transition-all disabled:opacity-70"
                       >
                         <Save size={18} />
                         {loading ? 'Saving...' : user.profileCompleted ? 'Save Changes' : 'Continue'}
@@ -170,7 +170,7 @@ export default function HealthPass() {
                   ) : (
                     <button 
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all"
+                      className="flex items-center gap-2 px-6 py-2 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl shadow-lg dark:shadow-none hover:bg-slate-800 dark:hover:bg-slate-700 transition-all"
                     >
                       <Edit3 size={18} />
                       Edit Health Pass
@@ -180,11 +180,11 @@ export default function HealthPass() {
               </div>
 
               <div className="flex flex-wrap gap-4 pt-4">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-bold">
                   <Award size={16} />
                   {user.points} Health Points
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-bold">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-sm font-bold">
                   <Activity size={16} />
                   Active Health Pass
                 </div>
@@ -193,10 +193,10 @@ export default function HealthPass() {
           </div>
 
           {/* Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12 pt-12 border-t border-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12 pt-12 border-t border-slate-100 dark:border-slate-800">
             {/* Personal Information */}
             <div className="space-y-6">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <UserIcon size={20} className="text-blue-500" />
                 Personal Information
               </h3>
@@ -209,17 +209,17 @@ export default function HealthPass() {
                       type="text" 
                       value={formData.fullName}
                       onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                     />
                   ) : (
-                    <p className="text-slate-900 font-medium">{user.fullName}</p>
+                    <p className="text-slate-900 dark:text-white font-medium">{user.fullName}</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Index Number</label>
-                    <p className="text-slate-900 font-medium flex items-center gap-2">
+                    <p className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
                       <Hash size={14} className="text-slate-400" />
                       {user.indexNumber || 'N/A'}
                     </p>
@@ -231,10 +231,10 @@ export default function HealthPass() {
                         type="date" 
                         value={formData.dob}
                         onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       />
                     ) : (
-                      <p className="text-slate-900 font-medium flex items-center gap-2">
+                      <p className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
                         <Calendar size={14} className="text-slate-400" />
                         {user.dob || 'N/A'}
                       </p>
@@ -249,19 +249,19 @@ export default function HealthPass() {
                       <select 
                         value={formData.gender}
                         onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       >
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
                       </select>
                     ) : (
-                      <p className="text-slate-900 font-medium">{user.gender || 'N/A'}</p>
+                      <p className="text-slate-900 dark:text-white font-medium">{user.gender || 'N/A'}</p>
                     )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Class / Grade</label>
-                    <p className="text-slate-900 font-medium">{user.class || 'N/A'}</p>
+                    <p className="text-slate-900 dark:text-white font-medium">{user.class || 'N/A'}</p>
                   </div>
                 </div>
 
@@ -272,10 +272,10 @@ export default function HealthPass() {
                       value={formData.address}
                       onChange={(e) => setFormData({...formData, address: e.target.value})}
                       rows={2}
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                      className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none dark:text-white"
                     />
                   ) : (
-                    <p className="text-slate-900 font-medium flex items-start gap-2">
+                    <p className="text-slate-900 dark:text-white font-medium flex items-start gap-2">
                       <MapPin size={14} className="text-slate-400 mt-1" />
                       {user.address || 'N/A'}
                     </p>
@@ -286,13 +286,13 @@ export default function HealthPass() {
 
             {/* Emergency / Parent Information */}
             <div className="space-y-6">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Heart size={20} className="text-red-500" />
                 Emergency Contact
               </h3>
 
               <div className="grid grid-cols-1 gap-6">
-                <div className="p-6 bg-slate-50 rounded-2xl space-y-4">
+                <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Parent / Guardian Name</label>
                     {isEditing ? (
@@ -300,10 +300,10 @@ export default function HealthPass() {
                         type="text" 
                         value={formData.parentName}
                         onChange={(e) => setFormData({...formData, parentName: e.target.value})}
-                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       />
                     ) : (
-                      <p className="text-slate-900 font-bold">{user.parentName || 'N/A'}</p>
+                      <p className="text-slate-900 dark:text-white font-bold">{user.parentName || 'N/A'}</p>
                     )}
                   </div>
                   <div className="space-y-1.5">
@@ -313,10 +313,10 @@ export default function HealthPass() {
                         type="text" 
                         value={formData.parentContact}
                         onChange={(e) => setFormData({...formData, parentContact: e.target.value})}
-                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       />
                     ) : (
-                      <p className="text-blue-600 font-bold flex items-center gap-2">
+                      <p className="text-blue-600 dark:text-blue-400 font-bold flex items-center gap-2">
                         <Phone size={14} />
                         {user.parentContact || 'N/A'}
                       </p>
@@ -324,9 +324,9 @@ export default function HealthPass() {
                   </div>
                 </div>
 
-                <div className="p-6 bg-blue-50 rounded-2xl">
-                  <h4 className="text-sm font-bold text-blue-900 mb-2">Health Privacy Note</h4>
-                  <p className="text-xs text-blue-700 leading-relaxed">
+                <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
+                  <h4 className="text-sm font-bold text-blue-900 dark:text-blue-400 mb-2">Health Privacy Note</h4>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
                     Your health information is securely stored and only accessible by authorized school medical staff and administrators. You can update your personal details, but medical records are managed by the school clinic.
                   </p>
                 </div>

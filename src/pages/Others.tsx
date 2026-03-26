@@ -114,7 +114,7 @@ export default function Others() {
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-4">
               Admin
             </h3>
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm">
               {[
                 { label: 'Organic Admin', path: '/organic-admin' },
                 { label: 'Healthy Canteen Admin', path: '/breakfast-admin' },
@@ -129,10 +129,10 @@ export default function Others() {
                 { label: 'STEM Innovation', path: '/stem-innovation' },
                 { label: 'Modules', path: '/modules' },
               ].map((item, idx) => (
-                <button key={item.label} onClick={() => navigate(item.path)} className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                <button key={item.label} onClick={() => navigate(item.path)} className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-100 dark:border-slate-700 last:border-0">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-blue-500"><Settings size={18} /></div>
-                  <span className="flex-1 text-left font-medium text-slate-900">{item.label}</span>
-                  <ChevronRight className="text-slate-300" size={20} />
+                  <span className="flex-1 text-left font-medium text-slate-900 dark:text-slate-100">{item.label}</span>
+                  <ChevronRight className="text-slate-300 dark:text-slate-600" size={20} />
                 </button>
               ))}
             </div>
@@ -144,23 +144,23 @@ export default function Others() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => navigate('/health-pass')}
-          className="bg-white rounded-2xl p-4 mb-8 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-sm"
+          className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-8 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-sm"
         >
-          <div className="w-16 h-16 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
             {user?.photoUrl ? (
               <img src={user.photoUrl} alt={user.fullName} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-2xl">
+              <div className="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-2xl">
                 {user?.fullName?.charAt(0) || 'U'}
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-semibold text-slate-900 truncate">{user?.fullName}</h2>
-            <p className="text-sm text-slate-500 truncate">{user?.email}</p>
-            <p className="text-xs font-medium text-blue-600 uppercase tracking-wider mt-1">{user?.role}</p>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{user?.fullName}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider mt-1">{user?.role}</p>
           </div>
-          <ChevronRight className="text-slate-400" size={20} />
+          <ChevronRight className="text-slate-400 dark:text-slate-600" size={20} />
         </motion.div>
 
         {/* Sections */}
@@ -175,23 +175,30 @@ export default function Others() {
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-4">
                 {section.title}
               </h3>
-              <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                {section.items.map((item, itemIdx) => (
-                  <button
-                    key={item.label}
-                    onClick={() => item.onClick ? item.onClick() : navigate(item.path)}
-                    className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors active:bg-slate-100 relative"
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${item.color}`}>
-                      <item.icon size={18} />
+              <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                {section.items.map((item, itemIdx) => {
+                  const ItemContent = (
+                    <div
+                      key={item.label}
+                      onClick={() => !item.component && (item.onClick ? item.onClick() : navigate(item.path))}
+                      className={`w-full flex items-center gap-4 p-4 ${!item.component ? 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:bg-slate-100 dark:active:bg-slate-700 cursor-pointer' : ''} relative`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${item.color}`}>
+                        <item.icon size={18} />
+                      </div>
+                      <span className="flex-1 text-left font-medium text-slate-900 dark:text-slate-100">{item.label}</span>
+                      {item.component ? (
+                        item.component
+                      ) : (
+                        <ChevronRight className="text-slate-300 dark:text-slate-600" size={20} />
+                      )}
+                      {itemIdx !== section.items.length - 1 && (
+                        <div className="absolute bottom-0 left-16 right-0 h-[1px] bg-slate-100 dark:bg-slate-800" />
+                      )}
                     </div>
-                    <span className="flex-1 text-left font-medium text-slate-900">{item.label}</span>
-                    <ChevronRight className="text-slate-300" size={20} />
-                    {itemIdx !== section.items.length - 1 && (
-                      <div className="absolute bottom-0 left-16 right-0 h-[1px] bg-slate-100" />
-                    )}
-                  </button>
-                ))}
+                  );
+                  return ItemContent;
+                })}
               </div>
             </motion.div>
           ))}
@@ -201,11 +208,11 @@ export default function Others() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl overflow-hidden shadow-sm mt-8"
+            className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm mt-8"
           >
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 p-4 text-red-500 font-semibold hover:bg-red-50 transition-colors active:bg-red-100"
+              className="w-full flex items-center justify-center gap-2 p-4 text-red-500 dark:text-red-400 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors active:bg-red-100 dark:active:bg-red-900/50"
             >
               <LogOut size={20} />
               Log Out

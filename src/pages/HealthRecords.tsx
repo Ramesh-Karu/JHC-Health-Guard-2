@@ -69,14 +69,14 @@ export default function HealthRecords() {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Health History</h1>
-          <p className="text-slate-500">Complete timeline of your growth and measurements</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Health History</h1>
+          <p className="text-slate-500 dark:text-slate-400">Complete timeline of your growth and measurements</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-8">Weight & Height Progress</h3>
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-8">Weight & Height Progress</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -120,8 +120,8 @@ export default function HealthRecords() {
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-8">BMI Trend</h3>
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-8">BMI Trend</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
@@ -168,42 +168,42 @@ export default function HealthRecords() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-          <h3 className="font-bold text-slate-900 flex items-center gap-2">
-            <Clock size={20} className="text-slate-400" />
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700">
+          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Clock size={20} className="text-slate-400 dark:text-slate-500" />
             Measurement Timeline
           </h3>
         </div>
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-slate-50 dark:divide-slate-700">
           {records.map((record) => (
-            <div key={record.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-50/50 transition-colors">
+            <div key={record.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
+                <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500">
                   <Calendar size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">{new Date(record.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                  <p className="text-xs text-slate-500">Recorded on {new Date(record.createdAt).toLocaleDateString()}</p>
+                  <p className="font-bold text-slate-900 dark:text-white">{new Date(record.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Recorded on {new Date(record.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-3 gap-8 md:gap-12">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Weight</p>
-                  <p className="font-bold text-slate-900">{record.weight} kg</p>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Weight</p>
+                  <p className="font-bold text-slate-900 dark:text-white">{record.weight} kg</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Height</p>
-                  <p className="font-bold text-slate-900">{record.height} cm</p>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Height</p>
+                  <p className="font-bold text-slate-900 dark:text-white">{record.height} cm</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">BMI</p>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">BMI</p>
                   <div className="flex items-center gap-2">
-                    <p className="font-bold text-slate-900">{record.bmi.toFixed(1)}</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{record.bmi.toFixed(1)}</p>
                     <span className={cn(
                       "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
-                      record.category === 'Normal' ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"
+                      record.category === 'Normal' ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
                     )}>
                       {record.category}
                     </span>
@@ -213,7 +213,7 @@ export default function HealthRecords() {
             </div>
           ))}
           {records.length === 0 && (
-            <div className="p-10 text-center text-slate-400">No health records found.</div>
+            <div className="p-10 text-center text-slate-400 dark:text-slate-500">No health records found.</div>
           )}
         </div>
       </div>

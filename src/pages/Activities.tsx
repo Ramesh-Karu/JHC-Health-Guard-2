@@ -137,8 +137,8 @@ export default function Activities() {
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Health & Fitness</h1>
-          <p className="text-slate-500">Track your activities and learn new exercises</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Health & Fitness</h1>
+          <p className="text-slate-500 dark:text-slate-400">Track your activities and learn new exercises</p>
         </div>
         {user?.role === 'admin' && (
           <button 
@@ -153,7 +153,7 @@ export default function Activities() {
 
       {/* Exercise Tutorials */}
       <section>
-        <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
           <Play size={20} className="text-blue-500" />
           Fitness Tutorials
         </h2>
@@ -162,9 +162,9 @@ export default function Activities() {
             <motion.div 
               key={exercise.id}
               whileHover={{ y: -5 }}
-              className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group"
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden group"
             >
-              <div className="aspect-video bg-slate-100 relative">
+              <div className="aspect-video bg-slate-100 dark:bg-slate-900 relative">
                 <iframe 
                   src={exercise.videoUrl} 
                   className="w-full h-full" 
@@ -178,16 +178,16 @@ export default function Activities() {
                   <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">{exercise.difficulty}</span>
                   <span className="text-xs font-bold text-slate-400">{exercise.ageGroup}</span>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{exercise.title}</h3>
-                <p className="text-sm text-slate-500 mb-4 line-clamp-2">{exercise.description}</p>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{exercise.title}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">{exercise.description}</p>
+                <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-700">
                   <div className="flex items-center gap-1 text-blue-600 font-bold">
                     <Award size={16} />
                     <span>{pointSettings.exercise || exercise.points} pts</span>
                   </div>
                   <button 
                     onClick={() => handleCompleteExercise(exercise)}
-                    className="flex items-center gap-1 text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors"
+                    className="flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 transition-colors"
                   >
                     Mark as Done <ChevronRight size={16} />
                   </button>
@@ -200,15 +200,15 @@ export default function Activities() {
 
       {/* Activity History */}
       <section>
-        <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
           <Clock size={20} className="text-blue-500" />
           Activity History
         </h2>
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-50/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                <tr className="bg-slate-50/50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider">
                   <th className="px-6 py-4">Activity</th>
                   <th className="px-6 py-4">Date</th>
                   <th className="px-6 py-4">Duration</th>
@@ -216,22 +216,22 @@ export default function Activities() {
                   <th className="px-6 py-4">Points</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {activities.map((activity) => (
-                  <tr key={activity.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={activity.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
                           <ActivityIcon size={18} className="text-blue-500" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900">{activity.name}</p>
-                          <p className="text-xs text-slate-500 capitalize">{activity.type}</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{activity.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{new Date(activity.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{activity.duration || 'N/A'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{new Date(activity.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{activity.duration || 'N/A'}</td>
                     <td className="px-6 py-4">
                       <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">{activity.performance || 'N/A'}</span>
                     </td>
@@ -253,70 +253,70 @@ export default function Activities() {
 
       {/* Log Activity Modal (Admin) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl w-full max-w-md shadow-2xl"
+            className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-md shadow-2xl"
           >
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Log Sport Activity</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Log Sport Activity</h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400">
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleLogActivity} className="p-8 space-y-5">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Select Student</label>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Select Student</label>
                 <select 
                   required
                   value={formData.userId}
                   onChange={(e) => setFormData({...formData, userId: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                 >
                   <option value="">Choose a student...</option>
                   {students.map(s => <option key={s.id} value={s.id}>{s.fullName} ({s.class})</option>)}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Sport Type</label>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Sport Type</label>
                 <select 
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                 >
                   {SPORTS_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">Date</label>
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Date</label>
                   <input 
                     type="date" 
                     required
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">Duration</label>
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Duration</label>
                   <input 
                     type="text" 
                     placeholder="e.g. 1 hour"
                     value={formData.duration}
                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Performance</label>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Performance</label>
                 <select 
                   value={formData.performance}
                   onChange={(e) => setFormData({...formData, performance: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                 >
                   <option value="Excellent">Excellent</option>
                   <option value="Good">Good</option>

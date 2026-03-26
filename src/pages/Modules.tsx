@@ -75,12 +75,12 @@ export default function Modules() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Learning Modules</h1>
-          <p className="text-slate-500">Manage educational content for the home page</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Learning Modules</h1>
+          <p className="text-slate-500 dark:text-slate-400">Manage educational content for the home page</p>
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all"
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 dark:shadow-blue-900/20 hover:bg-blue-700 transition-all"
         >
           <Plus size={20} />
           Create Module
@@ -91,33 +91,33 @@ export default function Modules() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl"
+          className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-xl dark:shadow-slate-900/50"
         >
-          <h3 className="text-lg font-bold text-slate-900 mb-6">New Module Details</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">New Module Details</h3>
           <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">Module Title</label>
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Module Title</label>
               <div className="relative">
-                <Type className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Type className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
                 <input 
                   required
                   type="text" 
                   placeholder="e.g. Exercise Tutorials"
                   value={formData.title}
                   onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">Category</label>
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Category</label>
               <div className="relative">
-                <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
                 <select 
                   value={formData.category}
                   onChange={e => setFormData({...formData, category: e.target.value})}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none text-slate-900 dark:text-white"
                 >
                   <option value="Education">Education</option>
                   <option value="Fitness">Fitness</option>
@@ -128,45 +128,45 @@ export default function Modules() {
             </div>
 
             <div className="md:col-span-2 space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">Description</label>
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Description</label>
               <div className="relative">
-                <AlignLeft className="absolute left-4 top-4 text-slate-400" size={18} />
+                <AlignLeft className="absolute left-4 top-4 text-slate-400 dark:text-slate-500" size={18} />
                 <textarea 
                   required
                   rows={3}
                   placeholder="Briefly describe what this module covers..."
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">Image URL</label>
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Image URL</label>
               <div className="relative">
-                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
                 <input 
                   required
                   type="url" 
                   placeholder="https://picsum.photos/..."
                   value={formData.imageUrl}
                   onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">External Link (Optional)</label>
+              <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">External Link (Optional)</label>
               <div className="relative">
-                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
                 <input 
                   type="url" 
                   placeholder="https://youtube.com/..."
                   value={formData.link}
                   onChange={e => setFormData({...formData, link: e.target.value})}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
@@ -175,13 +175,13 @@ export default function Modules() {
               <button 
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-6 py-3 text-slate-600 font-bold hover:bg-slate-50 rounded-xl transition-all"
+                className="px-6 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all"
+                className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 dark:shadow-blue-900/20 hover:bg-blue-700 transition-all"
               >
                 Create Module
               </button>
@@ -195,28 +195,28 @@ export default function Modules() {
           <motion.div 
             layout
             key={module.id}
-            className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm group"
+            className="bg-white dark:bg-slate-800 rounded-[32px] overflow-hidden border border-slate-100 dark:border-slate-700 shadow-sm group"
           >
             <div className="h-48 overflow-hidden relative">
               <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
-              <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+              <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-lg text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                 {module.category}
               </div>
             </div>
             <div className="p-6">
-              <h4 className="font-bold text-slate-900 mb-2">{module.title}</h4>
-              <p className="text-xs text-slate-500 mb-6 leading-relaxed line-clamp-2">{module.description}</p>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2">{module.title}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed line-clamp-2">{module.description}</p>
               <div className="flex gap-2">
                 <button 
                   onClick={() => module.link && window.open(module.link, '_blank')}
-                  className="flex-1 py-3 bg-slate-50 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-900 dark:hover:bg-slate-600 hover:text-white transition-all flex items-center justify-center gap-2"
                 >
                   <ExternalLink size={16} />
                   View
                 </button>
                 <button 
                   onClick={() => handleDelete(module.id)}
-                  className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                  className="p-3 bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -227,10 +227,10 @@ export default function Modules() {
       </div>
 
       {!loading && modules.length === 0 && (
-        <div className="text-center py-20 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200">
-          <BookOpen size={48} className="mx-auto text-slate-300 mb-4" />
-          <h3 className="text-lg font-bold text-slate-900">No modules yet</h3>
-          <p className="text-slate-500">Create your first learning module to display on the home page.</p>
+        <div className="text-center py-20 bg-slate-50 dark:bg-slate-800/50 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-700">
+          <BookOpen size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No modules yet</h3>
+          <p className="text-slate-500 dark:text-slate-400">Create your first learning module to display on the home page.</p>
         </div>
       )}
     </div>
