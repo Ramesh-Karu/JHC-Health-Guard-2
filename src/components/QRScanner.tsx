@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
+import QrScanner from 'qr-scanner';
 import { X, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,9 +9,8 @@ interface QRScannerProps {
 }
 
 export default function QRScanner({ onScan, onClose }: QRScannerProps) {
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
-
   const [error, setError] = useState<string | null>(null);
 
   const handleScanResult = (decodedText: string) => {
@@ -33,9 +32,8 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
     if (!file) return;
 
     try {
-      const html5QrCode = new Html5Qrcode("qr-reader");
-      const decodedText = await html5QrCode.scanFile(file, true);
-      handleScanResult(decodedText);
+      const result = await QrScanner.scanImage(file);
+      handleScanResult(result);
     } catch (err) {
       console.error("Failed to scan file", err);
       setError("Failed to scan QR code from image. Please try another image.");
@@ -43,37 +41,29 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   };
 
   useEffect(() => {
-    scannerRef.current = new Html5QrcodeScanner(
-      "qr-reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      /* verbose= */ false
-    );
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
 
-    scannerRef.current.render(
-      (decodedText) => {
-        if (scannerRef.current) {
-          scannerRef.current.clear().then(() => {
-            handleScanResult(decodedText);
-          }).catch(err => {
-            console.error("Failed to clear scanner", err);
-            handleScanResult(decodedText);
-          });
-        }
-      },
-      (errorMessage) => {
-        // Check if it's a permission error
-        if (errorMessage.includes('NotAllowedError') || errorMessage.includes('Permission denied')) {
-          setError("Camera permission denied. Please allow camera access in your browser settings.");
-        }
+    const qrScanner = new QrScanner(
+      videoElement,
+      (result) => handleScanResult(result.data),
+      {
+        onDecodeError: (error) => {
+          // console.log(error);
+        },
+        highlightScanRegion: true,
       }
     );
+
+    qrScanner.start().catch((err) => {
+      console.error("Failed to start scanner", err);
+      setError("Camera permission denied or camera not accessible. Please allow camera access in your browser settings.");
+    });
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(err => console.error("Failed to clear scanner on unmount", err));
-      }
+      qrScanner.destroy();
     };
-  }, [onScan]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
@@ -85,7 +75,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
       </button>
       
       <div className="w-full max-w-md aspect-square bg-slate-900 rounded-[40px] overflow-hidden border-4 border-blue-500/30 relative shadow-2xl">
-        <div id="qr-reader" className="w-full h-full" />
+        <video ref={videoRef} className="w-full h-full object-cover" />
         
         {/* Scanning Overlay UI */}
         <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
@@ -125,18 +115,6 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
         }
         .animate-scan {
           animation: scan 2s linear infinite;
-        }
-        #qr-reader__dashboard_section_csr button {
-          display: none !important;
-        }
-        #qr-reader__status_span {
-          color: white !important;
-          font-size: 12px !important;
-        }
-        #qr-reader video {
-          object-fit: cover !important;
-          width: 100% !important;
-          height: 100% !important;
         }
       `}</style>
     </div>

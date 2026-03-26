@@ -118,7 +118,7 @@ export default function StudentTracking() {
   const hasCircumference = latestHealth?.hip > 0 && latestHealth?.waist > 0;
   const hasEnoughPoints = (user?.points || 0) >= requiredPoints;
   
-  const isEligible = hasGoodBmi && hasStrength && hasCircumference && hasEnoughPoints;
+  const isEligible = hasGoodBmi && hasCircumference && hasEnoughPoints;
 
   return (
     <div className="space-y-6 p-4 md:p-8 max-w-6xl mx-auto pb-24 md:pb-8">
@@ -146,7 +146,7 @@ export default function StudentTracking() {
               {[
                 { label: 'Health Points', value: `${user?.points || 0} / ${requiredPoints}`, sub: 'Points', active: hasEnoughPoints },
                 { label: 'Healthy BMI', value: '18.5 - 24.9', sub: 'BMI Range', active: hasGoodBmi },
-                { label: 'Muscle Strength', value: 'Recorded', sub: 'Health Check', active: hasStrength },
+                { label: 'Muscle Strength', value: 'Recorded', sub: 'Health Check', active: true },
                 { label: 'Hip & Waist', value: 'Recorded', sub: 'Health Check', active: hasCircumference },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md hover:shadow-slate-100">
