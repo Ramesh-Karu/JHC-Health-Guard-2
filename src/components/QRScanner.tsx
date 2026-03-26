@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
-import { X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
+import { X, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface QRScannerProps {
@@ -11,6 +11,36 @@ interface QRScannerProps {
 export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const navigate = useNavigate();
+
+  const [error, setError] = useState<string | null>(null);
+
+  const handleScanResult = (decodedText: string) => {
+    if (onScan) {
+      onScan(decodedText);
+    } else {
+      let studentId = decodedText;
+      if (decodedText.includes('/health-passport/')) {
+        const parts = decodedText.split('/health-passport/');
+        studentId = parts[parts.length - 1];
+      }
+      navigate(`/health-passport/${studentId}`);
+      onClose();
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      const decodedText = await html5QrCode.scanFile(file, true);
+      handleScanResult(decodedText);
+    } catch (err) {
+      console.error("Failed to scan file", err);
+      setError("Failed to scan QR code from image. Please try another image.");
+    }
+  };
 
   useEffect(() => {
     scannerRef.current = new Html5QrcodeScanner(
@@ -23,36 +53,18 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
       (decodedText) => {
         if (scannerRef.current) {
           scannerRef.current.clear().then(() => {
-            if (onScan) {
-              onScan(decodedText);
-            } else {
-              // Default behavior: navigate to health passport
-              let studentId = decodedText;
-              if (decodedText.includes('/health-passport/')) {
-                const parts = decodedText.split('/health-passport/');
-                studentId = parts[parts.length - 1];
-              }
-              navigate(`/health-passport/${studentId}`);
-              onClose();
-            }
+            handleScanResult(decodedText);
           }).catch(err => {
             console.error("Failed to clear scanner", err);
-            if (onScan) {
-              onScan(decodedText);
-            } else {
-              let studentId = decodedText;
-              if (decodedText.includes('/health-passport/')) {
-                const parts = decodedText.split('/health-passport/');
-                studentId = parts[parts.length - 1];
-              }
-              navigate(`/health-passport/${studentId}`);
-              onClose();
-            }
+            handleScanResult(decodedText);
           });
         }
       },
       (errorMessage) => {
-        // console.warn(errorMessage);
+        // Check if it's a permission error
+        if (errorMessage.includes('NotAllowedError') || errorMessage.includes('Permission denied')) {
+          setError("Camera permission denied. Please allow camera access in your browser settings.");
+        }
       }
     );
 
@@ -89,9 +101,21 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
         </div>
       </div>
       
-      <div className="mt-8 text-center space-y-2">
-        <h3 className="text-xl font-bold text-white">Scan Health Passport</h3>
-        <p className="text-slate-400">Position the QR code within the frame to scan</p>
+      <div className="mt-8 text-center space-y-4">
+        {error ? (
+          <p className="text-red-500 font-bold">{error}</p>
+        ) : (
+          <>
+            <h3 className="text-xl font-bold text-white">Scan Health Passport</h3>
+            <p className="text-slate-400">Position the QR code within the frame to scan</p>
+          </>
+        )}
+        
+        <label className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold cursor-pointer hover:bg-blue-700 transition-all">
+          <Upload size={20} />
+          Upload QR Image
+          <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+        </label>
       </div>
 
       <style>{`
@@ -103,14 +127,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
           animation: scan 2s linear infinite;
         }
         #qr-reader__dashboard_section_csr button {
-          background-color: #3b82f6 !important;
-          color: white !important;
-          border: none !important;
-          padding: 8px 16px !important;
-          border-radius: 8px !important;
-          font-weight: bold !important;
-          cursor: pointer !important;
-          margin-top: 10px !important;
+          display: none !important;
         }
         #qr-reader__status_span {
           color: white !important;
