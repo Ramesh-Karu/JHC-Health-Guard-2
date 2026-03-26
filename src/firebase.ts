@@ -29,7 +29,9 @@ import {
   startAfter,
   increment,
   writeBatch,
-  getDocFromServer
+  getDocFromServer,
+  getCountFromServer,
+  serverTimestamp
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -99,6 +101,8 @@ export {
   startAfter,
   increment,
   writeBatch,
+  getCountFromServer,
+  serverTimestamp,
   ref,
   uploadBytes,
   getDownloadURL,

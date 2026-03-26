@@ -279,7 +279,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-blue-light flex items-center justify-center p-6 font-sans relative">
+    <div className="min-h-screen bg-brand-blue-light flex flex-col items-center justify-center p-6 font-sans relative pt-safe pb-safe">
       <Link 
         to="/" 
         className="absolute top-4 left-4 md:top-8 md:left-8 flex items-center gap-2 text-slate-500 hover:text-brand-blue font-bold transition-colors"

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getCountFromServer } from '../firebase';
 import { Plus, Search, Edit2, Trash2, Users } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
 
+import { useClassrooms, useTeachers } from '../lib/queries';
+
 export default function AdminClassrooms() {
-  const [classrooms, setClassrooms] = useState([]);
-  const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: classroomsRaw = [], isLoading: classesLoading, refetch: refetchClasses } = useClassrooms();
+  const { data: teachers = [], isLoading: teachersLoading } = useTeachers();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingClassroom, setEditingClassroom] = useState<any>(null);
@@ -20,45 +22,16 @@ export default function AdminClassrooms() {
     teacherId: ''
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const loading = classesLoading || teachersLoading;
 
-  const fetchData = async () => {
-    try {
-      // Fetch Classrooms
-      const classSnapshot = await getDocs(collection(db, 'classrooms'));
-      const classData = classSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Fetch Teachers
-      const teacherQuery = query(collection(db, 'users'), where('role', '==', 'teacher'));
-      const teacherSnapshot = await getDocs(teacherQuery);
-      const teacherData = teacherSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Fetch Students to get count
-      const studentQuery = query(collection(db, 'users'), where('role', '==', 'student'));
-      const studentSnapshot = await getDocs(studentQuery);
-      const students = studentSnapshot.docs.map(doc => doc.data());
-
-      // Map teacher names and student counts
-      const enrichedClassrooms = classData.map((c: any) => {
-        const teacher = teacherData.find(t => t.id === c.teacherId);
-        const studentCount = students.filter((s: any) => s.class === `${c.grade} ${c.division}`).length;
-        return {
-          ...c,
-          teacherName: teacher ? (teacher as any).fullName : null,
-          studentCount
-        };
-      });
-
-      setClassrooms(enrichedClassrooms as any);
-      setTeachers(teacherData as any);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'classrooms/users');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Map teacher names to classrooms
+  const classrooms = classroomsRaw.map((c: any) => {
+    const teacher = teachers.find((t: any) => t.id === c.teacherId);
+    return {
+      ...c,
+      teacherName: teacher ? (teacher as any).fullName : null
+    };
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +47,7 @@ export default function AdminClassrooms() {
       setEditingClassroom(null);
       setToast({ message: editingClassroom ? 'Classroom updated successfully' : 'Classroom added successfully', type: 'success' });
       setFormData({ grade: '', division: '', teacherId: '' });
-      fetchData();
+      refetchClasses();
     } catch (error) {
       handleFirestoreError(error, editingClassroom ? OperationType.UPDATE : OperationType.CREATE, 'classrooms');
     }
@@ -86,7 +59,7 @@ export default function AdminClassrooms() {
     try {
       await deleteDoc(doc(db, 'classrooms', id));
       setToast({ message: 'Classroom deleted successfully', type: 'success' });
-      fetchData();
+      refetchClasses();
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `classrooms/${id}`);
     }

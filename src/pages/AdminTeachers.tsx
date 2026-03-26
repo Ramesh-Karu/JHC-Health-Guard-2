@@ -156,23 +156,41 @@ export default function AdminTeachers() {
     let errors = 0;
 
     try {
-      // Pre-fetch existing teachers
-      const existingSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'teacher')));
-      const existingEmails = new Set(existingSnapshot.docs.map(d => d.data().email?.toLowerCase()));
-
       // Use Firestore batches for high performance
       const batchSize = 500;
+      const checkBatchSize = 30; // Firestore 'in' query limit
+
       for (let i = 0; i < validRows.length; i += batchSize) {
         const batch = writeBatch(db);
         const currentBatchRows = validRows.slice(i, i + batchSize);
-        let batchCount = 0;
+        
+        // Check for duplicates in smaller batches of 30
+        const existingEmails = new Set<string>();
+        for (let j = 0; j < currentBatchRows.length; j += checkBatchSize) {
+          const checkBatch = currentBatchRows.slice(j, j + checkBatchSize);
+          const emailsToCheck = checkBatch.map(r => r.email.toLowerCase().trim());
+          
+          if (emailsToCheck.length > 0) {
+            const q = query(
+              collection(db, 'users'), 
+              where('role', '==', 'teacher'),
+              where('email', 'in', emailsToCheck)
+            );
+            const snapshot = await getDocs(q);
+            snapshot.docs.forEach(d => {
+              const email = d.data().email;
+              if (email) existingEmails.add(email.toLowerCase());
+            });
+          }
+        }
 
+        let batchCount = 0;
         for (const row of currentBatchRows) {
           try {
             const normalizedEmail = row.email.toLowerCase().trim();
+            
             // Check for duplicate email
             if (existingEmails.has(normalizedEmail)) {
-              console.log(`Skipping duplicate teacher with email: ${normalizedEmail}`);
               skipped++;
               completed++;
               continue;
@@ -200,7 +218,6 @@ export default function AdminTeachers() {
             console.error('Error preparing teacher for batch:', err);
             errors++;
           }
-          
           completed++;
           if (completed % 10 === 0) {
             setImportProgress(Math.round((completed / total) * 100));

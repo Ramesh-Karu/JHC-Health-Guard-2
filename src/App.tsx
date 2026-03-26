@@ -36,10 +36,11 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 // Types
+import BirdToy from './components/BirdToy';
 import { User } from './types';
 
 // Utils
-function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
@@ -90,7 +91,7 @@ import AdminSports from './pages/AdminSports';
 import CoachDashboard from './pages/CoachDashboard';
 import CoachAttendance from './pages/CoachAttendance';
 import CoachActivities from './pages/CoachActivities';
-import BreakfastClubAdmin from './pages/BreakfastClubAdmin';
+import HealthyCanteenAdmin from './pages/HealthyCanteenAdmin';
 import BreakfastMarketplace from './pages/BreakfastMarketplace';
 import MyBreakfastReservations from './pages/MyBreakfastReservations';
 import VegetableMarketplace from './pages/VegetableMarketplace';
@@ -103,8 +104,10 @@ import BreakfastAdminDashboard from './pages/BreakfastAdminDashboard';
 import AdminHealthUpdate from './pages/AdminHealthUpdate';
 import StudentTracking from './pages/StudentTracking';
 import AdminBadgeApplications from './pages/AdminBadgeApplications';
+import AdminStudentManagement from './pages/AdminStudentManagement';
 
 import Onboarding from './components/Onboarding';
+import HeartLoader from './components/HeartLoader';
 
 const SidebarItem = ({ icon: Icon, label, path, onClick }: any) => (
   <NavLink
@@ -152,20 +155,21 @@ const Layout = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Organic Admin Dashboard', path: '/organic-admin-dashboard', roles: ['organic-admin'] },
-    { icon: LayoutDashboard, label: 'Breakfast Admin Dashboard', path: '/breakfast-admin-dashboard', roles: ['breakfast-admin'] },
+    { icon: LayoutDashboard, label: 'Healthy Canteen Admin', path: '/breakfast-admin-dashboard', roles: ['breakfast-admin'] },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'student'] },
     { icon: LayoutDashboard, label: 'Teacher Dashboard', path: '/teacher/dashboard', roles: ['teacher'] },
     { icon: LayoutDashboard, label: 'Coach Dashboard', path: '/coach/dashboard', roles: ['coach'] },
     { icon: Calendar, label: 'Attendance', path: '/coach/attendance', roles: ['coach'] },
     { icon: Activity, label: 'Record Activity', path: '/coach/activities', roles: ['coach'] },
-    { icon: TrendingUp, label: 'My Progress', path: '/tracking', roles: ['student'] },
+    { icon: TrendingUp, label: 'My Progress', path: '/tracking', roles: ['admin', 'student'] },
     { icon: Leaf, label: 'Marketplace', path: '/marketplace', roles: ['admin', 'student', 'teacher'] },
     { icon: ShoppingCart, label: 'My Reservations', path: '/my-reservations', roles: ['admin', 'student', 'teacher'] },
-    { icon: Coffee, label: 'Breakfast Club', path: '/breakfast', roles: ['admin', 'student', 'teacher'] },
-    { icon: Coffee, label: 'My Breakfast', path: '/my-breakfast', roles: ['admin', 'student', 'teacher'] },
+    { icon: Coffee, label: 'Healthy Breakfast', path: '/breakfast', roles: ['admin', 'student', 'teacher'] },
+    { icon: Coffee, label: 'My Healthy Breakfast', path: '/my-breakfast', roles: ['admin', 'student', 'teacher'] },
     { icon: ShieldCheck, label: 'Organic Admin', path: '/organic-admin', roles: ['admin'] },
-    { icon: ShieldCheck, label: 'Breakfast Admin', path: '/breakfast-admin', roles: ['admin'] },
+    { icon: ShieldCheck, label: 'Healthy Canteen Admin', path: '/breakfast-admin', roles: ['admin'] },
     { icon: Users, label: 'User Management', path: '/admin/users', roles: ['admin'] },
+    { icon: Search, label: 'Student Search & Edit', path: '/admin/student-management', roles: ['admin'] },
     { icon: UserCircle, label: 'Health Pass', path: '/health-pass', roles: ['admin', 'student', 'teacher', 'coach'] },
     { icon: Users, label: 'Students', path: '/students', roles: ['admin'] },
     { icon: Users, label: 'Teachers', path: '/admin/teachers', roles: ['admin'] },
@@ -193,7 +197,7 @@ const Layout = () => {
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role || 'student'));
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans relative">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans relative pt-safe">
       {/* Global Background Gradients for Glass Effect */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/20 rounded-full blur-[120px]" />
@@ -265,7 +269,7 @@ const Layout = () => {
       </motion.aside>
 
       {/* Main Content */}
-      <main className={cn("flex-1 flex flex-col overflow-hidden transition-all duration-300 pb-20 md:pb-0", isSidebarOpen && "md:ml-[300px]")}>
+      <main className={cn("flex-1 flex flex-col overflow-hidden transition-all duration-300", isSidebarOpen && "md:ml-[300px]")}>
         {/* Header */}
         <header className="h-16 mt-4 mx-4 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-2xl flex items-center justify-between px-4 md:px-8 flex-shrink-0 shadow-xl shadow-blue-900/5 z-10 relative">
           <div className="flex items-center gap-4 z-10">
@@ -318,7 +322,7 @@ const Layout = () => {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-transparent relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-32 md:pb-8 bg-transparent relative z-10">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={location.pathname}
@@ -445,11 +449,7 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
   
   if (loading) return (
     <div className="h-screen w-screen flex items-center justify-center bg-white">
-      <motion.div 
-        animate={{ rotate: 360 }} 
-        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-        className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full"
-      />
+      <HeartLoader />
     </div>
   );
 
@@ -467,6 +467,18 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
   return <Layout />;
 };
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes default stale time
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => {
     return localStorage.getItem('hasSeenOnboarding') !== 'true';
@@ -478,95 +490,97 @@ export default function App() {
   };
 
   return (
-    <AuthProvider>
-      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-      <Router>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/change-password" element={<ChangePassword />} />
-          
-          {/* Protected Routes with Persistent Layout */}
-          <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/activities" element={<Activities />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/nutrition" element={<Nutrition />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/queries" element={<Queries />} />
-            <Route path="/ai-insights" element={<AIInsights />} />
-            <Route path="/health-passport" element={<HealthPassport />} />
-            <Route path="/health-records" element={<HealthRecords />} />
-            <Route path="/others" element={<Others />} />
-          </Route>
-          
-          <Route path="/health-passport/:id" element={<HealthPassport />} />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+        <Router>
+          <BirdToy />
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/change-password" element={<ChangePassword />} />
+            
+            {/* Protected Routes with Persistent Layout */}
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/activities" element={<Activities />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/nutrition" element={<Nutrition />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/queries" element={<Queries />} />
+              <Route path="/ai-insights" element={<AIInsights />} />
+              <Route path="/health-passport" element={<HealthPassport />} />
+              <Route path="/health-records" element={<HealthRecords />} />
+              <Route path="/tracking" element={<StudentTracking />} />
+              <Route path="/others" element={<Others />} />
+            </Route>
+            
+            <Route path="/health-passport/:id" element={<HealthPassport />} />
 
-          <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
-            <Route path="/health-pass" element={<HealthPass />} />
-          </Route>
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
+              <Route path="/health-pass" element={<HealthPass />} />
+            </Route>
 
-          {/* Teacher Only Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
-            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-            <Route path="/teacher/students" element={<TeacherStudents />} />
-            <Route path="/teacher/health-records" element={<TeacherHealthRecords />} />
-            <Route path="/teacher/activities" element={<TeacherActivities />} />
-            <Route path="/teacher/analytics" element={<TeacherAnalytics />} />
-            <Route path="/teacher/announcements" element={<TeacherAnnouncements />} />
-            <Route path="/teacher/queries" element={<TeacherQueries />} />
-          </Route>
+            {/* Teacher Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+              <Route path="/teacher/students" element={<TeacherStudents />} />
+              <Route path="/teacher/health-records" element={<TeacherHealthRecords />} />
+              <Route path="/teacher/activities" element={<TeacherActivities />} />
+              <Route path="/teacher/analytics" element={<TeacherAnalytics />} />
+              <Route path="/teacher/announcements" element={<TeacherAnnouncements />} />
+              <Route path="/teacher/queries" element={<TeacherQueries />} />
+            </Route>
 
-          {/* Coach Only Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['coach']} />}>
-            <Route path="/coach/dashboard" element={<CoachDashboard />} />
-            <Route path="/coach/attendance" element={<CoachAttendance />} />
-            <Route path="/coach/activities" element={<CoachActivities />} />
-          </Route>
+            {/* Coach Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['coach']} />}>
+              <Route path="/coach/dashboard" element={<CoachDashboard />} />
+              <Route path="/coach/attendance" element={<CoachAttendance />} />
+              <Route path="/coach/activities" element={<CoachActivities />} />
+            </Route>
 
-          {/* Organic Marketplace Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
-            <Route path="/marketplace" element={<VegetableMarketplace />} />
-            <Route path="/my-reservations" element={<MyReservations />} />
-          </Route>
-          <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-            <Route path="/tracking" element={<StudentTracking />} />
-          </Route>
+            {/* Organic Marketplace Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
+              <Route path="/marketplace" element={<VegetableMarketplace />} />
+              <Route path="/my-reservations" element={<MyReservations />} />
+            </Route>
 
-          {/* Breakfast Club Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
-            <Route path="/breakfast" element={<BreakfastMarketplace />} />
-            <Route path="/my-breakfast" element={<MyBreakfastReservations />} />
-          </Route>
+            {/* Healthy Canteen Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
+              <Route path="/breakfast" element={<BreakfastMarketplace />} />
+              <Route path="/my-breakfast" element={<MyBreakfastReservations />} />
+            </Route>
 
-          {/* Organic Admin Only Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['organic-admin']} />}>
-            <Route path="/organic-admin-dashboard" element={<OrganicAdminDashboard />} />
-          </Route>
+            {/* Organic Admin Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['organic-admin']} />}>
+              <Route path="/organic-admin-dashboard" element={<OrganicAdminDashboard />} />
+            </Route>
 
-          {/* Breakfast Admin Only Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['breakfast-admin']} />}>
-            <Route path="/breakfast-admin-dashboard" element={<BreakfastAdminDashboard />} />
-          </Route>
+            {/* Healthy Canteen Admin Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['breakfast-admin']} />}>
+              <Route path="/breakfast-admin-dashboard" element={<HealthyCanteenAdmin />} />
+            </Route>
 
-          {/* Admin Only Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route path="/organic-admin" element={<OrganicClubAdmin />} />
-            <Route path="/breakfast-admin" element={<BreakfastClubAdmin />} />
-            <Route path="/admin/users" element={<UserManagement />} />
-            <Route path="/students" element={<Students />} />
-            <Route path="/admin/teachers" element={<AdminTeachers />} />
-            <Route path="/admin/classrooms" element={<AdminClassrooms />} />
-            <Route path="/admin/sports" element={<AdminSports />} />
-            <Route path="/admin/badges" element={<AdminBadgeApplications />} />
-            <Route path="/admin/health-update" element={<AdminHealthUpdate />} />
-            <Route path="/stem-innovation" element={<STEMInnovation />} />
-            <Route path="/modules" element={<Modules />} />
-          </Route>
+            {/* Admin Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+              <Route path="/organic-admin" element={<OrganicClubAdmin />} />
+              <Route path="/breakfast-admin" element={<HealthyCanteenAdmin />} />
+              <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/student-management" element={<AdminStudentManagement />} />
+              <Route path="/students" element={<Students />} />
+              <Route path="/admin/teachers" element={<AdminTeachers />} />
+              <Route path="/admin/classrooms" element={<AdminClassrooms />} />
+              <Route path="/admin/sports" element={<AdminSports />} />
+              <Route path="/admin/badges" element={<AdminBadgeApplications />} />
+              <Route path="/admin/health-update" element={<AdminHealthUpdate />} />
+              <Route path="/stem-innovation" element={<STEMInnovation />} />
+              <Route path="/modules" element={<Modules />} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

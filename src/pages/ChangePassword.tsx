@@ -75,7 +75,7 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 pt-safe pb-safe">
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md border border-slate-100">
         <h2 className="text-2xl font-bold text-slate-900 mb-6 text-center">Change Password</h2>
         <p className="text-slate-500 text-sm mb-6 text-center">Please change your password to continue.</p>

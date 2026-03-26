@@ -9,6 +9,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -17,23 +18,28 @@ export default function Leaderboard() {
       try {
         const leaderboardDoc = await getDoc(doc(db, 'system', 'leaderboard'));
         const now = new Date().getTime();
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
         
         if (leaderboardDoc.exists()) {
           const data = leaderboardDoc.data();
-          const lastUpdated = data.updatedAt?.toDate().getTime() || 0;
+          const updatedAt = data.updatedAt?.toDate() || new Date(0);
+          const lastUpdatedTime = updatedAt.getTime();
           
-          // If less than 24 hours old and has users, use cached
-          if (data.users && now - lastUpdated < 24 * 60 * 60 * 1000) {
+          // If less than 7 days old and has users, use cached
+          if (data.users && data.users.length > 0 && now - lastUpdatedTime < SEVEN_DAYS) {
             setLeaderboard(data.users);
+            setLastUpdated(updatedAt);
             setLoading(false);
             return;
           }
         }
         
-        // Fetch all students and sort in memory to avoid composite index requirements
+        // Fetch all students and sort in memory
+        // We only fetch students who have at least 1 point to reduce data load
         const q = query(
           collection(db, 'users'), 
-          where('role', '==', 'student')
+          where('role', '==', 'student'),
+          where('points', '>', 0)
         );
         const snapshot = await getDocs(q);
         const data = snapshot.docs
@@ -41,14 +47,17 @@ export default function Leaderboard() {
           .sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
         
         // Update cache
+        const updateTime = new Date();
         await setDoc(doc(db, 'system', 'leaderboard'), {
           users: data,
-          updatedAt: new Date()
+          updatedAt: updateTime
         });
         
         setLeaderboard(data);
+        setLastUpdated(updateTime);
         setLoading(false);
       } catch (err) {
+        console.error("Leaderboard fetch error:", err);
         handleFirestoreError(err, OperationType.GET, 'system/leaderboard');
         setLoading(false);
       }
@@ -61,7 +70,7 @@ export default function Leaderboard() {
     ? leaderboard 
     : leaderboard.filter(s => s.class === filter);
 
-  const classes = ['All', ...Array.from(new Set(leaderboard.map(s => s.class)))];
+  const classes = ['All', ...Array.from(new Set(leaderboard.map(s => s.class).filter(Boolean)))];
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Medal className="text-amber-400" size={24} />;
@@ -76,25 +85,47 @@ export default function Leaderboard() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">School Leaderboard</h1>
           <p className="text-slate-500">Celebrating our healthiest students</p>
+          {lastUpdated && (
+            <p className="text-[10px] text-slate-400 mt-1 font-medium uppercase tracking-wider">
+              Last updated: {lastUpdated.toLocaleDateString()} {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
         </div>
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
-          {classes.map(c => (
-            <button
-              key={c}
-              onClick={() => setFilter(c)}
-              className={cn(
-                "px-4 py-2 rounded-xl text-sm font-bold transition-all",
-                filter === c ? "bg-blue-500 text-white shadow-md" : "text-slate-500 hover:bg-slate-50"
-              )}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
+        {!loading && leaderboard.length > 0 && (
+          <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm overflow-x-auto no-scrollbar">
+            {classes.map(c => (
+              <button
+                key={c}
+                onClick={() => setFilter(c)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
+                  filter === c ? "bg-blue-500 text-white shadow-md" : "text-slate-500 hover:bg-slate-50"
+                )}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Top 3 Podium */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pb-10">
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+          <p className="text-slate-400 font-medium">Loading rankings...</p>
+        </div>
+      ) : leaderboard.length === 0 ? (
+        <div className="bg-white rounded-[32px] p-12 text-center border border-slate-100 shadow-sm">
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Trophy className="text-slate-200" size={40} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No Rankings Yet</h3>
+          <p className="text-slate-500 max-w-xs mx-auto">Start participating in activities to earn points and appear on the leaderboard!</p>
+        </div>
+      ) : (
+        <>
+          {/* Top 3 Podium */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pb-10">
         {/* 2nd Place */}
         {filteredData[1] && (
           <motion.div 
@@ -214,7 +245,9 @@ export default function Leaderboard() {
           )}
         </div>
       </div>
-    </div>
+    </>
+  )}
+</div>
   );
 }
 

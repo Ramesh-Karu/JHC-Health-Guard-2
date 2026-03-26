@@ -55,14 +55,6 @@ export default function DeveloperTools() {
       </div>
       
       <div className="space-y-2">
-        <button 
-          onClick={handleReseed}
-          disabled={isSeeding}
-          className="flex items-center gap-3 w-full p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all text-slate-700 font-medium disabled:opacity-50"
-        >
-          <Database size={20} />
-          {isSeeding ? 'Seeding...' : 'Reseed Database'}
-        </button>
         <a 
           href="https://github.com/Ramesh-Karu" 
           target="_blank" 

@@ -50,7 +50,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-6 font-sans">
+    <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-6 font-sans pt-safe pb-safe">
       <div className="w-full max-w-md flex flex-col items-center text-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -58,18 +58,61 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -50, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.5, ease: "anticipate" }}
             className="w-full flex flex-col items-center"
           >
-            <div className={`w-32 h-32 ${slides[currentSlide].color} rounded-full flex items-center justify-center mb-10 shadow-lg`}>
-              {slides[currentSlide].icon}
-            </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">
+            <motion.div 
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: 0.1
+              }}
+              className={`w-36 h-36 ${slides[currentSlide].color} rounded-[2.5rem] flex items-center justify-center mb-10 shadow-2xl shadow-slate-200 relative group`}
+            >
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                {slides[currentSlide].icon}
+              </motion.div>
+              
+              {/* Decorative elements */}
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center"
+              >
+                <Zap size={14} className="text-amber-400 fill-amber-400" />
+              </motion.div>
+            </motion.div>
+
+            <motion.h1 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-4xl font-black text-slate-900 mb-4 tracking-tight"
+            >
               {slides[currentSlide].title}
-            </h1>
-            <p className="text-slate-500 text-lg leading-relaxed mb-12">
+            </motion.h1>
+            
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-slate-500 text-lg leading-relaxed mb-12 font-medium"
+            >
               {slides[currentSlide].description}
-            </p>
+            </motion.p>
           </motion.div>
         </AnimatePresence>
 

@@ -1,63 +1,127 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export default function QRScanner({ onClose, onScan }: { onClose: () => void, onScan?: (text: string) => void }) {
+interface QRScannerProps {
+  onScan?: (decodedText: string) => void;
+  onClose: () => void;
+}
+
+export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        false
-      );
+    scannerRef.current = new Html5QrcodeScanner(
+      "qr-reader",
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      /* verbose= */ false
+    );
 
-      scanner.render(
-        (decodedText) => {
-          scanner.clear();
-          onClose();
-          if (onScan) {
-            onScan(decodedText);
-          } else {
-            // Assuming the QR code contains the full URL or just the path
-            if (decodedText.startsWith('http')) {
-              window.location.href = decodedText;
+    scannerRef.current.render(
+      (decodedText) => {
+        if (scannerRef.current) {
+          scannerRef.current.clear().then(() => {
+            if (onScan) {
+              onScan(decodedText);
             } else {
-              navigate(decodedText);
+              // Default behavior: navigate to health passport
+              let studentId = decodedText;
+              if (decodedText.includes('/health-passport/')) {
+                const parts = decodedText.split('/health-passport/');
+                studentId = parts[parts.length - 1];
+              }
+              navigate(`/health-passport/${studentId}`);
+              onClose();
             }
-          }
-        },
-        (error) => {
-          console.warn(error);
+          }).catch(err => {
+            console.error("Failed to clear scanner", err);
+            if (onScan) {
+              onScan(decodedText);
+            } else {
+              let studentId = decodedText;
+              if (decodedText.includes('/health-passport/')) {
+                const parts = decodedText.split('/health-passport/');
+                studentId = parts[parts.length - 1];
+              }
+              navigate(`/health-passport/${studentId}`);
+              onClose();
+            }
+          });
         }
-      );
-
-      scannerRef.current = scanner;
-    }, 500);
+      },
+      (errorMessage) => {
+        // console.warn(errorMessage);
+      }
+    );
 
     return () => {
-      clearTimeout(timer);
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+        scannerRef.current.clear().catch(err => console.error("Failed to clear scanner on unmount", err));
       }
     };
-  }, [navigate, onClose]);
+  }, [onScan]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="bg-white p-6 rounded-3xl w-full max-w-md relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-full"
-        >
-          <X size={20} />
-        </button>
-        <h2 className="text-xl font-bold mb-4 text-center">Scan Student QR</h2>
-        <div id="qr-reader" className="w-full"></div>
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
+      <button 
+        onClick={onClose}
+        className="absolute top-6 right-6 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all"
+      >
+        <X size={24} />
+      </button>
+      
+      <div className="w-full max-w-md aspect-square bg-slate-900 rounded-[40px] overflow-hidden border-4 border-blue-500/30 relative shadow-2xl">
+        <div id="qr-reader" className="w-full h-full" />
+        
+        {/* Scanning Overlay UI */}
+        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+          <div className="w-64 h-64 border-2 border-blue-500 rounded-3xl relative">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-xl" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-xl" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-xl" />
+            
+            {/* Scanning Line Animation */}
+            <div className="absolute left-0 right-0 h-1 bg-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-scan" />
+          </div>
+        </div>
       </div>
+      
+      <div className="mt-8 text-center space-y-2">
+        <h3 className="text-xl font-bold text-white">Scan Health Passport</h3>
+        <p className="text-slate-400">Position the QR code within the frame to scan</p>
+      </div>
+
+      <style>{`
+        @keyframes scan {
+          0% { top: 0; }
+          100% { top: 100%; }
+        }
+        .animate-scan {
+          animation: scan 2s linear infinite;
+        }
+        #qr-reader__dashboard_section_csr button {
+          background-color: #3b82f6 !important;
+          color: white !important;
+          border: none !important;
+          padding: 8px 16px !important;
+          border-radius: 8px !important;
+          font-weight: bold !important;
+          cursor: pointer !important;
+          margin-top: 10px !important;
+        }
+        #qr-reader__status_span {
+          color: white !important;
+          font-size: 12px !important;
+        }
+        #qr-reader video {
+          object-fit: cover !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+      `}</style>
     </div>
   );
 }

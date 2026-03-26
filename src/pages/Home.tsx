@@ -213,24 +213,25 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [modulesSnapshot, usersSnapshot, breakfastSnapshot, vegSnapshot] = await Promise.all([
+        const [modulesSnapshot, leaderboardCacheDoc, breakfastSnapshot, vegSnapshot] = await Promise.all([
           getDocs(collection(db, 'modules')).catch(err => { handleFirestoreError(err, OperationType.GET, 'modules'); throw err; }),
-          getDocs(query(collection(db, 'users'), where('role', '==', 'student'))).catch(err => { handleFirestoreError(err, OperationType.GET, 'users'); throw err; }),
+          getDoc(doc(db, 'system', 'leaderboard')).catch(err => { handleFirestoreError(err, OperationType.GET, 'system/leaderboard'); throw err; }),
           getDocs(collection(db, 'breakfast_items')).catch(err => { handleFirestoreError(err, OperationType.GET, 'breakfast_items'); throw err; }),
           getDocs(collection(db, 'vegetables')).catch(err => { handleFirestoreError(err, OperationType.GET, 'vegetables'); throw err; })
         ]);
         
         const modulesData = modulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Module));
         
-        const usersData = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const leaderboardData = usersData
-          .sort((a: any, b: any) => (b.points || 0) - (a.points || 0))
-          .map((u: any, i) => ({
+        let leaderboardData = [];
+        if (leaderboardCacheDoc.exists()) {
+          const cacheData = leaderboardCacheDoc.data();
+          leaderboardData = (cacheData.users || []).slice(0, 5).map((u: any, i: number) => ({
             rank: i + 1,
             name: u.fullName,
             points: u.points || 0,
-            avatar: u.photoUrl || `https://picsum.photos/seed/${u.username}/400/400`
+            avatar: u.photoUrl || `https://ui-avatars.com/api/?name=${u.fullName}&background=3b82f6&color=fff`
           }));
+        }
           
         const breakfastData = breakfastSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const vegData = vegSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -264,7 +265,7 @@ export default function Home() {
         <div className="absolute top-[40%] right-[10%] w-[30%] h-[30%] bg-emerald-400/10 rounded-full blur-[100px]" />
       </div>
       {/* Navigation */}
-      <nav className="fixed top-6 left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl shadow-slate-200/20">
+      <nav className="fixed top-[calc(1.5rem+env(safe-area-inset-top))] left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl shadow-slate-200/20">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 justify-start">
             <div className="w-8 h-8 bg-brand-blue rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20">

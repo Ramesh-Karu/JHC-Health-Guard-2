@@ -12,9 +12,23 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "username": { "type": "string" },
         "points": { "type": "number" },
-        "photoUrl": { "type": "string" }
+        "photoUrl": { "type": "string" },
+        "class": { "type": "string" }
       },
       "required": ["uid", "email", "fullName", "role"]
+    },
+    "LeaderboardCache": {
+      "title": "LeaderboardCache",
+      "description": "Cached leaderboard data",
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": { "$ref": "User" }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["users", "updatedAt"]
     },
     "HealthRecord": {
       "title": "HealthRecord",
@@ -68,6 +82,31 @@
       },
       "required": ["title", "imageUrl", "description", "category"]
     },
+    "Comment": {
+      "title": "Comment",
+      "description": "User comment on a post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "authorId", "authorName", "content", "createdAt"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "User like on a post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "userId", "createdAt"]
+    },
     "Product": {
       "title": "Product",
       "description": "Breakfast item or vegetable",
@@ -78,7 +117,29 @@
         "price": { "type": "number" },
         "quantity": { "type": "number" }
       },
-      "required": ["name", "imageUrl", "price", "quantity"]
+      "required": ["name", "imageUrl", "price"]
+    },
+    "BreakfastPurchase": {
+      "title": "BreakfastPurchase",
+      "description": "Student breakfast purchase record",
+      "type": "object",
+      "properties": {
+        "indexNumber": { "type": "string" },
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "pointsAwarded": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["indexNumber", "date", "pointsAwarded", "createdAt"]
+    },
+    "BreakfastSettings": {
+      "title": "HealthyCanteenSettings",
+      "description": "Healthy canteen settings",
+      "type": "object",
+      "properties": {
+        "pointsPerEntry": { "type": "number" }
+      },
+      "required": ["pointsPerEntry"]
     }
   },
   "firestore": {
@@ -87,7 +148,12 @@
     "/activities/{activityId}": { "schema": "Activity", "description": "Student activities" },
     "/announcements/{announcementId}": { "schema": "Announcement", "description": "Class announcements" },
     "/modules/{moduleId}": { "schema": "Module", "description": "Learning modules" },
+    "/comments/{commentId}": { "schema": "Comment", "description": "User comments" },
+    "/likes/{likeId}": { "schema": "Like", "description": "User likes" },
     "/breakfast_items/{itemId}": { "schema": "Product", "description": "Breakfast items" },
-    "/vegetables/{itemId}": { "schema": "Product", "description": "Vegetables" }
+    "/vegetables/{itemId}": { "schema": "Product", "description": "Vegetables" },
+    "/breakfast_purchases/{purchaseId}": { "schema": "BreakfastPurchase", "description": "Breakfast purchase records" },
+    "/settings/breakfast": { "schema": "BreakfastSettings", "description": "Breakfast settings" },
+    "/system/leaderboard": { "schema": "LeaderboardCache", "description": "Cached leaderboard" }
   }
 }

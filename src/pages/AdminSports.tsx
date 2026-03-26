@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, doc, deleteDoc, setDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, doc, deleteDoc, setDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, getCountFromServer } from '../firebase';
 import { Plus, Trash2, Users, UserPlus, Award } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
 
+import { useSports } from '../lib/queries';
+
 export default function AdminSports() {
-  const [sports, setSports] = useState([]);
+  const { data: sports = [], isLoading, refetch } = useSports();
   const [coaches, setCoaches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddSportModal, setShowAddSportModal] = useState(false);
@@ -23,33 +25,18 @@ export default function AdminSports() {
   });
 
   useEffect(() => {
-    fetchData();
+    fetchCoaches();
   }, []);
 
-  const fetchData = async () => {
+  const fetchCoaches = async () => {
     try {
-      // Fetch Sports
-      const sportsSnapshot = await getDocs(collection(db, 'sports'));
-      const sportsData = sportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
       // Fetch Coaches
       const coachQuery = query(collection(db, 'users'), where('role', '==', 'coach'));
       const coachSnapshot = await getDocs(coachQuery);
       const coachData = coachSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      // Fetch Activities to get student counts per sport
-      const activitiesSnapshot = await getDocs(collection(db, 'activities'));
-      const activities = activitiesSnapshot.docs.map(doc => doc.data());
-
-      const enrichedSports = sportsData.map((s: any) => {
-        const studentCount = new Set(activities.filter(a => a.name === s.name).map(a => a.userId)).size;
-        return { ...s, studentCount };
-      });
-
-      setSports(enrichedSports as any);
       setCoaches(coachData as any);
     } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'sports/coaches');
+      handleFirestoreError(error, OperationType.GET, 'coaches');
     } finally {
       setLoading(false);
     }
@@ -62,7 +49,7 @@ export default function AdminSports() {
       setShowAddSportModal(false);
       setNewSport('');
       setToast({ message: 'Sport added successfully', type: 'success' });
-      fetchData();
+      refetch();
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'sports');
     }
@@ -90,7 +77,7 @@ export default function AdminSports() {
       setShowAddCoachModal(false);
       setToast({ message: 'Coach added successfully', type: 'success' });
       setNewCoach({ fullName: '', email: '', password: '', phone: '', indexNumber: '', sportsManaged: [] });
-      fetchData();
+      refetch();
     } catch (err: any) {
       console.error("Error adding coach:", err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -109,7 +96,7 @@ export default function AdminSports() {
     try {
       await deleteDoc(doc(db, 'sports', id));
       setToast({ message: 'Sport deleted successfully', type: 'success' });
-      fetchData();
+      refetch();
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `sports/${id}`);
     }

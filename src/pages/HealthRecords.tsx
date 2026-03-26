@@ -20,7 +20,8 @@ import {
   Tooltip, 
   ResponsiveContainer,
   AreaChart,
-  Area
+  Area,
+  Legend
 } from 'recharts';
 import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
@@ -84,6 +85,10 @@ export default function HealthRecords() {
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                   </linearGradient>
+                  <linearGradient id="colorHeight" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
@@ -91,12 +96,23 @@ export default function HealthRecords() {
                 <Tooltip 
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
+                <Legend verticalAlign="top" height={36}/>
                 <Area 
                   type="monotone" 
                   dataKey="weight" 
+                  name="Weight (kg)"
                   stroke="#3b82f6" 
                   fillOpacity={1} 
                   fill="url(#colorWeight)" 
+                  strokeWidth={3}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="height" 
+                  name="Height (cm)"
+                  stroke="#10b981" 
+                  fillOpacity={1} 
+                  fill="url(#colorHeight)" 
                   strokeWidth={3}
                 />
               </AreaChart>
@@ -111,16 +127,40 @@ export default function HealthRecords() {
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
+                <Legend verticalAlign="top" height={36}/>
                 <Line 
+                  yAxisId="left"
                   type="monotone" 
                   dataKey="bmi" 
+                  name="BMI"
                   stroke="#3b82f6" 
                   strokeWidth={4} 
                   dot={{ r: 6, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                />
+                <Line 
+                  yAxisId="right"
+                  type="monotone" 
+                  dataKey="weight" 
+                  name="Weight (kg)"
+                  stroke="#f59e0b" 
+                  strokeWidth={2} 
+                  strokeDasharray="5 5"
+                  dot={{ r: 4, fill: '#f59e0b' }}
+                />
+                <Line 
+                  yAxisId="right"
+                  type="monotone" 
+                  dataKey="height" 
+                  name="Height (cm)"
+                  stroke="#10b981" 
+                  strokeWidth={2} 
+                  strokeDasharray="5 5"
+                  dot={{ r: 4, fill: '#10b981' }}
                 />
               </LineChart>
             </ResponsiveContainer>

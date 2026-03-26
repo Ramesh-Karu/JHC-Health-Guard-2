@@ -515,7 +515,7 @@ async function startServer() {
     res.json(sports);
   });
 
-  // Breakfast Club Marketplace
+  // Healthy Canteen Marketplace
   app.get("/api/breakfast-items", authenticate, (req, res) => {
     const items = db.prepare("SELECT * FROM breakfast_items WHERE sellingDate >= date('now')").all();
     res.json(items);

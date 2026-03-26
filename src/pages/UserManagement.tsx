@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { db, auth, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, setDoc, deleteDoc, onSnapshot, updateDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch } from '../firebase';
+import { db, auth, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, setDoc, deleteDoc, updateDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch, orderBy, limit, startAfter, getCountFromServer } from '../firebase';
 import { Search, Plus, Trash2, FileDown, FileUp, X, UserPlus, Edit2 } from 'lucide-react';
 import { useAuth } from '../App';
 import Papa from 'papaparse';
@@ -9,7 +9,6 @@ import { User } from '../types';
 import Toast from '../components/Toast';
 
 export default function UserManagement() {
-  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +17,14 @@ export default function UserManagement() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Pagination States
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [firstDoc, setFirstDoc] = useState<any>(null);
+  const [pageStack, setPageStack] = useState<any[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 20;
 
   // Import Preview States
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
@@ -33,41 +40,146 @@ export default function UserManagement() {
     role: 'student'
   });
 
-  useEffect(() => {
-    const q = query(collection(db, 'users'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const fetchUsers = async (direction: 'next' | 'prev' | 'initial' = 'initial') => {
+    setLoading(true);
+    try {
+      const usersCol = collection(db, 'users');
+      
+      // Get total count on initial load
+      if (direction === 'initial') {
+        const countSnapshot = await getCountFromServer(usersCol);
+        setTotalUsers(countSnapshot.data().count);
+        setPageStack([]);
+      }
+
+      let q;
+      if (searchTerm) {
+        // Prefix search for fullName
+        q = query(
+          usersCol, 
+          where('fullName', '>=', searchTerm),
+          where('fullName', '<=', searchTerm + '\uf8ff'),
+          limit(usersPerPage)
+        );
+      } else if (showOnlyLazy) {
+        q = query(
+          usersCol,
+          where('authCreated', '==', false),
+          orderBy('fullName'),
+          limit(usersPerPage)
+        );
+      } else {
+        q = query(usersCol, orderBy('fullName'), limit(usersPerPage));
+      }
+
+      if (direction === 'next' && lastDoc) {
+        if (searchTerm) {
+          q = query(
+            usersCol,
+            where('fullName', '>=', searchTerm),
+            where('fullName', '<=', searchTerm + '\uf8ff'),
+            startAfter(lastDoc),
+            limit(usersPerPage)
+          );
+        } else if (showOnlyLazy) {
+          q = query(
+            usersCol,
+            where('authCreated', '==', false),
+            orderBy('fullName'),
+            startAfter(lastDoc),
+            limit(usersPerPage)
+          );
+        } else {
+          q = query(usersCol, orderBy('fullName'), startAfter(lastDoc), limit(usersPerPage));
+        }
+      } else if (direction === 'prev' && pageStack.length > 1) {
+        const prevDoc = pageStack[pageStack.length - 2];
+        if (searchTerm) {
+          q = query(
+            usersCol,
+            where('fullName', '>=', searchTerm),
+            where('fullName', '<=', searchTerm + '\uf8ff'),
+            startAfter(prevDoc),
+            limit(usersPerPage)
+          );
+        } else if (showOnlyLazy) {
+          q = query(
+            usersCol,
+            where('authCreated', '==', false),
+            orderBy('fullName'),
+            startAfter(prevDoc),
+            limit(usersPerPage)
+          );
+        } else {
+          q = query(usersCol, orderBy('fullName'), startAfter(prevDoc), limit(usersPerPage));
+        }
+        // If going back to first page
+        if (pageStack.length === 2) {
+           if (searchTerm) {
+            q = query(
+              usersCol,
+              where('fullName', '>=', searchTerm),
+              where('fullName', '<=', searchTerm + '\uf8ff'),
+              limit(usersPerPage)
+            );
+          } else if (showOnlyLazy) {
+            q = query(
+              usersCol,
+              where('authCreated', '==', false),
+              orderBy('fullName'),
+              limit(usersPerPage)
+            );
+          } else {
+            q = query(usersCol, orderBy('fullName'), limit(usersPerPage));
+          }
+        }
+      }
+
+      if (!q) return; // Safety check for TS
+
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as object) }));
       setUsers(data as any);
-      setLoading(false);
-    }, (err) => {
+      
+      if (snapshot.docs.length > 0) {
+        setFirstDoc(snapshot.docs[0]);
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+        
+        if (direction === 'next') {
+          setPageStack(prev => [...prev, snapshot.docs[0]]);
+          setCurrentPage(prev => prev + 1);
+        } else if (direction === 'prev') {
+          setPageStack(prev => prev.slice(0, -1));
+          setCurrentPage(prev => prev - 1);
+        } else {
+          setPageStack([snapshot.docs[0]]);
+          setCurrentPage(1);
+        }
+      } else {
+        setUsers([]);
+        setLastDoc(null);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
       handleFirestoreError(err, OperationType.LIST, 'users');
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 20;
-
-  const filteredUsers = useMemo(() => {
-    return users.filter(u => 
-      u && (
-        (u.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (u.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (u.role?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-      ) && (!showOnlyLazy || u.authCreated === false)
-    );
-  }, [users, searchTerm, showOnlyLazy]);
-
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * usersPerPage;
-    return filteredUsers.slice(startIndex, startIndex + usersPerPage);
-  }, [filteredUsers, currentPage]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setCurrentPage(1);
+    fetchUsers('initial');
+  }, [showOnlyLazy]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers('initial');
+    }, 500);
+    return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  const totalPages = Math.ceil(totalUsers / usersPerPage);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +211,7 @@ export default function UserManagement() {
       setIsModalOpen(false);
       setFormData({ email: '', username: '', password: '', fullName: '', role: 'student' });
       setToast({ message: 'User created successfully', type: 'success' });
+      fetchUsers('initial');
     } catch (err: any) {
       console.error("Error creating user:", err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -126,6 +239,7 @@ export default function UserManagement() {
       setIsEditModalOpen(false);
       setEditingUser(null);
       setToast({ message: 'User updated successfully', type: 'success' });
+      fetchUsers('initial');
     } catch (err) {
       console.error('Error updating user:', err);
       setToast({ message: 'Error updating user', type: 'error' });
@@ -138,6 +252,7 @@ export default function UserManagement() {
       try {
         await deleteDoc(doc(db, 'users', userId));
         setToast({ message: 'User deleted successfully', type: 'success' });
+        fetchUsers('initial');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setToast({ message: `Error deleting user: ${errorMessage}`, type: 'error' });
@@ -172,6 +287,7 @@ export default function UserManagement() {
         }
         
         setToast({ message: `Successfully deleted ${students.length} students`, type: 'success' });
+        fetchUsers('initial');
       } catch (err) {
         console.error('Error deleting all students:', err);
         setToast({ message: 'Error deleting students. Some may not have been deleted.', type: 'error' });
@@ -233,24 +349,40 @@ export default function UserManagement() {
     let errors = 0;
 
     try {
-      // Pre-fetch existing users
-      const existingSnapshot = await getDocs(collection(db, 'users'));
-      const existingUsernames = new Set(existingSnapshot.docs.map(d => d.data().username?.toLowerCase()));
-
       // Use Firestore batches for high performance
       const batchSize = 500;
+      const checkBatchSize = 30; // Firestore 'in' query limit
+
       for (let i = 0; i < validRows.length; i += batchSize) {
         const batch = writeBatch(db);
         const currentBatchRows = validRows.slice(i, i + batchSize);
-        let batchCount = 0;
+        
+        // Check for duplicates in smaller batches of 30
+        const existingUsernames = new Set<string>();
+        for (let j = 0; j < currentBatchRows.length; j += checkBatchSize) {
+          const checkBatch = currentBatchRows.slice(j, j + checkBatchSize);
+          const usernamesToCheck = checkBatch.map(r => r.username.toLowerCase().trim());
+          
+          if (usernamesToCheck.length > 0) {
+            const q = query(
+              collection(db, 'users'), 
+              where('username', 'in', usernamesToCheck)
+            );
+            const snapshot = await getDocs(q);
+            snapshot.docs.forEach(d => {
+              const uname = d.data().username;
+              if (uname) existingUsernames.add(uname.toLowerCase());
+            });
+          }
+        }
 
+        let batchCount = 0;
         for (const row of currentBatchRows) {
           try {
             const normalizedUsername = row.username.toLowerCase().trim();
-            console.log('Importing user:', normalizedUsername);
+            
             // Check for duplicate username
             if (existingUsernames.has(normalizedUsername)) {
-              console.log(`Skipping duplicate user with username: ${normalizedUsername}`);
               skipped++;
               completed++;
               continue;
@@ -273,7 +405,6 @@ export default function UserManagement() {
               createdAt: new Date().toISOString()
             });
             
-            console.log('User added to batch:', normalizedUsername);
             existingUsernames.add(normalizedUsername);
             added++;
             batchCount++;
@@ -281,13 +412,12 @@ export default function UserManagement() {
             console.error('Error preparing user for batch:', err);
             errors++;
           }
-          
           completed++;
           if (completed % 10 === 0) {
             setImportProgress(Math.round((completed / total) * 100));
           }
         }
-
+        
         if (batchCount > 0) {
           await batch.commit();
         }
@@ -300,6 +430,7 @@ export default function UserManagement() {
     
     setIsImporting(false);
     setIsImportPreviewOpen(false);
+    fetchUsers('initial');
     
     let message = `Import finished. ${added} added to database.`;
     if (skipped > 0) message += ` ${skipped} skipped (duplicates).`;
@@ -406,7 +537,7 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginatedUsers.map((u) => (
+            {users.map((u) => (
               <tr key={u.id}>
                 <td className="px-6 py-4 font-bold">
                   {u.fullName}
@@ -431,18 +562,18 @@ export default function UserManagement() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-4">
           <button 
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={currentPage === 1 || loading}
+            onClick={() => fetchUsers('prev')}
             className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
           >
             Previous
           </button>
           <span className="text-sm font-bold text-slate-700">
-            Page {currentPage} of {totalPages}
+            Page {currentPage} {totalUsers > 0 && `of ${totalPages}`}
           </span>
           <button 
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={users.length < usersPerPage || loading}
+            onClick={() => fetchUsers('next')}
             className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
           >
             Next
@@ -465,7 +596,7 @@ export default function UserManagement() {
                 <option value="coach">Coach</option>
                 <option value="admin">Admin</option>
                 <option value="organic-admin">Organic Admin</option>
-                <option value="breakfast-admin">Breakfast Admin</option>
+                <option value="breakfast-admin">Healthy Canteen Admin</option>
               </select>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-slate-600 font-bold">Cancel</button>
@@ -488,7 +619,7 @@ export default function UserManagement() {
                 <option value="coach">Coach</option>
                 <option value="admin">Admin</option>
                 <option value="organic-admin">Organic Admin</option>
-                <option value="breakfast-admin">Breakfast Admin</option>
+                <option value="breakfast-admin">Healthy Canteen Admin</option>
               </select>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => { setIsEditModalOpen(false); setEditingUser(null); }} className="px-6 py-2.5 text-slate-600 font-bold">Cancel</button>

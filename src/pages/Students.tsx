@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch, orderBy, limit, startAfter } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch, orderBy, limit, startAfter, getCountFromServer } from '../firebase';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { 
@@ -28,6 +28,8 @@ import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import Toast from '../components/Toast';
 
+import HeartLoader from '../components/HeartLoader';
+
 export default function Students() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +45,13 @@ export default function Students() {
   const [filterGender, setFilterGender] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Pagination States
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [pageStack, setPageStack] = useState<any[]>([]);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const studentsPerPage = 10;
 
   // Import Preview States
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
@@ -63,7 +72,8 @@ export default function Students() {
     address: '',
     parentName: '',
     parentContact: '',
-    photoUrl: ''
+    photoUrl: '',
+    admissionNumber: ''
   });
 
   const [healthData, setHealthData] = useState({
@@ -74,24 +84,129 @@ export default function Students() {
 
   useEffect(() => {
     if (user) {
-      fetchStudents();
+      fetchStudents('initial');
     }
-  }, [user]);
+  }, [user, searchTerm, filterClass, filterDivision, filterGender]);
 
-  const fetchStudents = async () => {
-    console.log('fetchStudents called');
+  const fetchStudents = async (direction: 'next' | 'prev' | 'initial' = 'initial') => {
+    setLoading(true);
     try {
-      let q = query(
-        collection(db, 'users'), 
-        where('role', '==', 'student'),
-        orderBy('fullName')
-      );
+      const studentsCol = collection(db, 'users');
+      
+      // Build base query
+      let baseConstraints = [where('role', '==', 'student')];
+      
+      if (filterClass) baseConstraints.push(where('class', '==', filterClass));
+      if (filterDivision) baseConstraints.push(where('division', '==', filterDivision));
+      if (filterGender) baseConstraints.push(where('gender', '==', filterGender));
+
+      // Get total count on initial load or filter change
+      if (direction === 'initial') {
+        const countQuery = query(studentsCol, ...baseConstraints);
+        const countSnapshot = await getCountFromServer(countQuery);
+        setTotalStudents(countSnapshot.data().count);
+        setPageStack([]);
+        setCurrentPage(1);
+        setLastDoc(null);
+      }
+
+      let q;
+      if (searchTerm) {
+        // Search by fullName (prefix search)
+        // Note: Combining range search with other filters might require indexes
+        q = query(
+          studentsCol,
+          ...baseConstraints,
+          where('fullName', '>=', searchTerm),
+          where('fullName', '<=', searchTerm + '\uf8ff'),
+          limit(studentsPerPage)
+        );
+      } else {
+        q = query(
+          studentsCol,
+          ...baseConstraints,
+          orderBy('fullName'),
+          limit(studentsPerPage)
+        );
+      }
+
+      if (direction === 'next' && lastDoc) {
+        if (searchTerm) {
+          q = query(
+            studentsCol,
+            ...baseConstraints,
+            where('fullName', '>=', searchTerm),
+            where('fullName', '<=', searchTerm + '\uf8ff'),
+            startAfter(lastDoc),
+            limit(studentsPerPage)
+          );
+        } else {
+          q = query(
+            studentsCol,
+            ...baseConstraints,
+            orderBy('fullName'),
+            startAfter(lastDoc),
+            limit(studentsPerPage)
+          );
+        }
+      } else if (direction === 'prev' && pageStack.length > 1) {
+        const prevDoc = pageStack[pageStack.length - 2];
+        if (searchTerm) {
+          q = query(
+            studentsCol,
+            ...baseConstraints,
+            where('fullName', '>=', searchTerm),
+            where('fullName', '<=', searchTerm + '\uf8ff'),
+            startAfter(prevDoc),
+            limit(studentsPerPage)
+          );
+        } else {
+          q = query(
+            studentsCol,
+            ...baseConstraints,
+            orderBy('fullName'),
+            startAfter(prevDoc),
+            limit(studentsPerPage)
+          );
+        }
+        
+        // If going back to first page
+        if (pageStack.length === 2) {
+          if (searchTerm) {
+            q = query(
+              studentsCol,
+              ...baseConstraints,
+              where('fullName', '>=', searchTerm),
+              where('fullName', '<=', searchTerm + '\uf8ff'),
+              limit(studentsPerPage)
+            );
+          } else {
+            q = query(
+              studentsCol,
+              ...baseConstraints,
+              orderBy('fullName'),
+              limit(studentsPerPage)
+            );
+          }
+        }
+      }
 
       const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log('Fetched students:', data);
-      
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as object) }));
       setStudents(data as User[]);
+      
+      if (querySnapshot.docs.length > 0) {
+        setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
+        if (direction === 'next') {
+          setPageStack(prev => [...prev, querySnapshot.docs[0]]);
+          setCurrentPage(prev => prev + 1);
+        } else if (direction === 'prev') {
+          setPageStack(prev => prev.slice(0, -1));
+          setCurrentPage(prev => prev - 1);
+        } else if (direction === 'initial') {
+          setPageStack([querySnapshot.docs[0]]);
+        }
+      }
     } catch (err) {
       console.error('Error fetching students:', err);
       handleFirestoreError(err, OperationType.GET, 'users');
@@ -144,12 +259,12 @@ export default function Students() {
         setToast({ message: 'Student registered successfully!', type: 'success' });
       }
       
-      fetchStudents();
+      fetchStudents('initial');
       setIsModalOpen(false);
       setEditingStudent(null);
       setFormData({
         username: '', password: '', fullName: '', indexNumber: '', dob: '',
-        gender: 'Male', class: '', division: '', address: '', parentName: '', parentContact: '', photoUrl: ''
+        gender: 'Male', class: '', division: '', address: '', parentName: '', parentContact: '', photoUrl: '', admissionNumber: ''
       });
     } catch (err: any) {
       console.error("Error saving student:", err);
@@ -171,6 +286,7 @@ export default function Students() {
       password: '', // Don't populate password
       fullName: student.fullName || '',
       indexNumber: student.indexNumber || '',
+      admissionNumber: student.admissionNumber || '',
       dob: student.dob || '',
       gender: student.gender || 'Male',
       class: student.class || '',
@@ -378,7 +494,7 @@ export default function Students() {
     
     setIsImporting(false);
     setIsImportPreviewOpen(false);
-    fetchStudents();
+    fetchStudents('initial');
     
     let message = `Import finished. ${added} added to database.`;
     if (skipped > 0) message += ` ${skipped} skipped (duplicates).`;
@@ -394,7 +510,7 @@ export default function Students() {
     try {
       await deleteDoc(doc(db, 'users', id));
       setToast({ message: 'Student deleted successfully', type: 'success' });
-      fetchStudents();
+      fetchStudents('initial');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setToast({ message: `Error deleting student: ${errorMessage}`, type: 'error' });
@@ -402,17 +518,7 @@ export default function Students() {
     }
   };
 
-  const filteredStudents = students.filter(s => {
-    const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    const searchMatch = nameMatch || indexMatch;
-    
-    const classMatch = filterClass ? s.class === filterClass : true;
-    const divisionMatch = filterDivision ? s.division === filterDivision : true;
-    const genderMatch = filterGender ? s.gender === filterGender : true;
-
-    return searchMatch && classMatch && divisionMatch && genderMatch;
-  });
+  const filteredStudents = students;
 
   return (
     <div className="space-y-8">
@@ -497,69 +603,112 @@ export default function Students() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden">
-                        <img 
-                          src={student.photoUrl || `https://ui-avatars.com/api/?name=${student.fullName}&background=3b82f6&color=fff`} 
-                          alt="" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{student.fullName}</p>
-                        <p className="text-xs text-slate-500">{student.username}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 font-medium">{student.indexNumber}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">{student.class}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-xs font-bold">{student.division}</span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{student.gender}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-blue-600 font-bold">
-                      <Award size={14} />
-                      {student.points}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => navigate(`/health-passport/${student.id}`)}
-                        className="p-2 hover:bg-slate-50 text-slate-600 rounded-lg transition-colors"
-                        title="View Health Passport"
-                      >
-                        <QrCode size={18} />
-                      </button>
-                      <button 
-                        onClick={() => { setSelectedStudent(student); setIsHealthModalOpen(true); }}
-                        className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                        title="Add Health Record"
-                      >
-                        <Activity size={18} />
-                      </button>
-                      <button 
-                        onClick={() => openEditModal(student)}
-                        className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                        title="Edit Student"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button onClick={() => handleDelete(student.id)} className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <HeartLoader />
                   </td>
                 </tr>
-              ))}
+              ) : filteredStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 font-medium">
+                    No students found
+                  </td>
+                </tr>
+              ) : (
+                filteredStudents.map((student) => (
+                  <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden">
+                          <img 
+                            src={student.photoUrl || `https://ui-avatars.com/api/?name=${student.fullName}&background=3b82f6&color=fff`} 
+                            alt="" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{student.fullName}</p>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Adm: {student.admissionNumber || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">{student.indexNumber}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">{student.class}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{student.gender}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1 text-blue-600 font-bold">
+                        <Award size={14} />
+                        {student.points}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => navigate(`/health-passport/${student.id}`)}
+                          className="p-2 hover:bg-slate-50 text-slate-600 rounded-lg transition-colors"
+                          title="View Health Passport"
+                        >
+                          <QrCode size={18} />
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedStudent(student); setIsHealthModalOpen(true); }}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                          title="Add Health Record"
+                        >
+                          <Activity size={18} />
+                        </button>
+                        <button 
+                          onClick={() => openEditModal(student)}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                          title="Edit Student"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button onClick={() => handleDelete(student.id)} className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination UI */}
+        <div className="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <p className="text-sm text-slate-500 font-medium">
+            Showing <span className="text-slate-900 font-bold">{filteredStudents.length}</span> of <span className="text-slate-900 font-bold">{totalStudents}</span> students
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchStudents('prev')}
+              disabled={currentPage === 1 || loading}
+              className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex items-center gap-1">
+              <span className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-bold shadow-sm shadow-blue-200">
+                {currentPage}
+              </span>
+              <span className="text-slate-400 font-medium">/</span>
+              <span className="text-slate-600 font-medium">
+                {Math.ceil(totalStudents / studentsPerPage) || 1}
+              </span>
+            </div>
+            <button
+              onClick={() => fetchStudents('next')}
+              disabled={currentPage >= Math.ceil(totalStudents / studentsPerPage) || loading}
+              className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -596,6 +745,15 @@ export default function Students() {
                     required
                     value={formData.indexNumber}
                     onChange={(e) => setFormData({...formData, indexNumber: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Admission Number</label>
+                  <input 
+                    type="text" 
+                    value={formData.admissionNumber || ''}
+                    onChange={(e) => setFormData({...formData, admissionNumber: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>

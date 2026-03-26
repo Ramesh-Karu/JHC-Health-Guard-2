@@ -1,97 +1,117 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, orderBy, limit } from '../firebase';
-import { Search, User, Activity, AlertCircle } from 'lucide-react';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, orderBy, limit, startAfter, getCountFromServer } from '../firebase';
+import { Search, User, Activity, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../App';
 
 export default function TeacherStudents() {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterClass, setFilterClass] = useState('');
-  const [filterDivision, setFilterDivision] = useState('');
-  const [filterBmiCategory, setFilterBmiCategory] = useState('');
-  const [filterHealthStatus, setFilterHealthStatus] = useState('');
-  const [filterPoints, setFilterPoints] = useState('');
-  const [filterDate, setFilterDate] = useState('');
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [pageStack, setPageStack] = useState<any[]>([]);
+  const studentsPerPage = 10;
+
+  const fetchStudents = async (direction: 'next' | 'prev' | 'initial' = 'initial') => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const studentsCol = collection(db, 'users');
+      
+      // Base query: only students in the teacher's class/division
+      let baseQ = query(
+        studentsCol, 
+        where('role', '==', 'student'),
+        where('class', '==', user.class),
+        where('division', '==', user.division)
+      );
+
+      // Get total count on initial load
+      if (direction === 'initial') {
+        const countSnapshot = await getCountFromServer(baseQ);
+        setTotalStudents(countSnapshot.data().count);
+        setPageStack([]);
+      }
+
+      let q = query(baseQ, orderBy('fullName'), limit(studentsPerPage));
+
+      if (direction === 'next' && lastDoc) {
+        q = query(baseQ, orderBy('fullName'), startAfter(lastDoc), limit(studentsPerPage));
+      } else if (direction === 'prev' && pageStack.length > 1) {
+        const prevDoc = pageStack[pageStack.length - 2];
+        q = query(baseQ, orderBy('fullName'), startAfter(prevDoc), limit(studentsPerPage));
+        if (pageStack.length === 2) {
+          q = query(baseQ, orderBy('fullName'), limit(studentsPerPage));
+        }
+      }
+
+      const snapshot = await getDocs(q);
+      const studentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Fetch latest health record for each student on the CURRENT PAGE ONLY
+      const studentsWithHealth = await Promise.all(studentsData.map(async (student: any) => {
+        const healthQ = query(
+          collection(db, 'health_records'),
+          where('userId', '==', student.id),
+          orderBy('date', 'desc'),
+          limit(1)
+        );
+        const healthSnapshot = await getDocs(healthQ);
+        let latestBmi = null;
+        let healthCategory = 'N/A';
+        let latestDate = '';
+        
+        if (!healthSnapshot.empty) {
+          const latestRecord = healthSnapshot.docs[0].data();
+          latestBmi = latestRecord.bmi;
+          healthCategory = latestRecord.category;
+          latestDate = latestRecord.date;
+        }
+
+        return {
+          ...student,
+          latestBmi,
+          healthCategory,
+          latestDate
+        };
+      }));
+
+      setStudents(studentsWithHealth);
+
+      if (snapshot.docs.length > 0) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+        if (direction === 'next') {
+          setPageStack(prev => [...prev, snapshot.docs[0]]);
+          setCurrentPage(prev => prev + 1);
+        } else if (direction === 'prev') {
+          setPageStack(prev => prev.slice(0, -1));
+          setCurrentPage(prev => prev - 1);
+        } else {
+          setPageStack([snapshot.docs[0]]);
+          setCurrentPage(1);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      handleFirestoreError(error, OperationType.GET, 'users/health_records');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      if (!user) return;
-      try {
-        // Fetch students in teacher's class
-        const q = query(collection(db, 'users'), where('role', '==', 'student'));
-        const querySnapshot = await getDocs(q);
-        const studentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // Fetch latest health record for each student to get BMI and category
-        const studentsWithHealth = await Promise.all(studentsData.map(async (student: any) => {
-          const healthQ = query(
-            collection(db, 'health_records'),
-            where('userId', '==', student.id),
-            orderBy('date', 'desc'),
-            limit(1)
-          );
-          const healthSnapshot = await getDocs(healthQ);
-          let latestBmi = null;
-          let healthCategory = 'N/A';
-          let latestDate = '';
-          
-          if (!healthSnapshot.empty) {
-            const latestRecord = healthSnapshot.docs[0].data();
-            latestBmi = latestRecord.bmi;
-            healthCategory = latestRecord.category;
-            latestDate = latestRecord.date;
-          }
-
-          return {
-            ...student,
-            latestBmi,
-            healthCategory,
-            latestDate
-          };
-        }));
-
-        setStudents(studentsWithHealth as any);
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, 'users/health_records');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStudents();
+    fetchStudents('initial');
   }, [user]);
 
-  const uniqueClasses = Array.from(new Set(students.map((s: any) => s.class).filter(Boolean)));
-  const uniqueDivisions = Array.from(new Set(students.map((s: any) => s.division).filter(Boolean)));
+  const totalPages = Math.ceil(totalStudents / studentsPerPage);
 
   const filteredStudents = students.filter((s: any) => {
     const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
     const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    const matchesSearch = nameMatch || indexMatch;
-    const matchesClass = filterClass ? s.class === filterClass : true;
-    const matchesDivision = filterDivision ? s.division === filterDivision : true;
-    const matchesBmiCategory = filterBmiCategory ? s.healthCategory === filterBmiCategory : true;
-    
-    let matchesHealthStatus = true;
-    if (filterHealthStatus === 'Healthy') {
-      matchesHealthStatus = s.healthCategory === 'Normal';
-    } else if (filterHealthStatus === 'Unhealthy') {
-      matchesHealthStatus = s.healthCategory && s.healthCategory !== 'Normal' && s.healthCategory !== 'N/A';
-    }
-
-    let matchesPoints = true;
-    const pts = s.points || 0;
-    if (filterPoints === '0-100') matchesPoints = pts >= 0 && pts <= 100;
-    else if (filterPoints === '101-500') matchesPoints = pts > 100 && pts <= 500;
-    else if (filterPoints === '501-1000') matchesPoints = pts > 500 && pts <= 1000;
-    else if (filterPoints === '>1000') matchesPoints = pts > 1000;
-
-    const matchesDate = filterDate ? s.latestDate === filterDate : true;
-    
-    return matchesSearch && matchesClass && matchesDivision && matchesBmiCategory && matchesHealthStatus && matchesPoints && matchesDate;
+    return nameMatch || indexMatch;
   });
 
   return (
@@ -115,35 +135,25 @@ export default function TeacherStudents() {
               className="pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-64"
             />
           </div>
-          <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
-            <option value="">All Classes</option>
-            {uniqueClasses.map((c: any) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
-            <option value="">All Divisions</option>
-            {uniqueDivisions.map((d: any) => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <select value={filterBmiCategory} onChange={e => setFilterBmiCategory(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
-            <option value="">All BMI Categories</option>
-            <option value="Normal">Normal</option>
-            <option value="Underweight">Underweight</option>
-            <option value="Overweight">Overweight</option>
-            <option value="Obese">Obese</option>
-            <option value="At Risk (Waist/Hip)">At Risk (Waist/Hip)</option>
-          </select>
-          <select value={filterHealthStatus} onChange={e => setFilterHealthStatus(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
-            <option value="">All Health Status</option>
-            <option value="Healthy">Healthy</option>
-            <option value="Unhealthy">Unhealthy</option>
-          </select>
-          <select value={filterPoints} onChange={e => setFilterPoints(e.target.value)} className="p-2 border border-slate-200 rounded-xl">
-            <option value="">All Points</option>
-            <option value="0-100">0 - 100</option>
-            <option value="101-500">101 - 500</option>
-            <option value="501-1000">501 - 1000</option>
-            <option value=">1000">&gt; 1000</option>
-          </select>
-          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="p-2 border border-slate-200 rounded-xl" />
+          <div className="flex items-center gap-2 ml-auto">
+            <button 
+              disabled={currentPage === 1 || loading}
+              onClick={() => fetchStudents('prev')}
+              className="p-2 border border-slate-200 rounded-xl disabled:opacity-50 hover:bg-slate-50"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <span className="text-sm font-bold text-slate-700 px-2">
+              Page {currentPage} of {totalPages || 1}
+            </span>
+            <button 
+              disabled={students.length < studentsPerPage || loading}
+              onClick={() => fetchStudents('next')}
+              className="p-2 border border-slate-200 rounded-xl disabled:opacity-50 hover:bg-slate-50"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">

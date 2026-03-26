@@ -32,7 +32,7 @@ service cloud.firestore {
       return isAuthenticated() && (
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-        (request.auth.token.email == "rameshnathankaruvoolan10@gmail.com") // Primary admin email
+        (request.auth.token.email == "rameshnathankaruvoolan10@gmail.com" && request.auth.token.email_verified == true)
       );
     }
     
@@ -102,6 +102,15 @@ service cloud.firestore {
              (data.badgeStatus in ['none', 'pending', 'approved', 'rejected'] || !('badgeStatus' in data));
     }
     
+    function isValidComment(data) {
+      return data.postId is string &&
+             data.authorId is string &&
+             data.authorName is string &&
+             data.content is string &&
+             data.content.size() > 0 && data.content.size() < 1000 &&
+             data.createdAt is string;
+    }
+    
     // ===============================================================
     // Rules
     // ===============================================================
@@ -116,6 +125,11 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
       allow update: if isAdmin();
       allow delete: if isAdmin();
+    }
+
+    match /system/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
     match /users/{userId} {
@@ -169,7 +183,11 @@ service cloud.firestore {
 
     match /announcements/{announcementId} {
       allow read: if isAuthenticated();
-      allow create, update: if isTeacherOrAdmin();
+      allow create: if isTeacherOrAdmin();
+      allow update: if isTeacherOrAdmin() || (
+        isAuthenticated() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'likesCount', 'commentsCount', 'poll'])
+      );
       allow delete: if isAdmin();
     }
 
@@ -226,6 +244,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /breakfast_purchases/{purchaseId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin() || isBreakfastAdmin());
+      allow list: if isAuthenticated() && (isAdmin() || isBreakfastAdmin() || (request.query.limit <= 100 && request.query.filters.userId == request.auth.uid));
+      allow create: if isAdmin() || isBreakfastAdmin();
+      allow update: if isAdmin() || isBreakfastAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /organic_reservations/{reservationId} {
       allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin() || isMigratingRead(resource.data.userId));
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
@@ -245,6 +271,12 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
       allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /comments/{commentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId) && isValidComment(request.resource.data);
+      allow update, delete: if isAdmin() || isOwner(resource.data.authorId);
     }
 
     match /home_page_data/{docId} {

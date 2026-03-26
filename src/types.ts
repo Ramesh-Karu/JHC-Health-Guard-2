@@ -11,6 +11,7 @@ export interface User {
   authCreated?: boolean;
   tempPassword?: string;
   indexNumber?: string;
+  admissionNumber?: string;
   dob?: string;
   gender?: string;
   class?: string;
@@ -18,6 +19,8 @@ export interface User {
   address?: string;
   parentName?: string;
   parentContact?: string;
+  guardianName?: string;
+  guardianContact?: string;
   photoUrl?: string;
   points: number;
   wellnessBadge?: boolean;
@@ -52,6 +55,16 @@ export interface Activity {
   createdAt: string;
 }
 
+export interface Poll {
+  question: string;
+  options: {
+    id: string;
+    text: string;
+    votes: string[]; // Array of user IDs
+  }[];
+  expiresAt?: string;
+}
+
 export interface Post {
   id: string;
   authorId: string;
@@ -64,6 +77,9 @@ export interface Post {
   commentsCount: number;
   isLiked: boolean;
   createdAt: string;
+  category?: 'General' | 'Nutrition' | 'Fitness' | 'Success Story' | 'Announcement';
+  reactions?: { [key: string]: string[] };
+  poll?: Poll;
 }
 
 export interface Comment {
@@ -106,4 +122,41 @@ export interface Module {
   link: string;
   category: string;
   createdAt: string;
+}
+
+export interface BreakfastItem {
+  id: string;
+  name: string;
+  imageUrl: string;
+  description: string;
+  price: number;
+  quantity?: number; // Optional now
+  nutritionInfo?: string;
+  category?: string;
+  createdAt: string;
+}
+
+export interface BreakfastReservation {
+  id: string;
+  userId: string;
+  userName: string;
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  totalPrice: number;
+  status: 'Reserved' | 'Collected';
+  createdAt: string;
+}
+
+export interface BreakfastPurchase {
+  id: string;
+  indexNumber: string;
+  userId?: string; // Linked user ID if found
+  date: string; // YYYY-MM-DD
+  pointsAwarded: number;
+  createdAt: string;
+}
+
+export interface BreakfastSettings {
+  pointsPerEntry: number;
 }
