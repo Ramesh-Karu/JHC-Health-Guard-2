@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, orderBy, limit, startAfter, getCountFromServer } from '../firebase';
-import { Search, User, Activity, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, User, Activity, AlertCircle, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { useAuth } from '../App';
+import StudentHealthHistoryModal from '../components/StudentHealthHistoryModal';
 
 export default function TeacherStudents() {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ export default function TeacherStudents() {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [pageStack, setPageStack] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const studentsPerPage = 10;
 
   const fetchStudents = async (direction: 'next' | 'prev' | 'initial' = 'initial') => {
@@ -167,6 +169,7 @@ export default function TeacherStudents() {
                 <th className="p-4 font-medium">Latest BMI</th>
                 <th className="p-4 font-medium">Health Status</th>
                 <th className="p-4 font-medium">Latest Date</th>
+                <th className="p-4 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -203,6 +206,15 @@ export default function TeacherStudents() {
                     </span>
                   </td>
                   <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
+                  <td className="p-4">
+                    <button 
+                      onClick={() => setSelectedStudent(student)}
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      <History size={16} />
+                      History
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -214,6 +226,12 @@ export default function TeacherStudents() {
           )}
         </div>
       </div>
+      {selectedStudent && (
+        <StudentHealthHistoryModal 
+          student={selectedStudent} 
+          onClose={() => setSelectedStudent(null)} 
+        />
+      )}
     </div>
   );
 }

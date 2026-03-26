@@ -8,14 +8,13 @@ export default function Leaderboard() {
   const { user: currentUser } = useAuth();
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recalculating, setRecalculating] = useState(false);
   const [filter, setFilter] = useState('All');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    
-    const fetchLeaderboard = async () => {
-      try {
+  const fetchLeaderboard = async (forceRefresh = false) => {
+    try {
+      if (!forceRefresh) {
         const leaderboardDoc = await getDoc(doc(db, 'system', 'leaderboard'));
         const now = new Date().getTime();
         const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
@@ -33,38 +32,48 @@ export default function Leaderboard() {
             return;
           }
         }
-        
-        // Fetch all students and sort in memory
-        // We only fetch students who have at least 1 point to reduce data load
-        const q = query(
-          collection(db, 'users'), 
-          where('role', '==', 'student'),
-          where('points', '>', 0)
-        );
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
-        
-        // Update cache
-        const updateTime = new Date();
-        await setDoc(doc(db, 'system', 'leaderboard'), {
-          users: data,
-          updatedAt: updateTime
-        });
-        
-        setLeaderboard(data);
-        setLastUpdated(updateTime);
-        setLoading(false);
-      } catch (err) {
-        console.error("Leaderboard fetch error:", err);
-        handleFirestoreError(err, OperationType.GET, 'system/leaderboard');
-        setLoading(false);
       }
-    };
+      
+      // Fetch all students and sort in memory
+      // We only fetch students who have at least 1 point to reduce data load
+      const q = query(
+        collection(db, 'users'), 
+        where('role', '==', 'student'),
+        where('points', '>', 0)
+      );
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
+      
+      // Update cache
+      const updateTime = new Date();
+      await setDoc(doc(db, 'system', 'leaderboard'), {
+        users: data,
+        updatedAt: updateTime
+      });
+      
+      setLeaderboard(data);
+      setLastUpdated(updateTime);
+      setLoading(false);
+      setRecalculating(false);
+    } catch (err) {
+      console.error("Leaderboard fetch error:", err);
+      handleFirestoreError(err, OperationType.GET, 'system/leaderboard');
+      setLoading(false);
+      setRecalculating(false);
+    }
+  };
 
+  useEffect(() => {
+    setLoading(true);
     fetchLeaderboard();
   }, []);
+
+  const handleRecalculate = async () => {
+    setRecalculating(true);
+    await fetchLeaderboard(true);
+  };
 
   const filteredData = filter === 'All' 
     ? leaderboard 
@@ -86,9 +95,18 @@ export default function Leaderboard() {
           <h1 className="text-2xl font-bold text-slate-900">School Leaderboard</h1>
           <p className="text-slate-500">Celebrating our healthiest students</p>
           {lastUpdated && (
-            <p className="text-[10px] text-slate-400 mt-1 font-medium uppercase tracking-wider">
-              Last updated: {lastUpdated.toLocaleDateString()} {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </p>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                Last updated: {lastUpdated.toLocaleDateString()} {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+              <button
+                onClick={handleRecalculate}
+                disabled={recalculating}
+                className="text-[10px] text-blue-600 font-bold uppercase tracking-wider hover:text-blue-800 disabled:text-slate-400"
+              >
+                {recalculating ? 'Recalculating...' : 'Recalculate Now'}
+              </button>
+            </div>
           )}
         </div>
         {!loading && leaderboard.length > 0 && (
