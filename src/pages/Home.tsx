@@ -32,7 +32,8 @@ import {
   User,
   Ruler,
   Github,
-  Scale as ScaleIcon
+  Scale as ScaleIcon,
+  Download
 } from 'lucide-react';
 import QRScanner from '../components/QRScanner';
 import { Globe } from 'lucide-react';
@@ -816,6 +817,19 @@ export default function Home() {
                 <ShieldCheck size={16} className="text-slate-400" />
               </div>
             </div>
+          </div>
+          <div className="pt-8 flex flex-col items-center gap-3">
+            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Download App</span>
+            <a 
+              title="Download Health Guard latest version xapk From APKPure" 
+              rel="nofollow" 
+              download="HealthGuard_latest_version" 
+              href="https://d.apkpure.com/b/APK/com.healthguard.jhc?version=latest"
+              className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all shadow-sm hover:shadow-md"
+            >
+              <Download size={20} className="text-slate-400" />
+              <img src="https://static.apkpure.com/www/static/imgs/logo_new@2x.png" alt="APKPure Logo" className="h-6" />
+            </a>
           </div>
         </div>
       </footer>

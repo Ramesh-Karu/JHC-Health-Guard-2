@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Heart, Lock, User, ChevronRight, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Heart, Lock, User, ChevronRight, AlertCircle, ArrowLeft, Download } from 'lucide-react';
 import { auth, db, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, doc, getDoc, setDoc, query, collection, where, getDocs, createUserWithEmailAndPassword, deleteDoc, writeBatch, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../App';
 
@@ -346,6 +346,20 @@ export default function Login() {
             </button>
           </form>
         </motion.div>
+
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Download App</span>
+          <a 
+            title="Download Health Guard latest version xapk From APKPure" 
+            rel="nofollow" 
+            download="HealthGuard_latest_version" 
+            href="https://d.apkpure.com/b/APK/com.healthguard.jhc?version=latest"
+            className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm hover:shadow-md"
+          >
+            <Download size={20} className="text-slate-400" />
+            <img src="https://static.apkpure.com/www/static/imgs/logo_new@2x.png" alt="APKPure Logo" className="h-6" />
+          </a>
+        </div>
       </div>
     </div>
   );
