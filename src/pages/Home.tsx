@@ -818,18 +818,32 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="pt-8 flex flex-col items-center gap-3">
+          <div className="pt-8 flex flex-col items-center gap-4">
             <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Download App</span>
-            <a 
-              title="Download Health Guard latest version xapk From APKPure" 
-              rel="nofollow" 
-              download="HealthGuard_latest_version" 
-              href="https://d.apkpure.com/b/APK/com.healthguard.jhc?version=latest"
-              className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all shadow-sm hover:shadow-md"
-            >
-              <Download size={20} className="text-slate-400" />
-              <img src="https://static.apkpure.com/www/static/imgs/logo_new@2x.png" alt="APKPure Logo" className="h-6" />
-            </a>
+            <div className="flex flex-wrap justify-center gap-4">
+              <a 
+                title="Download Health Guard latest version xapk From APKPure" 
+                rel="nofollow" 
+                download="HealthGuard_latest_version" 
+                href="https://d.apkpure.com/b/APK/com.healthguard.jhc?version=latest"
+                className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all shadow-sm hover:shadow-md"
+              >
+                <Download size={20} className="text-slate-400 shrink-0" />
+                <img src="https://static.apkpure.com/www/static/imgs/logo_new@2x.png" alt="APKPure Logo" className="h-6 object-contain" />
+              </a>
+
+              <div className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white/5 border border-white/10 rounded-2xl opacity-60 cursor-not-allowed relative">
+                <Apple size={20} className="text-slate-300 shrink-0" />
+                <span className="font-semibold text-slate-300">App Store</span>
+                <span className="absolute -top-2 -right-2 bg-slate-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-600">Soon</span>
+              </div>
+
+              <div className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white/5 border border-white/10 rounded-2xl opacity-60 cursor-not-allowed relative">
+                <Play size={20} className="text-slate-300 shrink-0" />
+                <span className="font-semibold text-slate-300">Google Play</span>
+                <span className="absolute -top-2 -right-2 bg-slate-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-600">Soon</span>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
