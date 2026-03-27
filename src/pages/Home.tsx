@@ -33,7 +33,8 @@ import {
   Ruler,
   Github,
   Scale as ScaleIcon,
-  Download
+  Download,
+  Info
 } from 'lucide-react';
 import QRScanner from '../components/QRScanner';
 import { Globe } from 'lucide-react';
@@ -843,6 +844,18 @@ export default function Home() {
                 <span className="font-semibold text-slate-300">Google Play</span>
                 <span className="absolute -top-2 -right-2 bg-slate-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-600">Soon</span>
               </div>
+            </div>
+
+            <div className="mt-6 text-left max-w-md mx-auto bg-white/5 p-4 rounded-xl border border-white/10">
+              <h4 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
+                <Info size={16} className="text-brand-blue" /> How to install the APK
+              </h4>
+              <ol className="text-xs text-slate-400 list-decimal list-inside space-y-1.5">
+                <li>Download the APK file using the button above.</li>
+                <li>Open the downloaded file from your notifications or file manager.</li>
+                <li>If prompted by Android security, tap <strong>Settings</strong> and enable <strong>Allow from this source</strong>.</li>
+                <li>Tap <strong>Install</strong> and open the app.</li>
+              </ol>
             </div>
           </div>
         </div>

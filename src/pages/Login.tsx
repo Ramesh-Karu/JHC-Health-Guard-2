@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Heart, Lock, User, ChevronRight, AlertCircle, ArrowLeft, Download, Apple, Play } from 'lucide-react';
+import { Heart, Lock, User, ChevronRight, AlertCircle, ArrowLeft, Download, Apple, Play, Info } from 'lucide-react';
 import { auth, db, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, doc, getDoc, setDoc, query, collection, where, getDocs, createUserWithEmailAndPassword, deleteDoc, writeBatch, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../App';
 
@@ -372,6 +372,18 @@ export default function Login() {
               <span className="font-semibold text-slate-500 dark:text-slate-400">Google Play</span>
               <span className="absolute -top-2 -right-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-600">Soon</span>
             </div>
+          </div>
+
+          <div className="mt-6 text-left max-w-md mx-auto bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+              <Info size={16} className="text-brand-blue" /> How to install the APK
+            </h4>
+            <ol className="text-xs text-slate-500 dark:text-slate-400 list-decimal list-inside space-y-1.5">
+              <li>Download the APK file using the button above.</li>
+              <li>Open the downloaded file from your notifications or file manager.</li>
+              <li>If prompted by Android security, tap <strong>Settings</strong> and enable <strong>Allow from this source</strong>.</li>
+              <li>Tap <strong>Install</strong> and open the app.</li>
+            </ol>
           </div>
         </div>
       </div>
