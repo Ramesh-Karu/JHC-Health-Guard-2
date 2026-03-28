@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuth } from '../App';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, getDoc, orderBy, auth, signInWithPopup, GoogleAuthProvider, setDoc } from '../firebase';
@@ -267,10 +267,18 @@ export default function Home() {
         <div className="absolute top-[40%] right-[10%] w-[30%] h-[30%] bg-emerald-400/10 rounded-full blur-[100px]" />
       </div>
       {/* Navigation */}
-      <nav className="fixed top-[calc(1.5rem+env(safe-area-inset-top))] left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 dark:bg-slate-900/30 backdrop-blur-xl border border-white/50 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-200/20 dark:shadow-none">
+      <nav className="fixed top-[calc(1.5rem+env(safe-area-inset-top))] left-0 right-0 z-50 mx-4 md:mx-8 lg:mx-auto max-w-7xl bg-white/30 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-200/20 dark:shadow-none">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 justify-start">
-            <div className="w-8 h-8 bg-brand-blue rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20">
+            <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-none border border-white/50 dark:border-slate-800/50">
+              <img 
+                src="https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg" 
+                alt="School Logo" 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="w-8 h-8 bg-brand-blue rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20 dark:shadow-none">
               <Heart className="text-white" size={18} />
             </div>
             <div>
@@ -286,7 +294,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/login')}
-              className="px-6 py-2.5 bg-brand-blue text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-blue/20 hover:bg-blue-700 transition-all flex items-center gap-2"
+              className="px-6 py-2.5 bg-brand-blue text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-blue/20 dark:shadow-none hover:bg-blue-700 transition-all flex items-center gap-2"
             >
               Login
               <ChevronRight size={14} />
@@ -785,7 +793,7 @@ export default function Home() {
               <h4 className="font-bold mb-6">Support</h4>
               <ul className="space-y-4 text-slate-400 text-sm font-medium">
                 <li><a href="#" className="hover:text-brand-blue transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-brand-blue transition-colors">Privacy Policy</a></li>
+                <li><Link to="/privacy-security" className="hover:text-brand-blue transition-colors">Privacy Policy</Link></li>
                 <li><a href="#" className="hover:text-brand-blue transition-colors">Terms of Service</a></li>
                 <li><a href="#" className="hover:text-brand-blue transition-colors">Contact Us</a></li>
               </ul>

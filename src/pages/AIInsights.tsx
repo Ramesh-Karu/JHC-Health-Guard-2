@@ -15,6 +15,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../App';
+import { LoginPrompt } from '../components/LoginPrompt';
 import { analyzeStudentHealth, getAdminAIInsights, AIAnalysisResult } from '../services/aiService';
 import { 
   ResponsiveContainer, 
@@ -96,7 +97,7 @@ export default function AIInsights() {
     }
   }, [user]);
 
-  if (loading) {
+  if (loading && user) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <motion.div 
@@ -105,6 +106,24 @@ export default function AIInsights() {
           className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
         />
         <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">AI is analyzing health patterns...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AI Health Intelligence</h1>
+            <p className="text-slate-500 dark:text-slate-400">Intelligent analysis of health patterns</p>
+          </div>
+        </div>
+        <LoginPrompt 
+          title="AI Health Insights"
+          description="Login to get personalized AI-powered analysis of your health patterns and growth status."
+          icon={<Brain size={48} />}
+        />
       </div>
     );
   }

@@ -59,24 +59,43 @@ export default function TeacherActivities() {
 
   const fetchStudents = async () => {
     try {
-      const q = query(collection(db, 'users'), where('role', '==', 'student'));
+      if (!user?.class || !user?.division) return;
+      
+      const q = query(
+        collection(db, 'users'), 
+        where('role', '==', 'student'),
+        where('class', '==', user.class),
+        where('division', '==', user.division)
+      );
       const querySnapshot = await getDocs(q);
       const studentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const studentIds = studentsData.map(s => s.id);
       
-      const studentsWithHealth = await Promise.all(studentsData.map(async (student: any) => {
-        const healthQ = query(
-          collection(db, 'health_records'),
-          where('userId', '==', student.id),
-          orderBy('date', 'desc'),
-          limit(1)
+      let allHealthRecords: any[] = [];
+      
+      if (studentIds.length > 0) {
+        // Chunk studentIds into arrays of 10 for Firestore 'in' queries
+        const chunks = [];
+        for (let i = 0; i < studentIds.length; i += 10) {
+          chunks.push(studentIds.slice(i, i + 10));
+        }
+
+        const healthPromises = chunks.map(chunk => 
+          getDocs(query(collection(db, 'health_records'), where('userId', 'in', chunk)))
         );
-        const healthSnapshot = await getDocs(healthQ);
+
+        const healthSnapshots = await Promise.all(healthPromises);
+        allHealthRecords = healthSnapshots.flatMap(snap => snap.docs.map(doc => doc.data()));
+      }
+
+      const studentsWithHealth = studentsData.map((student: any) => {
+        const studentRecords = allHealthRecords.filter(r => r.userId === student.id);
         let latestBmi = null;
         let healthCategory = 'N/A';
         let latestDate = '';
         
-        if (!healthSnapshot.empty) {
-          const latestRecord = healthSnapshot.docs[0].data();
+        if (studentRecords.length > 0) {
+          const latestRecord: any = studentRecords.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
           latestBmi = latestRecord.bmi;
           healthCategory = latestRecord.category;
           latestDate = latestRecord.date;
@@ -88,7 +107,7 @@ export default function TeacherActivities() {
           healthCategory,
           latestDate
         };
-      }));
+      });
 
       setStudents(studentsWithHealth as any);
     } catch (error) {

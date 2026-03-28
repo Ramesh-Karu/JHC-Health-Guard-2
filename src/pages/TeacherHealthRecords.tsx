@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, orderBy, limit, updateDoc, doc, increment, getDoc } from '../firebase';
-import { Activity, Plus, Search } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { db, handleFirestoreError, OperationType, collection, addDoc, updateDoc, doc, increment, getDoc } from '../firebase';
+import { Plus, Search } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
+import { useAllStudents, useAllHealthRecords, CACHE_KEYS } from '../lib/queries';
 
 export default function TeacherHealthRecords() {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
+  const queryClient = useQueryClient();
+  const { data: allStudents = [], isLoading: studentsLoading } = useAllStudents();
+  const { data: allHealthRecords = [], isLoading: healthLoading } = useAllHealthRecords();
+
   const [pointSettings, setPointSettings] = useState({
     normalBMI: 50,
     goodStrength: 50
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchSettings = async () => {
       try {
         const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
@@ -30,7 +35,7 @@ export default function TeacherHealthRecords() {
     };
     fetchSettings();
   }, []);
-  const [loading, setLoading] = useState(true);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('');
@@ -52,54 +57,37 @@ export default function TeacherHealthRecords() {
     notes: ''
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchStudents();
-    }
-  }, [user]);
+  const studentsWithHealth = useMemo(() => {
+    if (!user?.class || !user?.division) return [];
 
-  const fetchStudents = async () => {
-    try {
-      // Fetch students in teacher's class
-      const q = query(collection(db, 'users'), where('role', '==', 'student'));
-      const querySnapshot = await getDocs(q);
-      const studentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Filter students in teacher's class
+    const myStudents = allStudents.filter(s => 
+      s.role === 'student' && 
+      s.class === user.class && 
+      s.division === user.division
+    );
 
-      // Fetch latest health record for each student
-      const studentsWithHealth = await Promise.all(studentsData.map(async (student: any) => {
-        const healthQ = query(
-          collection(db, 'health_records'),
-          where('userId', '==', student.id),
-          orderBy('date', 'desc'),
-          limit(1)
-        );
-        const healthSnapshot = await getDocs(healthQ);
-        let latestBmi = null;
-        let healthCategory = 'N/A';
-        let latestDate = '';
-        
-        if (!healthSnapshot.empty) {
-          const latestRecord = healthSnapshot.docs[0].data();
-          latestBmi = latestRecord.bmi;
-          healthCategory = latestRecord.category;
-          latestDate = latestRecord.date;
-        }
+    return myStudents.map((student: any) => {
+      const studentRecords = allHealthRecords.filter(r => r.userId === student.id);
+      let latestBmi = null;
+      let healthCategory = 'N/A';
+      let latestDate = '';
+      
+      if (studentRecords.length > 0) {
+        const latestRecord: any = [...studentRecords].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+        latestBmi = latestRecord.bmi;
+        healthCategory = latestRecord.category;
+        latestDate = latestRecord.date;
+      }
 
-        return {
-          ...student,
-          latestBmi,
-          healthCategory,
-          latestDate
-        };
-      }));
-
-      setStudents(studentsWithHealth as any);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'users/health_records');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        ...student,
+        latestBmi,
+        healthCategory,
+        latestDate
+      };
+    });
+  }, [allStudents, allHealthRecords, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +129,12 @@ export default function TeacherHealthRecords() {
         });
       }
       
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_HEALTH_RECORDS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.STUDENT_HEALTH_RECORDS(formData.userId) });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+
       setShowAddModal(false);
       setToast({ message: `Health record saved successfully! Awarded ${pointsAwarded} points.`, type: 'success' });
       setFormData({
@@ -153,40 +147,50 @@ export default function TeacherHealthRecords() {
         date: new Date().toISOString().split('T')[0],
         notes: ''
       });
-      fetchStudents(); // Refresh to get latest BMI
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'health_records');
     }
   };
-  const uniqueClasses = Array.from(new Set(students.map((s: any) => s.class).filter(Boolean)));
-  const uniqueDivisions = Array.from(new Set(students.map((s: any) => s.division).filter(Boolean)));
 
-  const filteredStudents = students.filter((s: any) => {
-    const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-    const matchesSearch = nameMatch || indexMatch;
-    const matchesClass = filterClass ? s.class === filterClass : true;
-    const matchesDivision = filterDivision ? s.division === filterDivision : true;
-    const matchesBmiCategory = filterBmiCategory ? s.healthCategory === filterBmiCategory : true;
-    
-    let matchesHealthStatus = true;
-    if (filterHealthStatus === 'Healthy') {
-      matchesHealthStatus = s.healthCategory === 'Normal';
-    } else if (filterHealthStatus === 'Unhealthy') {
-      matchesHealthStatus = s.healthCategory && s.healthCategory !== 'Normal' && s.healthCategory !== 'N/A';
-    }
+  const uniqueClasses = Array.from(new Set(studentsWithHealth.map((s: any) => s.class).filter(Boolean)));
+  const uniqueDivisions = Array.from(new Set(studentsWithHealth.map((s: any) => s.division).filter(Boolean)));
 
-    let matchesPoints = true;
-    const pts = s.points || 0;
-    if (filterPoints === '0-100') matchesPoints = pts >= 0 && pts <= 100;
-    else if (filterPoints === '101-500') matchesPoints = pts > 100 && pts <= 500;
-    else if (filterPoints === '501-1000') matchesPoints = pts > 500 && pts <= 1000;
-    else if (filterPoints === '>1000') matchesPoints = pts > 1000;
+  const filteredStudents = useMemo(() => {
+    return studentsWithHealth.filter((s: any) => {
+      const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+      const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+      const matchesSearch = nameMatch || indexMatch;
+      const matchesClass = filterClass ? s.class === filterClass : true;
+      const matchesDivision = filterDivision ? s.division === filterDivision : true;
+      const matchesBmiCategory = filterBmiCategory ? s.healthCategory === filterBmiCategory : true;
+      
+      let matchesHealthStatus = true;
+      if (filterHealthStatus === 'Healthy') {
+        matchesHealthStatus = s.healthCategory === 'Normal';
+      } else if (filterHealthStatus === 'Unhealthy') {
+        matchesHealthStatus = s.healthCategory && s.healthCategory !== 'Normal' && s.healthCategory !== 'N/A';
+      }
 
-    const matchesDate = filterDate ? s.latestDate === filterDate : true;
-    
-    return matchesSearch && matchesClass && matchesDivision && matchesBmiCategory && matchesHealthStatus && matchesPoints && matchesDate;
-  });
+      let matchesPoints = true;
+      const pts = s.points || 0;
+      if (filterPoints === '0-100') matchesPoints = pts >= 0 && pts <= 100;
+      else if (filterPoints === '101-500') matchesPoints = pts > 100 && pts <= 500;
+      else if (filterPoints === '501-1000') matchesPoints = pts > 500 && pts <= 1000;
+      else if (filterPoints === '>1000') matchesPoints = pts > 1000;
+
+      const matchesDate = filterDate ? s.latestDate === filterDate : true;
+      
+      return matchesSearch && matchesClass && matchesDivision && matchesBmiCategory && matchesHealthStatus && matchesPoints && matchesDate;
+    });
+  }, [studentsWithHealth, searchTerm, filterClass, filterDivision, filterBmiCategory, filterHealthStatus, filterPoints, filterDate]);
+
+  if (studentsLoading || healthLoading) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -324,7 +328,7 @@ export default function TeacherHealthRecords() {
                   className="w-full p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">Select Student</option>
-                  {students.map((s: any) => (
+                  {studentsWithHealth.map((s: any) => (
                     <option key={s.id} value={s.id}>{s.fullName}</option>
                   ))}
                 </select>

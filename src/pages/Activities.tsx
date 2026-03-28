@@ -17,12 +17,26 @@ import { useAuth } from '../App';
 import { EXERCISES, SPORTS_TYPES, SCORING_RULES } from '../constants';
 import { Activity } from '../types';
 
+import { useStudentActivities } from '../lib/queries';
+
+import { LoginPrompt } from '../components/LoginPrompt';
+
 export default function Activities() {
   const { user } = useAuth();
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const { data: activities = [], isLoading: loading } = useStudentActivities(user?.id || '');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
+
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="Activity Tracking"
+          description="Log your sports, exercises, and healthy habits to earn points and climb the leaderboard."
+        />
+      </div>
+    );
+  }
 
   const [formData, setFormData] = useState({
     userId: '',
@@ -63,24 +77,9 @@ export default function Activities() {
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
-    setLoading(true);
-
-    const q = query(collection(db, 'activities'), where('userId', '==', user.id), orderBy('date', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Activity[];
-      setActivities(data);
-      setLoading(false);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, 'activities');
-      setLoading(false);
-    });
-
     if (user?.role === 'admin') {
       fetchStudents();
     }
-
-    return () => unsubscribe();
   }, [user?.id]);
 
   const fetchStudents = async () => {
@@ -217,7 +216,7 @@ export default function Activities() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                {activities.map((activity) => (
+                {(activities || []).map((activity) => (
                   <tr key={activity.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -240,9 +239,11 @@ export default function Activities() {
                     </td>
                   </tr>
                 ))}
-                {activities.length === 0 && (
+                {(!activities || activities.length === 0) && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-slate-400">No activities found.</td>
+                    <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                      {!user ? 'Login to view your activity history' : 'No activities found.'}
+                    </td>
                   </tr>
                 )}
               </tbody>

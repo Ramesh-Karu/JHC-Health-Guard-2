@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Heart, Lock, User, ChevronRight, AlertCircle, ArrowLeft, Download, Apple, Play, Info } from 'lucide-react';
+import { Heart, Lock, User, ChevronRight, AlertCircle, ArrowLeft, Download, Apple, Play, Info, Shield } from 'lucide-react';
 import { auth, db, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, doc, getDoc, setDoc, query, collection, where, getDocs, createUserWithEmailAndPassword, deleteDoc, writeBatch, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../App';
 
@@ -279,23 +279,38 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-blue-light dark:bg-slate-950 flex flex-col items-center justify-center p-6 font-sans relative pt-safe pb-safe">
+    <div className="min-h-screen bg-brand-blue-light dark:bg-slate-950 flex flex-col items-center justify-start p-6 font-sans relative pt-20 pb-safe">
       <Link 
         to="/" 
-        className="absolute top-4 left-4 md:top-8 md:left-8 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue font-bold transition-colors"
+        className="absolute top-6 left-6 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue font-bold transition-colors z-20"
       >
         <ArrowLeft size={20} />
         Back to Home
       </Link>
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <motion.div 
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-20 h-20 bg-brand-blue rounded-full flex items-center justify-center shadow-xl shadow-brand-blue/20 mx-auto mb-6"
-          >
-            <Heart className="text-white" size={40} />
-          </motion.div>
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <motion.div 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none border border-white dark:border-slate-800"
+            >
+              <img 
+                src="https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg" 
+                alt="School Logo" 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
+            <motion.div 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="w-20 h-20 bg-brand-blue rounded-3xl flex items-center justify-center shadow-xl shadow-brand-blue/20 dark:shadow-none"
+            >
+              <Heart className="text-white" size={40} />
+            </motion.div>
+          </div>
           <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">Health Guard</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm font-medium">Jaffna Hindu College</p>
         </div>
@@ -385,6 +400,14 @@ export default function Login() {
               <li>Tap <strong>Install</strong> and open the app.</li>
             </ol>
           </div>
+
+          <Link 
+            to="/privacy-security"
+            className="mt-6 text-xs font-bold text-slate-400 hover:text-brand-blue transition-colors flex items-center gap-2"
+          >
+            <Shield size={14} />
+            Privacy & Security Policy
+          </Link>
         </div>
       </div>
     </div>

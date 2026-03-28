@@ -1,29 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { db, handleFirestoreError, OperationType, collection, getDocs, addDoc, updateDoc, doc, increment } from '../firebase';
+import React, { useState } from 'react';
+import { db, handleFirestoreError, OperationType, collection, addDoc, updateDoc, doc, increment } from '../firebase';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
+import { LoginPrompt } from '../components/LoginPrompt';
+import { useBreakfastItems } from '../lib/queries';
 
 export default function BreakfastMarketplace() {
   const { user } = useAuth();
-  const [items, setItems] = useState([]);
+  const { data: items = [], isLoading, refetch } = useBreakfastItems();
   const [quantities, setQuantities] = useState<any>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      fetchItems();
-    }
-  }, [user]);
-
-  const fetchItems = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'breakfast_items'));
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setItems(data as any);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'breakfast_items');
-    }
-  };
 
   const reserve = async (item: any) => {
     try {
@@ -54,21 +40,30 @@ export default function BreakfastMarketplace() {
       });
 
       setToast({ message: 'Reserved successfully!', type: 'success' });
-      fetchItems();
+      refetch();
     } catch (error) {
       setToast({ message: 'Error reserving item', type: 'error' });
       handleFirestoreError(error, OperationType.CREATE, 'breakfast_reservations');
     }
   };
 
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-[400px]">Loading...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="Healthy Breakfast"
+          description="Pre-order nutritious breakfast items for your school day. Login to view the menu and reserve your meal."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Healthy Canteen</h1>
-          <p className="text-slate-500">Pre-order your healthy breakfast from the canteen.</p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((i: any) => (

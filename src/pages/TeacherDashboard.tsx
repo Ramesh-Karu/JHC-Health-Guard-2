@@ -5,71 +5,23 @@ import { Users, Activity, AlertTriangle, TrendingUp, Award, Clock, QrCode } from
 import { useAuth } from '../App';
 import QRScanner from '../components/QRScanner';
 
+import { useTeacherDashboard } from '../lib/queries';
+
 export default function TeacherDashboard() {
   const { user } = useAuth();
+  const { data: teacherStats, isLoading: teacherLoading } = useTeacherDashboard(user?.class || '', user?.division || '');
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    setLoading(true);
-
-    // Real-time students listener
-    const studentsQ = query(collection(db, 'users'), where('role', '==', 'student'));
-    const unsubscribeStudents = onSnapshot(studentsQ, async (snapshot) => {
-      try {
-        const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const studentIds = students.map(s => s.id);
-
-        if (studentIds.length > 0) {
-          // Fetch health records and activities
-          // Note: For large datasets, you might want to filter these by userId in the query
-          // but for now we'll fetch all and filter client-side as per original logic
-          const [healthSnapshot, activitySnapshot] = await Promise.all([
-            getDocs(collection(db, 'health_records')),
-            getDocs(collection(db, 'activities'))
-          ]);
-
-          const healthRecords = healthSnapshot.docs
-            .map(doc => doc.data())
-            .filter(record => studentIds.includes(record.userId));
-
-          const categories = healthRecords.reduce((acc: any, curr: any) => {
-            acc[curr.category] = (acc[curr.category] || 0) + 1;
-            return acc;
-          }, {});
-
-          const bmiStats = Object.entries(categories).map(([category, count]) => ({ category, count }));
-
-          const activities = activitySnapshot.docs
-            .map(doc => doc.data())
-            .filter(activity => studentIds.includes(activity.userId));
-
-          const types = activities.reduce((acc: any, curr: any) => {
-            acc[curr.type] = (acc[curr.type] || 0) + 1;
-            return acc;
-          }, {});
-
-          const activityStats = Object.entries(types).map(([type, count]) => ({ type, count }));
-
-          setStats({
-            totalStudents: students.length,
-            bmiStats,
-            activityStats
-          });
-        } else {
-          setStats({ totalStudents: 0, bmiStats: [], activityStats: [] });
-        }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, 'analytics');
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribeStudents();
-  }, [user]);
+    
+    if (!teacherLoading && teacherStats) {
+      setStats(teacherStats);
+      setLoading(false);
+    }
+  }, [user, teacherStats, teacherLoading]);
 
   if (loading) return <div className="p-8">Loading...</div>;
 

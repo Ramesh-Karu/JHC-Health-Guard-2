@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, NavLink, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, db, onAuthStateChanged, signOut, doc, getDoc, onSnapshot, getDocs, collection, query, limit, seedDatabase } from './firebase';
+import { auth, db, onAuthStateChanged, signOut, doc, getDoc, onSnapshot, getDocs, collection, query, limit, seedDatabase, getDocFromCache, getDocsFromCache } from './firebase';
 import { 
   UserCircle,
   LayoutDashboard, 
@@ -75,6 +75,7 @@ import AIInsights from './pages/AIInsights';
 import HealthPassport from './pages/HealthPassport';
 import STEMInnovation from './pages/STEMInnovation';
 import BottomNav from './components/BottomNav';
+import { FloatingLoginBar } from './components/FloatingLoginBar';
 import Others from './pages/Others';
 import HealthPass from './pages/HealthPass';
 import Modules from './pages/Modules';
@@ -97,6 +98,7 @@ import MyBreakfastReservations from './pages/MyBreakfastReservations';
 import VegetableMarketplace from './pages/VegetableMarketplace';
 import MyReservations from './pages/MyReservations';
 import UserManagement from './pages/UserManagement';
+import PrivacySecurity from './pages/PrivacySecurity';
 import ChangePassword from './pages/ChangePassword';
 import OrganicClubAdmin from './pages/OrganicClubAdmin';
 import OrganicAdminDashboard from './pages/OrganicAdminDashboard';
@@ -133,6 +135,7 @@ const SidebarItem = ({ icon: Icon, label, path, onClick }: any) => (
 const Layout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
 
   useEffect(() => {
@@ -234,12 +237,12 @@ const Layout = () => {
       >
         <div className="flex flex-col h-full p-6 w-[280px]">
           <div className="flex items-center gap-3 mb-10 px-2">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none">
               <Heart className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-tight">Health Guard</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jaffna Hindu College</p>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight">Health Guard</h1>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Jaffna Hindu College</p>
             </div>
           </div>
 
@@ -259,7 +262,7 @@ const Layout = () => {
                 await logout();
                 window.location.href = '/login';
               }}
-              className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/50 hover:text-red-600 transition-all duration-200"
+              className="flex items-center w-full gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
             >
               <LogOut size={20} />
               <span className="font-medium">Logout</span>
@@ -271,7 +274,7 @@ const Layout = () => {
       {/* Main Content */}
       <main className={cn("flex-1 flex flex-col overflow-hidden transition-all duration-300", isSidebarOpen && "md:ml-[300px]")}>
         {/* Header */}
-        <header className="h-16 mt-4 mx-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-2xl border border-white/60 dark:border-slate-700/60 rounded-2xl flex items-center justify-between px-4 md:px-8 flex-shrink-0 shadow-xl shadow-blue-900/5 z-10 relative">
+        <header className="h-16 mt-4 mx-4 bg-white/40 dark:bg-slate-800/80 backdrop-blur-2xl border border-white/60 dark:border-slate-700/60 rounded-2xl flex items-center justify-between px-4 md:px-8 flex-shrink-0 shadow-xl shadow-blue-900/5 dark:shadow-none z-10 relative">
           <div className="flex items-center gap-4 z-10">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -281,23 +284,31 @@ const Layout = () => {
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
               <input 
                 type="text" 
                 placeholder="Search health data..." 
-                className="pl-10 pr-4 py-2 bg-white/50 dark:bg-slate-700/50 border border-white/60 dark:border-slate-600/60 rounded-xl w-64 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm shadow-sm text-slate-900 dark:text-white"
+                className="pl-10 pr-4 py-2 bg-white/50 dark:bg-slate-700/50 border border-white/60 dark:border-slate-600/60 rounded-xl w-64 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm shadow-sm dark:shadow-none text-slate-900 dark:text-white"
               />
             </div>
           </div>
 
           {/* Left Logo */}
           <div className="flex items-center gap-3 pointer-events-none">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-none border border-white/50 dark:border-slate-700/50">
+              <img 
+                src="https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg" 
+                alt="School Logo" 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none">
               <Heart className="text-white" size={20} />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold text-slate-900 tracking-tight leading-none">Health Guard</span>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Jaffna Hindu College</span>
+              <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight leading-none">Health Guard</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">Jaffna Hindu College</span>
             </div>
           </div>
 
@@ -305,14 +316,14 @@ const Layout = () => {
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center justify-end gap-1">
-                  {user?.fullName}
+                  {user?.fullName || 'Guest User'}
                   {user?.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={14} className="text-emerald-500 fill-emerald-100" /></span>}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role || 'Public Access'}</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm">
                 <img 
-                  src={user?.photoUrl || `https://ui-avatars.com/api/?name=${user?.fullName}&background=3b82f6&color=fff`} 
+                  src={user?.photoUrl || `https://ui-avatars.com/api/?name=${user?.fullName || 'Guest'}&background=3b82f6&color=fff`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
@@ -336,7 +347,8 @@ const Layout = () => {
               </AnimatePresence>
         </div>
       </main>
-      {user && <BottomNav />}
+      <BottomNav />
+      <FloatingLoginBar />
     </div>
   );
 };
@@ -365,8 +377,19 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Auth state changed:', firebaseUser ? firebaseUser.uid : 'null');
       if (firebaseUser) {
         try {
-          // Fetch user profile from Firestore
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          // Fetch user profile from Firestore with cache fallback
+          let userDoc;
+          try {
+            userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          } catch (err: any) {
+            if (err?.message?.includes('Quota exceeded') || err?.message?.includes('quota')) {
+              console.warn('Quota exceeded for user profile fetch, falling back to cache');
+              userDoc = await getDocFromCache(doc(db, 'users', firebaseUser.uid));
+            } else {
+              throw err;
+            }
+          }
+
           if (userDoc.exists()) {
             const userData = userDoc.data() as User;
             console.log('User data fetched:', userData);
@@ -420,7 +443,17 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!db) return;
       try {
         const q = query(collection(db, 'users'), limit(1));
-        const snapshot = await getDocs(q);
+        let snapshot;
+        try {
+          snapshot = await getDocs(q);
+        } catch (err: any) {
+          if (err?.message?.includes('Quota exceeded') || err?.message?.includes('quota')) {
+            console.warn('Quota exceeded for seeding check, skipping check');
+            return; // Skip seeding check if quota is hit
+          }
+          throw err;
+        }
+        
         if (snapshot.empty) {
           console.log("Database is empty, auto-seeding...");
           await seedDatabase();
@@ -453,15 +486,20 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
     </div>
   );
 
-  if (!user) return <Navigate to="/login" />;
-  
-  if (user.role === 'student' && !user.passwordChanged && location.pathname !== '/change-password') {
-    return <Navigate to="/change-password" />;
-  }
+  // Allow public access, but guard role checks
+  if (user) {
+    if (user.role === 'student' && !user.passwordChanged && location.pathname !== '/change-password') {
+      return <Navigate to="/change-password" />;
+    }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" />;
-    return <Navigate to="/dashboard" />;
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+      if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" />;
+      return <Navigate to="/dashboard" />;
+    }
+  } else {
+    // If not logged in and trying to access a role-specific route that isn't student-facing/general
+    // we might want to redirect, but the user said "Everyone can view, but everything will be locked"
+    // So we allow it, and the queries will return null.
   }
 
   return <Layout />;
@@ -473,17 +511,24 @@ import { ThemeProvider } from './components/ThemeProvider';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes default stale time
+      staleTime: 1000 * 60 * 60, // 1 hour default stale time
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 });
 
+import { loadInitialData } from './lib/queries';
+import { SyncProvider } from './components/SyncManager';
+
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => {
     return localStorage.getItem('hasSeenOnboarding') !== 'true';
   });
+
+  useEffect(() => {
+    loadInitialData();
+  }, []);
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('hasSeenOnboarding', 'true');
@@ -493,13 +538,15 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-          <Router>
-            <BirdToy />
-            <Routes>
+        <SyncProvider>
+          <AuthProvider>
+            {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+            <Router>
+              <BirdToy />
+              <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/privacy-security" element={<PrivacySecurity />} />
               <Route path="/change-password" element={<ChangePassword />} />
               
               {/* Protected Routes with Persistent Layout */}
@@ -583,7 +630,8 @@ export default function App() {
             </Routes>
           </Router>
         </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+      </SyncProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
   );
 }

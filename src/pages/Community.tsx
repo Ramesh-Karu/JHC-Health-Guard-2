@@ -36,12 +36,14 @@ const REACTION_TYPES = [
   { id: 'award', icon: Award, color: 'text-purple-500', fill: 'fill-purple-500', label: 'Award' },
 ];
 
+import { useCommunityPosts } from '../lib/queries';
+
 export default function Community() {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<Category>('All');
+  const { data: postsData, isLoading: loading } = useCommunityPosts(activeCategory);
+  const posts = (postsData as Post[]) || [];
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPost, setNewPost] = useState({ 
     content: '', 
     imageUrl: '', 
@@ -68,42 +70,6 @@ export default function Community() {
       post.poll?.question.toLowerCase().includes(searchLower)
     );
   });
-
-  useEffect(() => {
-    if (!user) return;
-
-    setLoading(true);
-    
-    let postsQuery = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
-    
-    if (activeCategory !== 'All') {
-      postsQuery = query(
-        collection(db, 'announcements'), 
-        where('category', '==', activeCategory),
-        orderBy('createdAt', 'desc')
-      );
-    }
-
-    const unsubscribePosts = onSnapshot(postsQuery, async (snapshot) => {
-      try {
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Post[];
-        
-        setPosts(data);
-      } catch (err) {
-        console.error("Error in posts snapshot:", err);
-      } finally {
-        setLoading(false);
-      }
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, 'announcements');
-      setLoading(false);
-    });
-
-    return () => unsubscribePosts();
-  }, [user, activeCategory]);
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -264,12 +230,14 @@ export default function Community() {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Community Feed</h1>
             <p className="text-slate-500 dark:text-slate-400">Share your health journey with others</p>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-600 transition-all active:scale-95"
-          >
-            <Plus size={24} />
-          </button>
+          {user && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-600 transition-all active:scale-95"
+            >
+              <Plus size={24} />
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}

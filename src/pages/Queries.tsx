@@ -15,44 +15,30 @@ import {
 import { useAuth } from '../App';
 import { Query } from '../types';
 
+import { useQueriesData } from '../lib/queries';
+
+import { LoginPrompt } from '../components/LoginPrompt';
+
 export default function Queries() {
   const { user } = useAuth();
-  const [queries, setQueries] = useState<Query[]>([]);
+  const { data: queriesData, isLoading: loading } = useQueriesData(user?.id || '', user?.role || '');
+  const queries = (queriesData as Query[]) || [];
+
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="Student Queries"
+          description="Have questions about your health, nutrition, or activities? Login to ask our experts and teachers."
+        />
+      </div>
+    );
+  }
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [newQuery, setNewQuery] = useState({ subject: '', message: '' });
   const [selectedQuery, setSelectedQuery] = useState<Query | null>(null);
   const [replyText, setReplyText] = useState('');
-
-  useEffect(() => {
-    if (!user) return;
-
-    setLoading(true);
-    let q;
-    if (user.role === 'student') {
-      q = query(
-        collection(db, 'queries'),
-        where('studentId', '==', user.id),
-        orderBy('createdAt', 'desc')
-      );
-    } else {
-      q = query(
-        collection(db, 'queries'),
-        orderBy('createdAt', 'desc')
-      );
-    }
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
-      setQueries(data as any);
-      setLoading(false);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, 'queries');
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
 
   const handleSubmitQuery = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +150,9 @@ export default function Queries() {
         {queries.length === 0 && (
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
             <HelpCircle size={48} className="text-slate-200 mx-auto mb-4" />
-            <p className="text-slate-400">No health queries found.</p>
+            <p className="text-slate-400">
+              {!user ? 'Login to view your health queries' : 'No health queries found.'}
+            </p>
           </div>
         )}
       </div>

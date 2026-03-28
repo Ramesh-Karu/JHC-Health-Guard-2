@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType, collection, query, getDocs, addDoc, updateDoc, doc, increment } from '../firebase';
 import { useAuth } from '../App';
 import { ShoppingCart, Leaf, Info } from 'lucide-react';
+import { LoginPrompt } from '../components/LoginPrompt';
 
 export default function VegetableMarketplace() {
   const { user } = useAuth();
@@ -54,9 +55,20 @@ export default function VegetableMarketplace() {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="Organic Marketplace"
+          description="Reserve fresh, organic vegetables from our school garden. Login to place your reservation."
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Organic Vegetable Marketplace</h1>
+    <div className="p-8 max-w-6xl mx-auto space-y-8">
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {vegetables.map((v: any) => (
           <div key={v.id} className="bg-white rounded-2xl shadow-sm border p-6">

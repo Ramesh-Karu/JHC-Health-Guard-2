@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 
 dotenv.config();
@@ -19,9 +20,20 @@ const __dirname = path.dirname(__filename);
 const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
 if (fs.existsSync(firebaseConfigPath)) {
   const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
-  admin.initializeApp({
-    projectId: firebaseConfig.projectId,
-  });
+  // In this environment, initializeApp() without arguments often works better
+  // as it picks up the environment's service account automatically.
+  try {
+    admin.initializeApp();
+  } catch (e) {
+    // If already initialized or fails, try with project ID
+    try {
+      admin.initializeApp({
+        projectId: firebaseConfig.projectId
+      });
+    } catch (e2) {
+      console.warn("Firebase Admin already initialized or failed to initialize:", e2);
+    }
+  }
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -705,6 +717,63 @@ async function startServer() {
     }
     
     res.json(dump);
+  });
+
+  // Firestore Bundle Endpoint
+  app.get("/api/firestore-bundle", async (req, res) => {
+    try {
+      const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+      // In firebase-admin v13, getFirestore is the way to get a named database
+      const db = getFirestore(firebaseConfig.firestoreDatabaseId);
+      
+      // Check if bundle method exists on the db instance
+      if (typeof (db as any).bundle !== 'function') {
+        console.warn("Firestore bundle method not found on db instance. Skipping bundle generation.");
+        return res.status(204).end();
+      }
+
+      const bundle = (db as any).bundle("initial-data");
+      
+      // Add collections to bundle with error handling for each
+      const addCollectionToBundle = async (name: string, query: any) => {
+        try {
+          const snap = await query.get();
+          bundle.add(name, snap);
+        } catch (e: any) {
+          // If quota is exceeded or permission denied, we just skip this collection
+          const isQuota = e?.message?.includes('Quota exceeded') || e?.code === 8 || e?.code === 11;
+          const isPermission = e?.message?.includes('PERMISSION_DENIED') || e?.code === 7;
+          
+          if (isQuota) {
+            console.warn(`Quota exceeded while adding ${name} to bundle.`);
+          } else if (isPermission) {
+            console.warn(`Permission denied while adding ${name} to bundle. This can happen if the database is locked or service account lacks access.`);
+          } else {
+            console.warn(`Failed to add collection ${name} to bundle:`, e);
+          }
+        }
+      };
+
+      await Promise.all([
+        addCollectionToBundle("all-users", db.collection("users")),
+        addCollectionToBundle("all-announcements", db.collection("announcements")),
+        addCollectionToBundle("all-sports", db.collection("sports")),
+        addCollectionToBundle("all-classrooms", db.collection("classrooms")),
+        addCollectionToBundle("global-stats", db.collection("metadata").where(admin.firestore.FieldPath.documentId(), "==", "global_stats"))
+      ]);
+
+      const buffer = bundle.build();
+      res.set("Content-Type", "application/octet-stream");
+      res.send(buffer);
+    } catch (err: any) {
+      if (err?.message?.includes('Quota exceeded') || err?.code === 8 || err?.code === 11) {
+        console.warn("Firestore bundle generation skipped due to quota limits.");
+      } else {
+        console.warn("Firestore bundle generation skipped (likely missing collections or config issues):", err);
+      }
+      // Return 204 No Content so frontend knows there's no bundle but doesn't throw an error
+      res.status(204).end();
+    }
   });
 
   app.post("/api/sports", authenticate, isAdmin, (req, res) => {

@@ -27,6 +27,7 @@ import {
 import DeveloperPopup from '../components/DeveloperPopup';
 import QRScanner from '../components/QRScanner';
 import StudentPassportPopup from '../components/StudentPassportPopup';
+import { SyncStatusIndicator } from '../components/SyncManager';
 
 export default function Others() {
   const { user, logout } = useAuth();
@@ -96,7 +97,7 @@ export default function Others() {
       items: [
         { icon: UserCircle, label: 'Health Pass', path: '/health-pass', color: 'bg-blue-500' },
         { icon: Bell, label: 'Notifications', path: '#', color: 'bg-red-500' },
-        { icon: Shield, label: 'Privacy & Security', path: '#', color: 'bg-blue-600' },
+        { icon: Shield, label: 'Privacy & Security', path: '/privacy-security', color: 'bg-blue-600' },
         { icon: HelpCircle, label: 'Help & Support', path: '/queries', color: 'bg-emerald-600' },
         { icon: Code, label: 'Developer', path: '#', color: 'bg-slate-800', onClick: () => setIsDeveloperOpen(true) },
       ]
@@ -139,29 +140,55 @@ export default function Others() {
           </div>
         )}
 
-        {/* Profile Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={() => navigate('/health-pass')}
-          className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-8 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-sm"
-        >
-          <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
-            {user?.photoUrl ? (
-              <img src={user.photoUrl} alt={user.fullName} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-2xl">
-                {user?.fullName?.charAt(0) || 'U'}
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{user?.fullName}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
-            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider mt-1">{user?.role}</p>
-          </div>
-          <ChevronRight className="text-slate-400 dark:text-slate-600" size={20} />
-        </motion.div>
+        {/* Profile Card / Login Prompt */}
+        {user ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => navigate('/health-pass')}
+            className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-8 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-sm"
+          >
+            <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+              {user?.photoUrl ? (
+                <img src={user.photoUrl} alt={user.fullName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-2xl">
+                  {user?.fullName?.charAt(0) || 'U'}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{user?.fullName}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+              <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider mt-1">{user?.role}</p>
+            </div>
+            <ChevronRight className="text-slate-400 dark:text-slate-600" size={20} />
+          </motion.div>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => navigate('/login')}
+            className="bg-blue-600 rounded-2xl p-6 mb-8 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-xl shadow-blue-200 dark:shadow-none"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+              <UserCircle className="text-white" size={40} />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-white">Login to your account</h2>
+              <p className="text-blue-100 text-sm">Access your health records and personalized dashboard</p>
+            </div>
+            <ChevronRight className="text-white/60" size={24} />
+          </motion.div>
+        )}
+
+        {/* Sync Status Section */}
+        <div className="mb-8">
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-4">
+            System Synchronization
+          </h3>
+          <SyncStatusIndicator inline />
+        </div>
 
         {/* Sections */}
         <div className="space-y-8">
@@ -204,20 +231,22 @@ export default function Others() {
           ))}
 
           {/* Logout Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm mt-8"
-          >
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 p-4 text-red-500 dark:text-red-400 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors active:bg-red-100 dark:active:bg-red-900/50"
+          {user && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm mt-8"
             >
-              <LogOut size={20} />
-              Log Out
-            </button>
-          </motion.div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 p-4 text-red-500 dark:text-red-400 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors active:bg-red-100 dark:active:bg-red-900/50"
+              >
+                <LogOut size={20} />
+                Log Out
+              </button>
+            </motion.div>
+          )}
         </div>
       </div>
       <DeveloperPopup isOpen={isDeveloperOpen} onClose={() => setIsDeveloperOpen(false)} />

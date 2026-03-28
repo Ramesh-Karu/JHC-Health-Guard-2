@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, updateDoc, deleteDoc, increment } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, doc, updateDoc, deleteDoc, setDoc, increment } from '../firebase';
 import { 
   Search, 
   User, 
@@ -23,77 +23,36 @@ import {
 import { User as UserType } from '../types';
 import Toast from '../components/Toast';
 import { useNavigate } from 'react-router-dom';
+import { useAllStudents, CACHE_KEYS } from '../lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AdminStudentManagement() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: allStudents = [], isLoading } = useAllStudents();
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<UserType[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<UserType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [formData, setFormData] = useState<Partial<UserType>>({});
   const [pointAdjustment, setPointAdjustment] = useState(0);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
-
-    setLoading(true);
-    setSearchResults([]);
-    try {
-      const usersCol = collection(db, 'users');
-      
-      // Search by name (prefix)
-      const nameQuery = query(
-        usersCol,
-        where('role', '==', 'student'),
-        where('fullName', '>=', searchTerm),
-        where('fullName', '<=', searchTerm + '\uf8ff')
-      );
-
-      // Search by index number
-      const indexQuery = query(
-        usersCol,
-        where('role', '==', 'student'),
-        where('indexNumber', '==', searchTerm)
-      );
-
-      // Search by admission number
-      const admissionQuery = query(
-        usersCol,
-        where('role', '==', 'student'),
-        where('admissionNumber', '==', searchTerm)
-      );
-
-      const [nameSnap, indexSnap, admissionSnap] = await Promise.all([
-        getDocs(nameQuery),
-        getDocs(indexQuery),
-        getDocs(admissionQuery)
-      ]);
-
-      const resultsMap = new Map<string, UserType>();
-      
-      [...nameSnap.docs, ...indexSnap.docs, ...admissionSnap.docs].forEach(doc => {
-        resultsMap.set(doc.id, { id: doc.id, ...doc.data() } as UserType);
-      });
-
-      setSearchResults(Array.from(resultsMap.values()));
-      
-      if (resultsMap.size === 0) {
-        setToast({ message: 'No students found matching your search.', type: 'error' });
-      }
-    } catch (err) {
-      console.error('Search error:', err);
-      handleFirestoreError(err, OperationType.GET, 'users');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const searchResults = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    const term = searchTerm.toLowerCase();
+    return allStudents.filter(s => 
+      s.fullName?.toLowerCase().includes(term) || 
+      s.indexNumber?.toLowerCase().includes(term) || 
+      s.admissionNumber?.toLowerCase().includes(term)
+    );
+  }, [allStudents, searchTerm]);
 
   const clearSearch = () => {
     setSearchTerm('');
-    setSearchResults([]);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
   };
 
   const openEditModal = (student: UserType) => {
@@ -124,8 +83,10 @@ export default function AdminStudentManagement() {
       setToast({ message: 'Student profile updated successfully!', type: 'success' });
       setIsEditModalOpen(false);
       
-      // Refresh search results
-      setSearchResults(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, ...updateData } : s));
+      // Refresh cache
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${selectedStudent.id}`);
       setToast({ message: 'Failed to update profile.', type: 'error' });
@@ -133,12 +94,26 @@ export default function AdminStudentManagement() {
   };
 
   const handleDeleteStudent = async (studentId: string) => {
+    const studentToDelete = allStudents.find(s => s.id === studentId);
     if (!confirm('Are you sure you want to PERMANENTLY delete this student? This action cannot be undone.')) return;
 
     try {
       await deleteDoc(doc(db, 'users', studentId));
+      
+      // Update global stats
+      if (studentToDelete) {
+        const statsRef = doc(db, 'metadata', 'global_stats');
+        await setDoc(statsRef, {
+          totalUsers: increment(-1),
+          'roleCounts.student': increment(-1)
+        }, { merge: true });
+      }
+
       setToast({ message: 'Student deleted successfully.', type: 'success' });
-      setSearchResults(prev => prev.filter(s => s.id !== studentId));
+      // Refresh cache
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
       if (selectedStudent?.id === studentId) setIsEditModalOpen(false);
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, `users/${studentId}`);
@@ -198,10 +173,10 @@ export default function AdminStudentManagement() {
           </div>
           <button 
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="px-10 py-4 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'Searching...' : 'Search Student'}
+            {isLoading ? 'Searching...' : 'Search Student'}
           </button>
         </form>
       </div>

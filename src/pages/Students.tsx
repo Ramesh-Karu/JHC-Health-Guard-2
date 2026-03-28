@@ -1,265 +1,157 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch, orderBy, limit, startAfter, getCountFromServer } from '../firebase';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAllStudents, CACHE_KEYS } from '../lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../App';
+import { useNavigate } from 'react-router-dom';
+import { User as UserType } from '../types';
+import Toast from '../components/Toast';
+import HeartLoader from '../components/HeartLoader';
+import { db, handleFirestoreError, OperationType } from '../firebase';
+import { doc, collection, getDocs, query, where, writeBatch, setDoc, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import firebaseConfig from '../../firebase-applet-config.json';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { 
   Search, 
-  Plus, 
+  UserPlus, 
   Filter, 
-  MoreVertical, 
+  Award, 
+  QrCode, 
+  Activity, 
   Edit, 
   Trash2, 
-  UserPlus, 
+  ChevronLeft, 
+  ChevronRight, 
+  Ruler, 
+  Scale, 
   FileDown, 
-  FileUp,
+  FileUp, 
   X,
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  Activity,
-  Ruler,
-  Scale,
-  Award,
-  QrCode
+  Plus,
+  Minus,
+  MapPin,
+  Phone,
+  Calendar,
+  UserCircle,
+  ShieldCheck,
+  AlertCircle,
+  ArrowLeft,
+  RotateCcw,
+  Save
 } from 'lucide-react';
-import { useAuth } from '../App';
-import { useNavigate } from 'react-router-dom';
-import { User } from '../types';
-import Toast from '../components/Toast';
-
-import HeartLoader from '../components/HeartLoader';
+import { motion } from 'motion/react';
 
 export default function Students() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [students, setStudents] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
-  const [editingStudent, setEditingStudent] = useState<User | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterClass, setFilterClass] = useState('');
-  const [filterDivision, setFilterDivision] = useState('');
-  const [filterGender, setFilterGender] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const queryClient = useQueryClient();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Pagination States
-  const [lastDoc, setLastDoc] = useState<any>(null);
-  const [pageStack, setPageStack] = useState<any[]>([]);
-  const [totalStudents, setTotalStudents] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
   // Import Preview States
   const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
-  const [importPreviewData, setImportPreviewData] = useState<any[]>([]);
-  const [importProgress, setImportProgress] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterDivision, setFilterDivision] = useState('');
+  const [filterGender, setFilterGender] = useState('');
 
   // Form States
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    fullName: '',
-    indexNumber: '',
-    dob: '',
-    gender: 'Male',
-    class: '',
-    division: '',
-    address: '',
-    parentName: '',
-    parentContact: '',
-    photoUrl: '',
-    admissionNumber: ''
+    username: '', password: '', fullName: '', indexNumber: '', dob: '',
+    gender: 'Male', class: '', division: '', address: '', parentName: '', parentContact: '', photoUrl: '', admissionNumber: ''
   });
+  const [editingStudent, setEditingStudent] = useState<UserType | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<UserType | null>(null);
+  const [healthData, setHealthData] = useState({ height: '', weight: '', date: new Date().toISOString().split('T')[0] });
+  const [importPreviewData, setImportPreviewData] = useState<any[]>([]);
+  const [importProgress, setImportProgress] = useState(0);
 
-  const [healthData, setHealthData] = useState({
-    height: '',
-    weight: '',
-    date: new Date().toISOString().split('T')[0]
-  });
+  const { data: allStudents = [], isLoading, refetch } = useAllStudents();
 
-  useEffect(() => {
-    if (user) {
-      fetchStudents('initial');
-    }
-  }, [user, searchTerm, filterClass, filterDivision, filterGender]);
+  const filteredStudents = useMemo(() => {
+    return allStudents.filter(s => {
+      const matchesSearch = s.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesClass = !filterClass || s.class === filterClass;
+      const matchesDivision = !filterDivision || s.division === filterDivision;
+      const matchesGender = !filterGender || s.gender === filterGender;
+      return matchesSearch && matchesClass && matchesDivision && matchesGender;
+    });
+  }, [allStudents, searchTerm, filterClass, filterDivision, filterGender]);
 
-  const fetchStudents = async (direction: 'next' | 'prev' | 'initial' = 'initial') => {
-    setLoading(true);
-    try {
-      const studentsCol = collection(db, 'users');
-      
-      // Build base query
-      let baseConstraints = [where('role', '==', 'student')];
-      
-      if (filterClass) baseConstraints.push(where('class', '==', filterClass));
-      if (filterDivision) baseConstraints.push(where('division', '==', filterDivision));
-      if (filterGender) baseConstraints.push(where('gender', '==', filterGender));
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * studentsPerPage;
+    return filteredStudents.slice(startIndex, startIndex + studentsPerPage);
+  }, [filteredStudents, currentPage]);
 
-      // Get total count on initial load or filter change
-      if (direction === 'initial') {
-        const countQuery = query(studentsCol, ...baseConstraints);
-        const countSnapshot = await getCountFromServer(countQuery);
-        setTotalStudents(countSnapshot.data().count);
-        setPageStack([]);
-        setCurrentPage(1);
-        setLastDoc(null);
-      }
-
-      let q;
-      if (searchTerm) {
-        // Search by fullName (prefix search)
-        // Note: Combining range search with other filters might require indexes
-        q = query(
-          studentsCol,
-          ...baseConstraints,
-          where('fullName', '>=', searchTerm),
-          where('fullName', '<=', searchTerm + '\uf8ff'),
-          limit(studentsPerPage)
-        );
-      } else {
-        q = query(
-          studentsCol,
-          ...baseConstraints,
-          orderBy('fullName'),
-          limit(studentsPerPage)
-        );
-      }
-
-      if (direction === 'next' && lastDoc) {
-        if (searchTerm) {
-          q = query(
-            studentsCol,
-            ...baseConstraints,
-            where('fullName', '>=', searchTerm),
-            where('fullName', '<=', searchTerm + '\uf8ff'),
-            startAfter(lastDoc),
-            limit(studentsPerPage)
-          );
-        } else {
-          q = query(
-            studentsCol,
-            ...baseConstraints,
-            orderBy('fullName'),
-            startAfter(lastDoc),
-            limit(studentsPerPage)
-          );
-        }
-      } else if (direction === 'prev' && pageStack.length > 1) {
-        const prevDoc = pageStack[pageStack.length - 2];
-        if (searchTerm) {
-          q = query(
-            studentsCol,
-            ...baseConstraints,
-            where('fullName', '>=', searchTerm),
-            where('fullName', '<=', searchTerm + '\uf8ff'),
-            startAfter(prevDoc),
-            limit(studentsPerPage)
-          );
-        } else {
-          q = query(
-            studentsCol,
-            ...baseConstraints,
-            orderBy('fullName'),
-            startAfter(prevDoc),
-            limit(studentsPerPage)
-          );
-        }
-        
-        // If going back to first page
-        if (pageStack.length === 2) {
-          if (searchTerm) {
-            q = query(
-              studentsCol,
-              ...baseConstraints,
-              where('fullName', '>=', searchTerm),
-              where('fullName', '<=', searchTerm + '\uf8ff'),
-              limit(studentsPerPage)
-            );
-          } else {
-            q = query(
-              studentsCol,
-              ...baseConstraints,
-              orderBy('fullName'),
-              limit(studentsPerPage)
-            );
-          }
-        }
-      }
-
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as object) }));
-      setStudents(data as User[]);
-      
-      if (querySnapshot.docs.length > 0) {
-        setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
-        if (direction === 'next') {
-          setPageStack(prev => [...prev, querySnapshot.docs[0]]);
-          setCurrentPage(prev => prev + 1);
-        } else if (direction === 'prev') {
-          setPageStack(prev => prev.slice(0, -1));
-          setCurrentPage(prev => prev - 1);
-        } else if (direction === 'initial') {
-          setPageStack([querySnapshot.docs[0]]);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching students:', err);
-      handleFirestoreError(err, OperationType.GET, 'users');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
 
   const handleSaveStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Saving student, formData:', formData, 'editingStudent:', editingStudent);
     try {
       if (editingStudent) {
-        console.log('Updating student:', editingStudent.id);
-        // Update existing student
         const studentRef = doc(db, 'users', editingStudent.id);
-        const updateData = { ...formData };
-        if (!updateData.password) {
-          delete (updateData as any).password;
-        }
-        console.log('Updating Firestore doc:', editingStudent.id, 'with data:', updateData);
+        const updateData = {
+          fullName: formData.fullName,
+          indexNumber: formData.indexNumber,
+          admissionNumber: formData.admissionNumber,
+          dob: formData.dob,
+          gender: formData.gender,
+          class: formData.class,
+          division: formData.division,
+          address: formData.address,
+          parentName: formData.parentName,
+          parentContact: formData.parentContact,
+          photoUrl: formData.photoUrl
+        };
         await updateDoc(studentRef, updateData);
-        console.log('Student updated successfully');
         setToast({ message: 'Student updated successfully!', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
       } else {
-        console.log('Creating new student');
-        // Create new student
-        const tempApp = initializeApp(firebaseConfig as any, 'temp-create-student-' + Date.now());
+        const tempApp = initializeApp(firebaseConfig, 'tempApp');
         const tempAuth = getAuth(tempApp);
+        const userCredential = await createUserWithEmailAndPassword(tempAuth, `${formData.username}@school.internal`, formData.password);
         
-        const normalizedUsername = formData.username.toLowerCase().trim();
-        const systemEmail = `${normalizedUsername}@school.internal`;
-        const userCredential = await createUserWithEmailAndPassword(tempAuth, systemEmail, formData.password);
-        
-        console.log('Student created in Auth, UID:', userCredential.user.uid);
-
         await setDoc(doc(db, 'users', userCredential.user.uid), {
-          ...formData,
-          username: normalizedUsername,
-          systemEmail: systemEmail,
+          email: `${formData.username}@school.internal`,
+          username: formData.username,
+          fullName: formData.fullName,
+          indexNumber: formData.indexNumber,
+          admissionNumber: formData.admissionNumber,
+          dob: formData.dob,
+          gender: formData.gender,
+          class: formData.class,
+          division: formData.division,
+          address: formData.address,
+          parentName: formData.parentName,
+          parentContact: formData.parentContact,
+          photoUrl: formData.photoUrl,
           role: 'student',
           passwordChanged: false,
           profileCompleted: false,
           points: 0,
+          authCreated: true,
           createdAt: new Date().toISOString()
         });
         
-        console.log('Student saved to Firestore');
         await deleteApp(tempApp);
         setToast({ message: 'Student registered successfully!', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+        setIsModalOpen(false);
       }
       
-      fetchStudents('initial');
       setIsModalOpen(false);
       setEditingStudent(null);
       setFormData({
@@ -267,19 +159,11 @@ export default function Students() {
         gender: 'Male', class: '', division: '', address: '', parentName: '', parentContact: '', photoUrl: '', admissionNumber: ''
       });
     } catch (err: any) {
-      console.error("Error saving student:", err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      if (errorMessage.includes('auth/email-already-in-use')) {
-        setToast({ message: 'Username is already taken.', type: 'error' });
-      } else if (errorMessage.includes('auth/weak-password')) {
-        setToast({ message: 'Password should be at least 6 characters.', type: 'error' });
-      } else {
-        setToast({ message: 'Failed to save student. Please try again.', type: 'error' });
-      }
+      // ...
     }
   };
 
-  const openEditModal = (student: User) => {
+  const openEditModal = (student: UserType) => {
     setEditingStudent(student);
     setFormData({
       username: student.username || '',
@@ -340,7 +224,7 @@ export default function Students() {
       return dateStr;
     };
 
-    const dataToExport = students.map(s => ({
+    const dataToExport = allStudents.map(s => ({
       username: s.username,
       fullName: s.fullName,
       email: s.email,
@@ -494,7 +378,9 @@ export default function Students() {
     
     setIsImporting(false);
     setIsImportPreviewOpen(false);
-    fetchStudents('initial');
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+    refetch();
     
     let message = `Import finished. ${added} added to database.`;
     if (skipped > 0) message += ` ${skipped} skipped (duplicates).`;
@@ -510,15 +396,15 @@ export default function Students() {
     try {
       await deleteDoc(doc(db, 'users', id));
       setToast({ message: 'Student deleted successfully', type: 'success' });
-      fetchStudents('initial');
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      refetch();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setToast({ message: `Error deleting student: ${errorMessage}`, type: 'error' });
       handleFirestoreError(error, OperationType.DELETE, `users/${id}`);
     }
   };
-
-  const filteredStudents = students;
 
   return (
     <div className="space-y-8">
@@ -576,11 +462,11 @@ export default function Students() {
           <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 flex flex-wrap gap-4">
             <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
               <option value="">All Classes</option>
-              {Array.from(new Set(students.map(s => s.class).filter(Boolean))).map(c => <option key={c} value={c}>{c}</option>)}
+              {Array.from(new Set(allStudents.map(s => s.class).filter(Boolean))).map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
             </select>
             <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
               <option value="">All Divisions</option>
-              {Array.from(new Set(students.map(s => s.division).filter(Boolean))).map(d => <option key={d} value={d}>{d}</option>)}
+              {Array.from(new Set(allStudents.map(s => s.division).filter(Boolean))).map(d => <option key={d as string} value={d as string}>{d as string}</option>)}
             </select>
             <select value={filterGender} onChange={e => setFilterGender(e.target.value)} className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
               <option value="">All Genders</option>
@@ -603,20 +489,20 @@ export default function Students() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
+              {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
                     <HeartLoader />
                   </td>
                 </tr>
-              ) : filteredStudents.length === 0 ? (
+              ) : paginatedStudents.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-slate-500 font-medium">
                     No students found
                   </td>
                 </tr>
               ) : (
-                filteredStudents.map((student) => (
+                paginatedStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -682,12 +568,12 @@ export default function Students() {
         {/* Pagination UI */}
         <div className="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
           <p className="text-sm text-slate-500 font-medium">
-            Showing <span className="text-slate-900 font-bold">{filteredStudents.length}</span> of <span className="text-slate-900 font-bold">{totalStudents}</span> students
+            Showing <span className="text-slate-900 font-bold">{paginatedStudents.length}</span> of <span className="text-slate-900 font-bold">{filteredStudents.length}</span> students
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => fetchStudents('prev')}
-              disabled={currentPage === 1 || loading}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1 || isLoading}
               className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               <ChevronLeft size={20} />
@@ -698,12 +584,12 @@ export default function Students() {
               </span>
               <span className="text-slate-400 font-medium">/</span>
               <span className="text-slate-600 font-medium">
-                {Math.ceil(totalStudents / studentsPerPage) || 1}
+                {totalPages || 1}
               </span>
             </div>
             <button
-              onClick={() => fetchStudents('next')}
-              disabled={currentPage >= Math.ceil(totalStudents / studentsPerPage) || loading}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages || isLoading}
               className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               <ChevronRight size={20} />

@@ -41,14 +41,32 @@ import { Skeleton } from '../components/Skeleton';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+import { useStudentProfile, useStudentHealthRecords, useStudentActivities } from '../lib/queries';
+
+import { LoginPrompt } from '../components/LoginPrompt';
+
 export default function HealthPassport() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [student, setStudent] = useState<any>(null);
-  const [healthHistory, setHealthHistory] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const targetId = id || user?.id || '';
+  
+  if (!user && !id) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="Digital Health Passport"
+          description="Access your official student health record, BMI history, and activity logs. Login to view your passport."
+        />
+      </div>
+    );
+  }
+
+  const { data: student, isLoading: studentLoading } = useStudentProfile(targetId);
+  const { data: healthHistory, isLoading: hrLoading } = useStudentHealthRecords(targetId);
+  const { data: activities, isLoading: actLoading } = useStudentActivities(targetId);
+  
+  const loading = studentLoading || hrLoading || actLoading;
   const componentRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -67,47 +85,6 @@ export default function HealthPassport() {
     pdf.addImage(imgData, 'PNG', 0, 0, 150, 87);
     pdf.save(`Health_Passport_${student?.fullName || 'Student'}.pdf`);
   };
-
-  useEffect(() => {
-    const targetId = id || user?.id;
-    if (!targetId) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    let unsubscribes: (() => void)[] = [];
-
-    // Real-time student profile listener
-    const unsubscribeStudent = onSnapshot(doc(db, 'users', targetId), (docSnap) => {
-      if (docSnap.exists()) {
-        setStudent({ id: docSnap.id, ...docSnap.data() });
-      } else {
-        setStudent(null);
-      }
-    });
-    unsubscribes.push(unsubscribeStudent);
-
-    // Real-time health records listener
-    const hrQuery = query(collection(db, 'health_records'), where('userId', '==', targetId), orderBy('date', 'desc'));
-    const unsubscribeHR = onSnapshot(hrQuery, (snapshot) => {
-      setHealthHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-    unsubscribes.push(unsubscribeHR);
-
-    // Real-time activities listener
-    const actQuery = query(collection(db, 'activities'), where('userId', '==', targetId), orderBy('date', 'desc'));
-    const unsubscribeAct = onSnapshot(actQuery, (snapshot) => {
-      setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    }, (err) => {
-      handleFirestoreError(err, OperationType.GET, 'activities');
-      setLoading(false);
-    });
-    unsubscribes.push(unsubscribeAct);
-
-    return () => unsubscribes.forEach(unsub => unsub());
-  }, [id, user?.id]);
 
   if (loading) return (
     <div className="space-y-8 pb-12 px-4">

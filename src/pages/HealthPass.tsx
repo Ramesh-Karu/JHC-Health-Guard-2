@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { db, storage, handleFirestoreError, OperationType, doc, updateDoc, ref, uploadBytes, getDownloadURL } from '../firebase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   User as UserIcon, 
   Mail, 
@@ -327,7 +327,8 @@ export default function HealthPass() {
                 <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
                   <h4 className="text-sm font-bold text-blue-900 dark:text-blue-400 mb-2">Health Privacy Note</h4>
                   <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                    Your health information is securely stored and only accessible by authorized school medical staff and administrators. You can update your personal details, but medical records are managed by the school clinic.
+                    Your health information is securely stored and only accessible by authorized school medical staff and administrators. 
+                    Read our <Link to="/privacy-security" className="underline font-bold hover:text-blue-800 dark:hover:text-blue-200">Privacy & Security Policy</Link> to learn more.
                   </p>
                 </div>
               </div>

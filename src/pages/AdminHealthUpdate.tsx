@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment, getDoc } from '../firebase';
 import { Search, Save, User, FileUp } from 'lucide-react';
 import Papa from 'papaparse';
 import Toast from '../components/Toast';
+import { CACHE_KEYS } from '../lib/queries';
 
 export default function AdminHealthUpdate() {
+  const queryClient = useQueryClient();
   const [indexNumber, setIndexNumber] = useState('');
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -98,6 +101,7 @@ export default function AdminHealthUpdate() {
         });
       }
 
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.STUDENT_HEALTH_RECORDS(student.id) });
       setToast({ message: `Health data updated successfully! Awarded ${pointsAwarded} points.`, type: 'success' });
       setFormData({ height: '', weight: '', hip: '', waist: '', gripStrength: '' });
       setStudent(null);
@@ -116,13 +120,15 @@ export default function AdminHealthUpdate() {
     Papa.parse(file, {
       header: true,
       complete: async (results) => {
+        // Fetch all students once
+        const studentsSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
+        const studentMap = new Map(studentsSnapshot.docs.map(doc => [doc.data().indexNumber, doc.id]));
+
         for (const row of results.data as any[]) {
           if (row.indexNumber && row.height && row.weight) {
             try {
-              const q = query(collection(db, 'users'), where('indexNumber', '==', row.indexNumber));
-              const snapshot = await getDocs(q);
-              if (!snapshot.empty) {
-                const studentId = snapshot.docs[0].id;
+              const studentId = studentMap.get(row.indexNumber);
+              if (studentId) {
                 const height = parseFloat(row.height);
                 const weight = parseFloat(row.weight);
                 const hip = parseFloat(row.hip || 0);
@@ -165,6 +171,7 @@ export default function AdminHealthUpdate() {
             }
           }
         }
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_HEALTH_RECORDS });
         setToast({ message: 'CSV import completed successfully!', type: 'success' });
       }
     });

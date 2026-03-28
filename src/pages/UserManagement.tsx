@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { db, auth, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, setDoc, deleteDoc, updateDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch, orderBy, limit, startAfter, getCountFromServer } from '../firebase';
-import { Search, Plus, Trash2, FileDown, FileUp, X, UserPlus, Edit2 } from 'lucide-react';
+import { db, auth, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, setDoc, deleteDoc, updateDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch, orderBy, limit, startAfter, getCountFromServer, increment } from '../firebase';
+import { Search, Plus, Trash2, FileDown, FileUp, X, UserPlus, Edit2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../App';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { User } from '../types';
 import Toast from '../components/Toast';
+import { useAllUsers, CACHE_KEYS } from '../lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: allUsers = [], isLoading: loading, refetch } = useAllUsers();
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyLazy, setShowOnlyLazy] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,10 +21,6 @@ export default function UserManagement() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Pagination States
-  const [lastDoc, setLastDoc] = useState<any>(null);
-  const [firstDoc, setFirstDoc] = useState<any>(null);
-  const [pageStack, setPageStack] = useState<any[]>([]);
-  const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 20;
 
@@ -40,146 +38,36 @@ export default function UserManagement() {
     role: 'student'
   });
 
-  const fetchUsers = async (direction: 'next' | 'prev' | 'initial' = 'initial') => {
-    setLoading(true);
-    try {
-      const usersCol = collection(db, 'users');
-      
-      // Get total count on initial load
-      if (direction === 'initial') {
-        const countSnapshot = await getCountFromServer(usersCol);
-        setTotalUsers(countSnapshot.data().count);
-        setPageStack([]);
-      }
+  const filteredUsers = useMemo(() => {
+    let result = allUsers;
 
-      let q;
-      if (searchTerm) {
-        // Prefix search for fullName
-        q = query(
-          usersCol, 
-          where('fullName', '>=', searchTerm),
-          where('fullName', '<=', searchTerm + '\uf8ff'),
-          limit(usersPerPage)
-        );
-      } else if (showOnlyLazy) {
-        q = query(
-          usersCol,
-          where('authCreated', '==', false),
-          orderBy('fullName'),
-          limit(usersPerPage)
-        );
-      } else {
-        q = query(usersCol, orderBy('fullName'), limit(usersPerPage));
-      }
-
-      if (direction === 'next' && lastDoc) {
-        if (searchTerm) {
-          q = query(
-            usersCol,
-            where('fullName', '>=', searchTerm),
-            where('fullName', '<=', searchTerm + '\uf8ff'),
-            startAfter(lastDoc),
-            limit(usersPerPage)
-          );
-        } else if (showOnlyLazy) {
-          q = query(
-            usersCol,
-            where('authCreated', '==', false),
-            orderBy('fullName'),
-            startAfter(lastDoc),
-            limit(usersPerPage)
-          );
-        } else {
-          q = query(usersCol, orderBy('fullName'), startAfter(lastDoc), limit(usersPerPage));
-        }
-      } else if (direction === 'prev' && pageStack.length > 1) {
-        const prevDoc = pageStack[pageStack.length - 2];
-        if (searchTerm) {
-          q = query(
-            usersCol,
-            where('fullName', '>=', searchTerm),
-            where('fullName', '<=', searchTerm + '\uf8ff'),
-            startAfter(prevDoc),
-            limit(usersPerPage)
-          );
-        } else if (showOnlyLazy) {
-          q = query(
-            usersCol,
-            where('authCreated', '==', false),
-            orderBy('fullName'),
-            startAfter(prevDoc),
-            limit(usersPerPage)
-          );
-        } else {
-          q = query(usersCol, orderBy('fullName'), startAfter(prevDoc), limit(usersPerPage));
-        }
-        // If going back to first page
-        if (pageStack.length === 2) {
-           if (searchTerm) {
-            q = query(
-              usersCol,
-              where('fullName', '>=', searchTerm),
-              where('fullName', '<=', searchTerm + '\uf8ff'),
-              limit(usersPerPage)
-            );
-          } else if (showOnlyLazy) {
-            q = query(
-              usersCol,
-              where('authCreated', '==', false),
-              orderBy('fullName'),
-              limit(usersPerPage)
-            );
-          } else {
-            q = query(usersCol, orderBy('fullName'), limit(usersPerPage));
-          }
-        }
-      }
-
-      if (!q) return; // Safety check for TS
-
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as object) }));
-      setUsers(data as any);
-      
-      if (snapshot.docs.length > 0) {
-        setFirstDoc(snapshot.docs[0]);
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        
-        if (direction === 'next') {
-          setPageStack(prev => [...prev, snapshot.docs[0]]);
-          setCurrentPage(prev => prev + 1);
-        } else if (direction === 'prev') {
-          setPageStack(prev => prev.slice(0, -1));
-          setCurrentPage(prev => prev - 1);
-        } else {
-          setPageStack([snapshot.docs[0]]);
-          setCurrentPage(1);
-        }
-      } else {
-        setUsers([]);
-        setLastDoc(null);
-      }
-    } catch (err) {
-      console.error('Error fetching users:', err);
-      handleFirestoreError(err, OperationType.LIST, 'users');
-    } finally {
-      setLoading(false);
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(u => 
+        u.fullName?.toLowerCase().includes(term) || 
+        u.username?.toLowerCase().includes(term) || 
+        u.email?.toLowerCase().includes(term)
+      );
     }
-  };
 
-  useEffect(() => {
-    fetchUsers('initial');
-  }, [showOnlyLazy]);
+    if (showOnlyLazy) {
+      result = result.filter(u => u.authCreated === false);
+    }
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUsers('initial');
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+    return result.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+  }, [allUsers, searchTerm, showOnlyLazy]);
 
+  const totalUsers = filteredUsers.length;
   const totalPages = Math.ceil(totalUsers / usersPerPage);
+  
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * usersPerPage;
+    return filteredUsers.slice(start, start + usersPerPage);
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, showOnlyLazy]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,6 +92,13 @@ export default function UserManagement() {
         profileCompleted: false,
         createdAt: new Date().toISOString()
       });
+
+      // Update global stats
+      const statsRef = doc(db, 'metadata', 'global_stats');
+      await setDoc(statsRef, {
+        totalUsers: increment(1),
+        [`roleCounts.${formData.role}`]: increment(1)
+      }, { merge: true });
       
       console.log('User saved to Firestore');
       await deleteApp(tempApp);
@@ -211,7 +106,11 @@ export default function UserManagement() {
       setIsModalOpen(false);
       setFormData({ email: '', username: '', password: '', fullName: '', role: 'student' });
       setToast({ message: 'User created successfully', type: 'success' });
-      fetchUsers('initial');
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
+      refetch();
     } catch (err: any) {
       console.error("Error creating user:", err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -239,7 +138,11 @@ export default function UserManagement() {
       setIsEditModalOpen(false);
       setEditingUser(null);
       setToast({ message: 'User updated successfully', type: 'success' });
-      fetchUsers('initial');
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
+      refetch();
     } catch (err) {
       console.error('Error updating user:', err);
       setToast({ message: 'Error updating user', type: 'error' });
@@ -248,11 +151,26 @@ export default function UserManagement() {
   };
 
   const handleDeleteUser = async (userId: string) => {
+    const userToDelete = allUsers.find(u => u.id === userId);
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await deleteDoc(doc(db, 'users', userId));
+        
+        // Update global stats
+        if (userToDelete) {
+          const statsRef = doc(db, 'metadata', 'global_stats');
+          await setDoc(statsRef, {
+            totalUsers: increment(-1),
+            [`roleCounts.${userToDelete.role}`]: increment(-1)
+          }, { merge: true });
+        }
+
         setToast({ message: 'User deleted successfully', type: 'success' });
-        fetchUsers('initial');
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
+        refetch();
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setToast({ message: `Error deleting user: ${errorMessage}`, type: 'error' });
@@ -262,7 +180,7 @@ export default function UserManagement() {
   };
 
   const handleDeleteAllStudents = async () => {
-    const students = users.filter(u => u.role === 'student');
+    const students = allUsers.filter(u => u.role === 'student');
     if (students.length === 0) {
       setToast({ message: 'No students found to delete', type: 'error' });
       return;
@@ -282,12 +200,21 @@ export default function UserManagement() {
             batch.delete(doc(db, 'users', student.id));
           });
           
+          // Update global stats in the same batch
+          const statsRef = doc(db, 'metadata', 'global_stats');
+          batch.set(statsRef, {
+            totalUsers: increment(-currentBatch.length),
+            'roleCounts.student': increment(-currentBatch.length)
+          }, { merge: true });
+
           await batch.commit();
           setImportProgress(Math.round(((i + currentBatch.length) / students.length) * 100));
         }
         
         setToast({ message: `Successfully deleted ${students.length} students`, type: 'success' });
-        fetchUsers('initial');
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
       } catch (err) {
         console.error('Error deleting all students:', err);
         setToast({ message: 'Error deleting students. Some may not have been deleted.', type: 'error' });
@@ -299,7 +226,7 @@ export default function UserManagement() {
   };
 
   const handleExportCSV = () => {
-    const csv = Papa.unparse(users);
+    const csv = Papa.unparse(allUsers);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -391,12 +318,13 @@ export default function UserManagement() {
             const userRef = doc(collection(db, 'users'));
             const systemEmail = `${normalizedUsername}@school.internal`;
             
+            const role = row.role || 'student';
             batch.set(userRef, {
               email: row.email || '',
               username: normalizedUsername,
               systemEmail: systemEmail,
               fullName: row.fullName,
-              role: row.role || 'student',
+              role: role,
               dob: row.dob || '',
               authCreated: false,
               tempPassword: row.password,
@@ -404,6 +332,13 @@ export default function UserManagement() {
               profileCompleted: false,
               createdAt: new Date().toISOString()
             });
+
+            // Update global stats in the same batch
+            const statsRef = doc(db, 'metadata', 'global_stats');
+            batch.set(statsRef, {
+              totalUsers: increment(1),
+              [`roleCounts.${role}`]: increment(1)
+            }, { merge: true });
             
             existingUsernames.add(normalizedUsername);
             added++;
@@ -430,7 +365,11 @@ export default function UserManagement() {
     
     setIsImporting(false);
     setIsImportPreviewOpen(false);
-    fetchUsers('initial');
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
+    refetch();
     
     let message = `Import finished. ${added} added to database.`;
     if (skipped > 0) message += ` ${skipped} skipped (duplicates).`;
@@ -476,6 +415,11 @@ export default function UserManagement() {
           passwordChanged: false,
           tempPassword: '123456'
         });
+        
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
         
         setToast({ message: `Account reset for ${u.username}. Password: 123456`, type: 'success' });
       } catch (err: any) {
@@ -537,7 +481,7 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-            {users.map((u) => (
+            {paginatedUsers.map((u) => (
               <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                 <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
                   {u.fullName}
@@ -555,7 +499,7 @@ export default function UserManagement() {
                 </td>
               </tr>
             ))}
-            {users.length === 0 && !loading && (
+            {paginatedUsers.length === 0 && !loading && (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400 italic">
                   No users found.
@@ -570,20 +514,22 @@ export default function UserManagement() {
         <div className="flex items-center justify-center gap-2 mt-4">
           <button 
             disabled={currentPage === 1 || loading}
-            onClick={() => fetchUsers('prev')}
-            className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-50 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-50 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
           >
+            <ChevronLeft size={18} />
             Previous
           </button>
           <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-            Page {currentPage} {totalUsers > 0 && `of ${totalPages}`}
+            Page {currentPage} of {totalPages}
           </span>
           <button 
-            disabled={users.length < usersPerPage || loading}
-            onClick={() => fetchUsers('next')}
-            className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-50 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            disabled={currentPage === totalPages || loading}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-50 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
           >
             Next
+            <ChevronRight size={18} />
           </button>
         </div>
       )}

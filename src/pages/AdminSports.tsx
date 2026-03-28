@@ -5,12 +5,15 @@ import { Plus, Trash2, Users, UserPlus, Award } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
 
-import { useSports } from '../lib/queries';
+import { useSports, useCoaches, useAllActivities } from '../lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AdminSports() {
-  const { data: sports = [], isLoading, refetch } = useSports();
-  const [coaches, setCoaches] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: sportsRaw = [], isLoading: sportsLoading, refetch } = useSports();
+  const { data: coaches = [], isLoading: coachesLoading } = useCoaches();
+  const { data: allActivities = [], isLoading: activitiesLoading } = useAllActivities();
+  
   const [showAddSportModal, setShowAddSportModal] = useState(false);
   const [showAddCoachModal, setShowAddCoachModal] = useState(false);
   const [newSport, setNewSport] = useState('');
@@ -24,23 +27,13 @@ export default function AdminSports() {
     sportsManaged: []
   });
 
-  useEffect(() => {
-    fetchCoaches();
-  }, []);
+  const loading = sportsLoading || coachesLoading || activitiesLoading;
 
-  const fetchCoaches = async () => {
-    try {
-      // Fetch Coaches
-      const coachQuery = query(collection(db, 'users'), where('role', '==', 'coach'));
-      const coachSnapshot = await getDocs(coachQuery);
-      const coachData = coachSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCoaches(coachData as any);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'coaches');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Calculate student counts client-side
+  const sports = sportsRaw.map((s: any) => ({
+    ...s,
+    studentCount: allActivities.filter((a: any) => a.name === s.name).length
+  }));
 
   const addSport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +67,7 @@ export default function AdminSports() {
       
       await deleteApp(tempApp);
       
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
       setShowAddCoachModal(false);
       setToast({ message: 'Coach added successfully', type: 'success' });
       setNewCoach({ fullName: '', email: '', password: '', phone: '', indexNumber: '', sportsManaged: [] });

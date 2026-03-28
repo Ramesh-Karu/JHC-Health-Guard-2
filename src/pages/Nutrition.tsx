@@ -6,6 +6,9 @@ import { FOOD_CATEGORIES, FOOD_ITEMS } from '../constants';
 import { useAuth } from '../App';
 import { analyzeStudentHealth, AIAnalysisResult } from '../services/aiService';
 
+import { useStudentHealthRecords, useStudentActivities } from '../lib/queries';
+import { LoginPrompt } from '../components/LoginPrompt';
+
 export default function Nutrition() {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -14,41 +17,28 @@ export default function Nutrition() {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAI, setLoadingAI] = useState(false);
 
+  const { data: healthRecords, isLoading: hrLoading } = useStudentHealthRecords(user?.role === 'student' ? user?.id : '');
+  const { data: activities, isLoading: actLoading } = useStudentActivities(user?.role === 'student' ? user?.id : '');
+
   useEffect(() => {
     const fetchAIRecommendations = async () => {
-      if (user?.role === 'student') {
+      if (user?.role === 'student' && !hrLoading && !actLoading) {
         setLoadingAI(true);
         try {
-          const healthQ = query(
-            collection(db, 'health_records'),
-            where('userId', '==', user.id),
-            orderBy('date', 'desc')
-          );
-          const activityQ = query(
-            collection(db, 'activities'),
-            where('userId', '==', user.id),
-            orderBy('date', 'desc')
-          );
+          const history = healthRecords || [];
+          const acts = activities || [];
 
-          const [healthSnapshot, activitySnapshot] = await Promise.all([
-            getDocs(healthQ),
-            getDocs(activityQ)
-          ]);
-
-          const history = healthSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          const activities = activitySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          const analysis = await analyzeStudentHealth(user, history, activities);
+          const analysis = await analyzeStudentHealth(user, history, acts);
           setAiAnalysis(analysis);
         } catch (err) {
-          handleFirestoreError(err, OperationType.GET, 'health_records/activities');
+          console.error("Error generating AI analysis:", err);
         } finally {
           setLoadingAI(false);
         }
       }
     };
     fetchAIRecommendations();
-  }, [user]);
+  }, [user, healthRecords, hrLoading, activities, actLoading]);
 
   const filteredFoods = FOOD_ITEMS.filter(food => {
     const matchesCategory = selectedCategory === 'All' || food.category === selectedCategory;
@@ -56,8 +46,20 @@ export default function Nutrition() {
     return matchesCategory && matchesSearch;
   });
 
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="Personalized Nutrition"
+          description="Access AI-powered personalized food suggestions based on your health records. Login to explore your nutrition plan."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10">
+      
       {/* AI Recommendations */}
       {user?.role === 'student' && (
         <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[40px] p-8 md:p-12 text-white shadow-2xl shadow-blue-200 relative overflow-hidden">

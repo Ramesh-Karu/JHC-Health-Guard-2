@@ -3,70 +3,22 @@ import { motion } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs } from '../firebase';
 import { TrendingUp, Activity, Users } from 'lucide-react';
 import { useAuth } from '../App';
+import { useTeacherDashboard } from '../lib/queries';
 
 export default function TeacherAnalytics() {
   const { user } = useAuth();
+  const { data: teacherStats, isLoading: teacherLoading } = useTeacherDashboard(user?.class || '', user?.division || '');
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      if (!user) return;
-      try {
-        // Fetch students in teacher's class
-        const studentsQ = query(collection(db, 'users'), where('role', '==', 'student'));
-        const studentsSnapshot = await getDocs(studentsQ);
-        const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const studentIds = students.map(s => s.id);
-
-        let bmiStats: any[] = [];
-        let activityStats: any[] = [];
-
-        if (studentIds.length > 0) {
-          // Fetch health records for these students
-          // Note: Firestore 'in' queries are limited to 10 items. For a real app with >10 students,
-          // you'd need to chunk the queries or fetch all and filter client-side.
-          // For simplicity here, we'll fetch all and filter.
-          const healthSnapshot = await getDocs(collection(db, 'health_records'));
-          const healthRecords = healthSnapshot.docs
-            .map(doc => doc.data())
-            .filter(record => studentIds.includes(record.userId));
-
-          const categories = healthRecords.reduce((acc: any, curr: any) => {
-            acc[curr.category] = (acc[curr.category] || 0) + 1;
-            return acc;
-          }, {});
-
-          bmiStats = Object.entries(categories).map(([category, count]) => ({ category, count }));
-
-          // Fetch activities
-          const activitySnapshot = await getDocs(collection(db, 'activities'));
-          const activities = activitySnapshot.docs
-            .map(doc => doc.data())
-            .filter(activity => studentIds.includes(activity.userId));
-
-          const types = activities.reduce((acc: any, curr: any) => {
-            acc[curr.type] = (acc[curr.type] || 0) + 1;
-            return acc;
-          }, {});
-
-          activityStats = Object.entries(types).map(([type, count]) => ({ type, count }));
-        }
-
-        setStats({
-          totalStudents: students.length,
-          bmiStats,
-          activityStats
-        });
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, 'analytics');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalytics();
-  }, [user]);
+    if (!user) return;
+    
+    if (!teacherLoading && teacherStats) {
+      setStats(teacherStats);
+      setLoading(false);
+    }
+  }, [user, teacherStats, teacherLoading]);
 
   if (loading) return <div className="p-8">Loading...</div>;
 

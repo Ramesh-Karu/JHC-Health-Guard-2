@@ -12,7 +12,8 @@ import {
 import { 
   getFirestore, 
   initializeFirestore,
-  memoryLocalCache,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   collection, 
   doc, 
   getDoc, 
@@ -31,7 +32,13 @@ import {
   writeBatch,
   getDocFromServer,
   getCountFromServer,
-  serverTimestamp
+  serverTimestamp,
+  loadBundle,
+  namedQuery,
+  enableNetwork,
+  disableNetwork,
+  getDocsFromCache,
+  getDocFromCache
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -47,10 +54,11 @@ try {
   if (getApps().length === 0) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    // Use initializeFirestore with memoryLocalCache to avoid "Unexpected state (ID: b815)" error
-    // which is often related to persistent storage issues in certain environments.
+    // Use initializeFirestore with persistentLocalCache to enable offline data access
     db = initializeFirestore(app, {
-      localCache: memoryLocalCache()
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
     }, firebaseConfig.firestoreDatabaseId);
     storage = getStorage(app);
   } else {
@@ -60,7 +68,9 @@ try {
       db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
     } catch (e) {
       db = initializeFirestore(app, {
-        localCache: memoryLocalCache()
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        })
       }, firebaseConfig.firestoreDatabaseId);
     }
     storage = getStorage(app);
@@ -103,6 +113,8 @@ export {
   writeBatch,
   getCountFromServer,
   serverTimestamp,
+  loadBundle,
+  namedQuery,
   ref,
   uploadBytes,
   getDownloadURL,
@@ -116,7 +128,11 @@ export {
   initializeApp,
   deleteApp,
   getAuth,
-  firebaseConfig
+  firebaseConfig,
+  enableNetwork,
+  disableNetwork,
+  getDocsFromCache,
+  getDocFromCache
 };
 
 export enum OperationType {
@@ -148,8 +164,17 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const isQuotaError = errorMessage.includes('Quota exceeded') || errorMessage.includes('quota');
+  
+  // Auto-disable network if quota is exceeded to save remaining "balance"
+  if (isQuotaError) {
+    console.warn('Firebase Quota Exceeded. Switching to offline mode.');
+    disableNetwork(db).catch(console.error);
+  }
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessage,
     authInfo: {
       userId: auth?.currentUser?.uid,
       email: auth?.currentUser?.email,
@@ -166,7 +191,13 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  
+  if (isQuotaError) {
+    console.warn('Firestore Quota Error: ', errorMessage);
+  } else {
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+  }
+  
   throw new Error(JSON.stringify(errInfo));
 }
 

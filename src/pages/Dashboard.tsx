@@ -17,7 +17,10 @@ import {
   Ruler,
   CheckCircle2,
   Zap,
-  MessageSquare
+  MessageSquare,
+  Wifi,
+  WifiOff,
+  RefreshCw
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -37,6 +40,8 @@ import {
 } from 'recharts';
 import { useAuth } from '../App';
 import { HealthRecord, Activity as ActivityType } from '../types';
+import { useQueryClient } from '@tanstack/react-query';
+import { CACHE_KEYS } from '../lib/queries';
 
 const StatCard = ({ icon: Icon, label, value, trend, trendValue, color }: any) => (
   <motion.div 
@@ -66,8 +71,16 @@ function cn(...classes: any[]) {
   return classes.filter(Boolean).join(' ');
 }
 
+import { useAdminDashboard, useStudentHealthRecords, useStudentActivities, useAnnouncements } from '../lib/queries';
+
 export default function Dashboard() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: adminAnalytics, isLoading: adminLoading, isRefetching: adminRefetching } = useAdminDashboard();
+  const { data: studentHealthRecords, isLoading: hrLoading } = useStudentHealthRecords(user?.role === 'student' ? user?.id : '');
+  const { data: studentActivities, isLoading: actLoading } = useStudentActivities(user?.role === 'student' ? user?.id : '');
+  const { data: studentAnnouncements, isLoading: annLoading } = useAnnouncements(user?.role === 'student' ? user?.class || '' : '');
+
   const [analytics, setAnalytics] = useState<any>(null);
   const [healthHistory, setHealthHistory] = useState<HealthRecord[]>([]);
   const [activities, setActivities] = useState<ActivityType[]>([]);
@@ -75,84 +88,30 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-
-    setLoading(true);
-    let unsubscribes: (() => void)[] = [];
-
-    if (user.role === 'admin') {
-      // Admin real-time listeners
-      const usersUnsubscribe = onSnapshot(query(collection(db, 'users'), where('role', '==', 'student')), (snapshot) => {
-        const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Fetch health records and activities (could also be snapshots if needed, but users is the main driver)
-        getDocs(collection(db, 'health_records')).then(hrSnapshot => {
-          getDocs(collection(db, 'activities')).then(actSnapshot => {
-            const allHealthRecords = hrSnapshot.docs.map(doc => doc.data());
-            const allActivities = actSnapshot.docs.map(doc => doc.data());
-
-            // Calculate analytics
-            const totalStudents = students.length;
-            const bmiCategories: Record<string, number> = {};
-            allHealthRecords.forEach((record: any) => {
-              if (record.category) {
-                bmiCategories[record.category] = (bmiCategories[record.category] || 0) + 1;
-              }
-            });
-            const bmiStats = Object.entries(bmiCategories).map(([category, count]) => ({ category, count }));
-            
-            const classBmiMap: Record<string, { total: number, count: number }> = {};
-            students.forEach((student: any) => {
-              if (student.class) {
-                const studentRecords = allHealthRecords.filter((r: any) => r.userId === student.id);
-                if (studentRecords.length > 0) {
-                  const latestRecord: any = studentRecords.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-                  if (latestRecord.bmi) {
-                    if (!classBmiMap[student.class]) classBmiMap[student.class] = { total: 0, count: 0 };
-                    classBmiMap[student.class].total += latestRecord.bmi;
-                    classBmiMap[student.class].count++;
-                  }
-                }
-              }
-            });
-            const classStats = Object.entries(classBmiMap).map(([className, data]) => ({
-              class: className,
-              avgBmi: data.total / data.count
-            }));
-
-            setAnalytics({
-              totalStudents,
-              bmiStats,
-              classStats,
-              activityStats: [{ type: 'sport', count: allActivities.filter((a: any) => a.type === 'sport').length }]
-            });
-            setLoading(false);
-          });
-        });
-      });
-      unsubscribes.push(usersUnsubscribe);
-    } else {
-      // Student real-time listeners
-      const hrUnsubscribe = onSnapshot(query(collection(db, 'health_records'), where('userId', '==', user.id), orderBy('date', 'desc')), (snapshot) => {
-        setHealthHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as HealthRecord[]);
-      });
-      const actUnsubscribe = onSnapshot(query(collection(db, 'activities'), where('userId', '==', user.id), orderBy('date', 'desc')), (snapshot) => {
-        setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ActivityType[]);
-      });
-      
-      unsubscribes.push(hrUnsubscribe, actUnsubscribe);
-
-      if (user.class) {
-        const annUnsubscribe = onSnapshot(query(collection(db, 'announcements'), where('class', '==', user.class)), (snapshot) => {
-          setAnnouncements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        });
-        unsubscribes.push(annUnsubscribe);
-      }
+    // If no user, we still show the dashboard but with empty data
+    if (!user) {
+      setAnalytics(null);
+      setHealthHistory([]);
+      setActivities([]);
+      setAnnouncements([]);
       setLoading(false);
+      return;
     }
 
-    return () => unsubscribes.forEach(unsub => unsub());
-  }, [user]);
+    if (user.role === 'admin') {
+      if (!adminLoading && adminAnalytics) {
+        setAnalytics(adminAnalytics);
+        setLoading(false);
+      }
+    } else {
+      if (!hrLoading && !actLoading && !annLoading) {
+        setHealthHistory(studentHealthRecords || []);
+        setActivities(studentActivities || []);
+        setAnnouncements(studentAnnouncements || []);
+        setLoading(false);
+      }
+    }
+  }, [user, adminAnalytics, adminLoading, studentHealthRecords, hrLoading, studentActivities, actLoading, studentAnnouncements, annLoading]);
 
   if (loading) return (
     <div className="space-y-8 px-4">
@@ -170,11 +129,25 @@ export default function Dashboard() {
   if (user?.role === 'admin') {
     const COLORS = ['#3b82f6', '#6366f1', '#f59e0b', '#ef4444'];
     
+    const handleRefresh = () => {
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
+    };
+
     return (
       <div className="space-y-8 px-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admin Overview</h1>
-          <p className="text-slate-500 dark:text-slate-400">Real-time school health analytics</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admin Overview</h1>
+            <p className="text-slate-500 dark:text-slate-400">Real-time school health analytics</p>
+          </div>
+          <button 
+            onClick={handleRefresh}
+            disabled={adminRefetching}
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={18} className={adminRefetching ? "animate-spin" : ""} />
+            {adminRefetching ? "Refreshing..." : "Refresh Data"}
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -282,7 +255,7 @@ export default function Dashboard() {
             <Heart className="text-white" size={18} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Hello, {user?.fullName}! 👋</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Hello, {user?.fullName || 'Guest'}! 👋</h1>
             <p className="text-slate-500 dark:text-slate-400">Here's your health summary for today.</p>
           </div>
         </div>

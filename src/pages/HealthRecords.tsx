@@ -27,30 +27,27 @@ import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 import { HealthRecord } from '../types';
 
+import { useStudentHealthRecords } from '../lib/queries';
+
+import { LoginPrompt } from '../components/LoginPrompt';
+
 export default function HealthRecords() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [records, setRecords] = useState<HealthRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: records = [], isLoading: loading } = useStudentHealthRecords(user?.id || '');
 
-  useEffect(() => {
-    const fetchRecords = async () => {
-      try {
-        if (!user?.id) return;
-        const q = query(collection(db, 'health_records'), where('userId', '==', user.id), orderBy('date', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as HealthRecord[];
-        setRecords(data);
-      } catch (err) {
-        handleFirestoreError(err, OperationType.GET, 'health_records');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRecords();
-  }, [user]);
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="Health Records"
+          description="Track your BMI, growth, and health trends over time. Login to view your personal health history."
+        />
+      </div>
+    );
+  }
 
-  const chartData = [...records].reverse().map(r => ({
+  const chartData = [...(records || [])].reverse().map(r => ({
     date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
     bmi: r.bmi,
     weight: r.weight,
@@ -213,7 +210,9 @@ export default function HealthRecords() {
             </div>
           ))}
           {records.length === 0 && (
-            <div className="p-10 text-center text-slate-400 dark:text-slate-500">No health records found.</div>
+            <div className="p-10 text-center text-slate-400 dark:text-slate-500">
+              {!user ? 'Login to view your health records' : 'No health records found.'}
+            </div>
           )}
         </div>
       </div>

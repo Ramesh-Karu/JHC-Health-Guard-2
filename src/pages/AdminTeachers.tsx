@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch } from '../firebase';
+import { useQueryClient } from '@tanstack/react-query';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, initializeApp, deleteApp, getAuth, createUserWithEmailAndPassword, firebaseConfig, signOut, writeBatch, increment } from '../firebase';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Edit2, Trash2, UserPlus, FileDown, FileUp, X } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
+import { useTeachers, CACHE_KEYS } from '../lib/queries';
 
 export default function AdminTeachers() {
-  const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: teachers = [], isLoading: loading, refetch: fetchTeachers } = useTeachers();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
@@ -30,23 +32,6 @@ export default function AdminTeachers() {
     phone: '',
     indexNumber: ''
   });
-
-  useEffect(() => {
-    fetchTeachers();
-  }, []);
-
-  const fetchTeachers = async () => {
-    try {
-      const q = query(collection(db, 'users'), where('role', '==', 'teacher'));
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTeachers(data as any);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'users');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,9 +60,18 @@ export default function AdminTeachers() {
           createdAt: new Date().toISOString()
         });
         
+        // Update global stats
+        const statsRef = doc(db, 'metadata', 'global_stats');
+        await setDoc(statsRef, {
+          totalUsers: increment(1),
+          'roleCounts.teacher': increment(1)
+        }, { merge: true });
+
         await deleteApp(tempApp);
       }
       
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
       setShowAddModal(false);
       setEditingTeacher(null);
       setToast({ message: editingTeacher ? 'Teacher updated successfully' : 'Teacher added successfully', type: 'success' });
@@ -211,6 +205,13 @@ export default function AdminTeachers() {
               createdAt: new Date().toISOString()
             });
             
+            // Update global stats in the same batch
+            const statsRef = doc(db, 'metadata', 'global_stats');
+            batch.set(statsRef, {
+              totalUsers: increment(1),
+              'roleCounts.teacher': increment(1)
+            }, { merge: true });
+
             existingEmails.add(normalizedEmail);
             added++;
             batchCount++;
@@ -236,6 +237,8 @@ export default function AdminTeachers() {
     
     setIsImporting(false);
     setIsImportPreviewOpen(false);
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+    queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
     fetchTeachers();
     
     let message = `Import finished. ${added} added to database.`;
@@ -247,10 +250,23 @@ export default function AdminTeachers() {
   };
 
   const handleDelete = async (id: string) => {
+    const teacherToDelete = teachers.find((t: any) => t.id === id);
     if (!confirm('Are you sure you want to delete this teacher?')) return;
     
     try {
       await deleteDoc(doc(db, 'users', id));
+      
+      // Update global stats
+      if (teacherToDelete) {
+        const statsRef = doc(db, 'metadata', 'global_stats');
+        await setDoc(statsRef, {
+          totalUsers: increment(-1),
+          'roleCounts.teacher': increment(-1)
+        }, { merge: true });
+      }
+
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
       setToast({ message: 'Teacher deleted successfully', type: 'success' });
       fetchTeachers();
     } catch (error) {

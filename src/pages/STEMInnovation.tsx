@@ -41,6 +41,8 @@ import Papa from 'papaparse';
 
 const COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981'];
 
+import { LoginPrompt } from '../components/LoginPrompt';
+
 export default function STEMInnovation() {
   const { user } = useAuth();
   const [demoMode, setDemoMode] = useState(false);
@@ -50,6 +52,10 @@ export default function STEMInnovation() {
   const [activeDemoStep, setActiveDemoStep] = useState(0);
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const fetchData = async () => {
       try {
         const studentsSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
@@ -184,6 +190,17 @@ export default function STEMInnovation() {
   ];
 
   if (loading) return <div className="flex items-center justify-center h-64">Loading STEM Dashboard...</div>;
+
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4">
+        <LoginPrompt 
+          title="STEM Innovation Mode"
+          description="Access advanced health analytics, research data, and system demonstrations. Login to explore the science behind Health Guard."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 pb-20">

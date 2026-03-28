@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getCountFromServer } from '../firebase';
 import { Plus, Search, Edit2, Trash2, Users } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
 
-import { useClassrooms, useTeachers } from '../lib/queries';
+import { useClassrooms, useTeachers, useAllStudents, CACHE_KEYS } from '../lib/queries';
 
 export default function AdminClassrooms() {
+  const queryClient = useQueryClient();
   const { data: classroomsRaw = [], isLoading: classesLoading, refetch: refetchClasses } = useClassrooms();
   const { data: teachers = [], isLoading: teachersLoading } = useTeachers();
+  const { data: allStudents = [], isLoading: studentsLoading } = useAllStudents();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -22,14 +25,19 @@ export default function AdminClassrooms() {
     teacherId: ''
   });
 
-  const loading = classesLoading || teachersLoading;
+  const loading = classesLoading || teachersLoading || studentsLoading;
 
-  // Map teacher names to classrooms
+  // Map teacher names and calculate student counts client-side
   const classrooms = classroomsRaw.map((c: any) => {
     const teacher = teachers.find((t: any) => t.id === c.teacherId);
+    const studentCount = allStudents.filter((s: any) => 
+      s.class === (c.grade || c.name) && s.division === c.division
+    ).length;
+    
     return {
       ...c,
-      teacherName: teacher ? (teacher as any).fullName : null
+      teacherName: teacher ? (teacher as any).fullName : null,
+      studentCount
     };
   });
 
@@ -43,6 +51,7 @@ export default function AdminClassrooms() {
         await addDoc(collection(db, 'classrooms'), formData);
       }
       
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.CLASSROOMS });
       setShowAddModal(false);
       setEditingClassroom(null);
       setToast({ message: editingClassroom ? 'Classroom updated successfully' : 'Classroom added successfully', type: 'success' });
@@ -58,6 +67,7 @@ export default function AdminClassrooms() {
     
     try {
       await deleteDoc(doc(db, 'classrooms', id));
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.CLASSROOMS });
       setToast({ message: 'Classroom deleted successfully', type: 'success' });
       refetchClasses();
     } catch (error) {
