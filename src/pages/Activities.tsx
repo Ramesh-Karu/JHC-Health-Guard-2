@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, orderBy, doc, updateDoc, increment, onSnapshot, getDoc } from '../firebase';
 import { 
@@ -134,6 +135,26 @@ export default function Activities() {
 
   return (
     <div className="space-y-10">
+      <Helmet>
+        <title>Activities | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Activities",
+              "item": "https://jhchealthguard.online/activities"
+            }]
+          })}
+        </script>
+      </Helmet>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Health & Fitness</h1>

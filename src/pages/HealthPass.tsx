@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { db, storage, handleFirestoreError, OperationType, doc, updateDoc, ref, uploadBytes, getDownloadURL } from '../firebase';
 import { useNavigate, Link } from 'react-router-dom';
@@ -107,6 +108,26 @@ export default function HealthPass() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
+      <Helmet>
+        <title>Health Passport | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Health Passport",
+              "item": "https://jhchealthguard.online/health-passport"
+            }]
+          })}
+        </script>
+      </Helmet>
       {/* Header / Cover */}
       <div className="relative h-48 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl overflow-hidden shadow-lg">
         <div className="absolute inset-0 opacity-20">

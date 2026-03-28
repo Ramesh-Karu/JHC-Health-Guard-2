@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, orderBy } from '../firebase';
 import { 
@@ -210,6 +211,26 @@ export default function AIInsights() {
 
   return (
     <div className="space-y-8">
+      <Helmet>
+        <title>AI Insights | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "AI Insights",
+              "item": "https://jhchealthguard.online/ai-insights"
+            }]
+          })}
+        </script>
+      </Helmet>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Personal AI Health Insights</h1>

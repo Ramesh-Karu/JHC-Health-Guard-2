@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Types
 import BirdToy from './components/BirdToy';
@@ -537,7 +538,8 @@ export default function App() {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <SyncProvider>
           <AuthProvider>
@@ -635,5 +637,6 @@ export default function App() {
       </SyncProvider>
     </ThemeProvider>
   </QueryClientProvider>
+</HelmetProvider>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, orderBy, limit, onSnapshot } from '../firebase';
 import { Skeleton } from '../components/Skeleton';
@@ -135,6 +136,26 @@ export default function Dashboard() {
 
     return (
       <div className="space-y-8 px-4">
+        <Helmet>
+          <title>Dashboard | JHC Health Guard</title>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [{
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://jhchealthguard.online/"
+              },{
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Dashboard",
+                "item": "https://jhchealthguard.online/dashboard"
+              }]
+            })}
+          </script>
+        </Helmet>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admin Overview</h1>

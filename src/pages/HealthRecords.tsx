@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, orderBy } from '../firebase';
 import { 
@@ -58,6 +59,26 @@ export default function HealthRecords() {
 
   return (
     <div className="space-y-8">
+      <Helmet>
+        <title>Health History | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Health History",
+              "item": "https://jhchealthguard.online/health-records"
+            }]
+          })}
+        </script>
+      </Helmet>
       <div className="flex items-center gap-4">
         <button 
           onClick={() => navigate(-1)}

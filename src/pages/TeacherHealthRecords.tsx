@@ -323,7 +323,7 @@ export default function TeacherHealthRecords() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Student</label>
                 <select
                   required
-                  value={formData.userId}
+                  value={formData.userId || ''}
                   onChange={e => setFormData({...formData, userId: e.target.value})}
                   className="w-full p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 >
@@ -340,7 +340,7 @@ export default function TeacherHealthRecords() {
                     type="number"
                     required
                     step="0.1"
-                    value={formData.height}
+                    value={formData.height || ''}
                     onChange={e => setFormData({...formData, height: e.target.value})}
                     className="w-full p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -351,7 +351,7 @@ export default function TeacherHealthRecords() {
                     type="number"
                     required
                     step="0.1"
-                    value={formData.weight}
+                    value={formData.weight || ''}
                     onChange={e => setFormData({...formData, weight: e.target.value})}
                     className="w-full p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -362,7 +362,7 @@ export default function TeacherHealthRecords() {
                 <input
                   type="date"
                   required
-                  value={formData.date}
+                  value={formData.date || ''}
                   onChange={e => setFormData({...formData, date: e.target.value})}
                   className="w-full p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 />
@@ -370,7 +370,7 @@ export default function TeacherHealthRecords() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Notes (Optional)</label>
                 <textarea
-                  value={formData.notes}
+                  value={formData.notes || ''}
                   onChange={e => setFormData({...formData, notes: e.target.value})}
                   className="w-full p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   rows={2}

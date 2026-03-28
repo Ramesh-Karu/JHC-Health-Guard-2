@@ -103,7 +103,7 @@ export default function Modules() {
                   required
                   type="text" 
                   placeholder="e.g. Exercise Tutorials"
-                  value={formData.title}
+                  value={formData.title || ''}
                   onChange={e => setFormData({...formData, title: e.target.value})}
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
@@ -115,7 +115,7 @@ export default function Modules() {
               <div className="relative">
                 <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
                 <select 
-                  value={formData.category}
+                  value={formData.category || ''}
                   onChange={e => setFormData({...formData, category: e.target.value})}
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none text-slate-900 dark:text-white"
                 >
@@ -135,7 +135,7 @@ export default function Modules() {
                   required
                   rows={3}
                   placeholder="Briefly describe what this module covers..."
-                  value={formData.description}
+                  value={formData.description || ''}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
@@ -150,7 +150,7 @@ export default function Modules() {
                   required
                   type="url" 
                   placeholder="https://picsum.photos/..."
-                  value={formData.imageUrl}
+                  value={formData.imageUrl || ''}
                   onChange={e => setFormData({...formData, imageUrl: e.target.value})}
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
@@ -164,7 +164,7 @@ export default function Modules() {
                 <input 
                   type="url" 
                   placeholder="https://youtube.com/..."
-                  value={formData.link}
+                  value={formData.link || ''}
                   onChange={e => setFormData({...formData, link: e.target.value})}
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />

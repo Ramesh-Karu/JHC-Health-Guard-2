@@ -619,7 +619,7 @@ export default function Students() {
                   <input 
                     type="text" 
                     required
-                    value={formData.fullName}
+                    value={formData.fullName || ''}
                     onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -629,7 +629,7 @@ export default function Students() {
                   <input 
                     type="text" 
                     required
-                    value={formData.indexNumber}
+                    value={formData.indexNumber || ''}
                     onChange={(e) => setFormData({...formData, indexNumber: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -649,7 +649,7 @@ export default function Students() {
                     type="text" 
                     required
                     disabled={!!editingStudent}
-                    value={formData.username}
+                    value={formData.username || ''}
                     onChange={(e) => setFormData({...formData, username: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
                   />
@@ -660,7 +660,7 @@ export default function Students() {
                     <input 
                       type="password" 
                       required
-                      value={formData.password}
+                      value={formData.password || ''}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                     />
@@ -671,7 +671,7 @@ export default function Students() {
                   <input 
                     type="date" 
                     required
-                    value={formData.dob}
+                    value={formData.dob || ''}
                     onChange={(e) => setFormData({...formData, dob: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -681,7 +681,7 @@ export default function Students() {
                   <input 
                     type="text" 
                     required
-                    value={formData.class}
+                    value={formData.class || ''}
                     onChange={(e) => setFormData({...formData, class: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -691,7 +691,7 @@ export default function Students() {
                   <input 
                     type="text" 
                     required
-                    value={formData.division}
+                    value={formData.division || ''}
                     onChange={(e) => setFormData({...formData, division: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />

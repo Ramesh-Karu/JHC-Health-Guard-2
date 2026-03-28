@@ -107,10 +107,10 @@ export interface Query {
 
 export interface Notification {
   id: string;
-  userId: string;
+  targetType: 'all' | 'class' | 'user';
+  targetId: string | null;
   message: string;
-  type: string;
-  isRead: boolean;
+  type: 'announcement' | 'health';
   createdAt: string;
 }
 

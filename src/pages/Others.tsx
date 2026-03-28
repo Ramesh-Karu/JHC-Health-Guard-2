@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
@@ -28,12 +29,17 @@ import DeveloperPopup from '../components/DeveloperPopup';
 import QRScanner from '../components/QRScanner';
 import StudentPassportPopup from '../components/StudentPassportPopup';
 import { SyncStatusIndicator } from '../components/SyncManager';
+import { InstallPWAButton } from '../components/InstallPWAButton';
+import NotificationForm from '../components/NotificationForm';
+import NotificationsModal from '../components/NotificationsModal';
 
 export default function Others() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isDeveloperOpen, setIsDeveloperOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isNotificationFormOpen, setIsNotificationFormOpen] = useState(false);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [scannedStudentId, setScannedStudentId] = useState<string | null>(null);
 
   const handleLogout = async () => {
@@ -96,7 +102,8 @@ export default function Others() {
 // ...
       items: [
         { icon: UserCircle, label: 'Health Pass', path: '/health-pass', color: 'bg-blue-500' },
-        { icon: Bell, label: 'Notifications', path: '#', color: 'bg-red-500' },
+        { icon: Bell, label: 'Notifications', path: '#', color: 'bg-red-500', onClick: () => setIsNotificationsModalOpen(true) },
+        ...(user?.role === 'admin' || user?.role === 'teacher' ? [{ icon: Bell, label: 'Create Notification', path: '#', color: 'bg-red-500', onClick: () => setIsNotificationFormOpen(true) }] : []),
         { icon: Apple, label: 'Add to iOS Home Screen', path: '/ios-shortcut', color: 'bg-slate-900' },
         { icon: Shield, label: 'Privacy & Security', path: '/privacy-security', color: 'bg-blue-600' },
         { icon: HelpCircle, label: 'Help & Support', path: '/queries', color: 'bg-emerald-600' },
@@ -107,8 +114,32 @@ export default function Others() {
 
   return (
     <div className="min-h-full bg-[#F2F2F7] dark:bg-slate-900 -m-4 md:-m-8 p-4 md:p-8 pb-24 pt-safe">
+      <Helmet>
+        <title>Settings | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Settings",
+              "item": "https://jhchealthguard.online/others"
+            }]
+          })}
+        </script>
+      </Helmet>
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 px-2">Settings</h1>
+        
+        <div className="px-2 mb-8">
+          <InstallPWAButton />
+        </div>
 
         {/* Admin Section (Admin Only) */}
         {user?.role === 'admin' && (
@@ -258,6 +289,14 @@ export default function Others() {
           onClose={() => setScannedStudentId(null)} 
         />
       )}
+      {isNotificationFormOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="w-full max-w-md relative">
+            <NotificationForm onClose={() => setIsNotificationFormOpen(false)} />
+          </div>
+        </div>
+      )}
+      <NotificationsModal isOpen={isNotificationsModalOpen} onClose={() => setIsNotificationsModalOpen(false)} />
     </div>
   );
 }

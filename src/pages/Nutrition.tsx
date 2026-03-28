@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, orderBy } from '../firebase';
 import { Apple, Search, ChevronRight, Info, Scale, Flame, Heart, X, Brain, Sparkles } from 'lucide-react';
@@ -59,7 +60,26 @@ export default function Nutrition() {
 
   return (
     <div className="space-y-10">
-      
+      <Helmet>
+        <title>Nutrition | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Nutrition",
+              "item": "https://jhchealthguard.online/nutrition"
+            }]
+          })}
+        </script>
+      </Helmet>
       {/* AI Recommendations */}
       {user?.role === 'student' && (
         <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[40px] p-8 md:p-12 text-white shadow-2xl shadow-blue-200 relative overflow-hidden">

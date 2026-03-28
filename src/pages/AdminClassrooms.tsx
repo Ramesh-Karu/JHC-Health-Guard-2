@@ -199,7 +199,7 @@ export default function AdminClassrooms() {
                   type="text"
                   required
                   placeholder="e.g., Grade 8"
-                  value={formData.grade}
+                  value={formData.grade || ''}
                   onChange={e => setFormData({...formData, grade: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
                 />
@@ -210,7 +210,7 @@ export default function AdminClassrooms() {
                   type="text"
                   required
                   placeholder="e.g., A"
-                  value={formData.division}
+                  value={formData.division || ''}
                   onChange={e => setFormData({...formData, division: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium"
                 />
@@ -218,7 +218,7 @@ export default function AdminClassrooms() {
               <div>
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Assign Teacher (Optional)</label>
                 <select
-                  value={formData.teacherId}
+                  value={formData.teacherId || ''}
                   onChange={e => setFormData({...formData, teacherId: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white font-medium appearance-none"
                 >

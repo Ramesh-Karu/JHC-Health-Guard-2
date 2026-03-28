@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, orderBy, getDocs, addDoc, doc, updateDoc, increment, deleteDoc, where, onSnapshot, setDoc, getDoc } from '../firebase';
 import { 
@@ -223,6 +224,26 @@ export default function Community() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Helmet>
+        <title>Community | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Community",
+              "item": "https://jhchealthguard.online/community"
+            }]
+          })}
+        </script>
+      </Helmet>
       {/* Header & Category Filter */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">

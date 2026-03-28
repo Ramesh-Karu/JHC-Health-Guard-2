@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { Trophy, Medal, Star, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../App';
@@ -25,6 +26,26 @@ export default function Leaderboard() {
 
   return (
     <div className="space-y-8 p-4 md:p-8 max-w-7xl mx-auto">
+      <Helmet>
+        <title>Leaderboard | JHC Health Guard</title>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://jhchealthguard.online/"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Leaderboard",
+              "item": "https://jhchealthguard.online/leaderboard"
+            }]
+          })}
+        </script>
+      </Helmet>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">School Leaderboard</h1>

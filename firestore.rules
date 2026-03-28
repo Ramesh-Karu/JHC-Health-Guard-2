@@ -182,7 +182,7 @@ service cloud.firestore {
     }
 
     match /announcements/{announcementId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isTeacherOrAdmin();
       allow update: if isTeacherOrAdmin() || (
         isAuthenticated() && 
@@ -267,21 +267,27 @@ service cloud.firestore {
     }
 
     match /likes/{likeId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
       allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     match /comments/{commentId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isAuthenticated() && isOwner(request.resource.data.authorId) && isValidComment(request.resource.data);
       allow update, delete: if isAdmin() || isOwner(resource.data.authorId);
     }
 
-    match /home_page_data/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.targetType == 'all' ||
+        resource.data.targetType == 'class' ||
+        (resource.data.targetType == 'user' && resource.data.targetId == request.auth.uid) ||
+        isTeacherOrAdmin()
+      );
+      allow create: if isTeacherOrAdmin();
+      allow update, delete: if isAdmin();
     }
   }
 }
