@@ -46,24 +46,24 @@ import { CACHE_KEYS } from '../lib/queries';
 const StatCard = ({ icon: Icon, label, value, trend, trendValue, color }: any) => (
   <motion.div 
     whileHover={{ y: -5 }}
-    className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+    className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
   >
     <div className="flex items-start justify-between mb-4">
-      <div className={cn("p-3 rounded-2xl", color)}>
-        <Icon size={24} className="text-white" />
+      <div className={cn("p-2.5 sm:p-3 rounded-2xl", color)}>
+        <Icon size={20} className="text-white sm:w-6 sm:h-6" />
       </div>
       {trend && (
         <div className={cn(
-          "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold",
+          "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold",
           trend === 'up' ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"
         )}>
-          {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+          {trend === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
           {trendValue}
         </div>
       )}
     </div>
-    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">{label}</p>
-    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{value}</h3>
+    <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium mb-1 truncate" title={label}>{label}</p>
+    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{value}</h3>
   </motion.div>
 );
 
@@ -188,13 +188,13 @@ export default function Dashboard() {
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">BMI Distribution</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                   <Pie
                     data={analytics?.bmiStats || []}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius="60%"
+                    outerRadius="90%"
                     paddingAngle={5}
                     dataKey="count"
                     nameKey="category"
@@ -203,15 +203,25 @@ export default function Dashboard() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '16px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      fontSize: '12px',
+                      padding: '8px 12px'
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex justify-center gap-6 mt-4">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-x-4 gap-y-2 mt-6">
               {analytics?.bmiStats?.map((entry: any, index: number) => (
-                <div key={entry.category} className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{entry.category}</span>
+                <div key={entry.category} className="flex items-center gap-2 min-w-0">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                  <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate" title={entry.category}>
+                    {entry.category}
+                  </span>
                 </div>
               ))}
             </div>
@@ -221,14 +231,28 @@ export default function Dashboard() {
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Average BMI by Class</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics?.classStats || []}>
+                <BarChart data={analytics?.classStats || []} margin={{ bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="class" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  <XAxis 
+                    dataKey="class" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#64748b', fontSize: 10 }}
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
                   />
-                  <Bar dataKey="avgBmi" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={40} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '16px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Bar dataKey="avgBmi" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

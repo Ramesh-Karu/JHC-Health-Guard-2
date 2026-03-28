@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Shield, Lock, Eye, Database, Server, UserCheck, ArrowLeft, Info } from 'lucide-react';
+import { Shield, Lock, Eye, Database, Server, UserCheck, ArrowLeft, Info, Smartphone, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function PrivacySecurity() {
@@ -31,6 +31,13 @@ export default function PrivacySecurity() {
       icon: Server,
       title: "Storage & Retention",
       content: "Data is retained for the duration of your enrollment at Jaffna Hindu College. Upon graduation or leaving the school, your records may be archived or deleted in accordance with the school's data retention policy."
+    },
+    {
+      icon: Smartphone,
+      title: "Access on iOS Devices",
+      content: "For the best experience on Apple devices, you can add Health Guard to your home screen. This provides quick access and a full-screen experience similar to a native application.",
+      link: "/ios-shortcut",
+      linkText: "Learn how to add shortcut"
     }
   ];
 
@@ -73,6 +80,15 @@ export default function PrivacySecurity() {
                   <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                     {section.content}
                   </p>
+                  {section.link && (
+                    <button 
+                      onClick={() => navigate(section.link)}
+                      className="mt-4 text-blue-500 hover:text-blue-600 font-bold flex items-center gap-2 text-sm"
+                    >
+                      {section.linkText}
+                      <ChevronRight size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>

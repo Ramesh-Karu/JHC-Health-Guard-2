@@ -99,6 +99,7 @@ import VegetableMarketplace from './pages/VegetableMarketplace';
 import MyReservations from './pages/MyReservations';
 import UserManagement from './pages/UserManagement';
 import PrivacySecurity from './pages/PrivacySecurity';
+import IOSShortcut from './pages/IOSShortcut';
 import ChangePassword from './pages/ChangePassword';
 import OrganicClubAdmin from './pages/OrganicClubAdmin';
 import OrganicAdminDashboard from './pages/OrganicAdminDashboard';
@@ -547,6 +548,7 @@ export default function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/privacy-security" element={<PrivacySecurity />} />
+              <Route path="/ios-shortcut" element={<IOSShortcut />} />
               <Route path="/change-password" element={<ChangePassword />} />
               
               {/* Protected Routes with Persistent Layout */}

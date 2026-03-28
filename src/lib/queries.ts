@@ -46,7 +46,7 @@ export const loadInitialData = async () => {
     // Use arrayBuffer() as loadBundle expects a Uint8Array or ArrayBuffer
     const bundleData = await response.arrayBuffer();
     if (bundleData) {
-      await loadBundle(db, new Uint8Array(bundleData));
+      await loadBundle(db, bundleData);
       console.log('Firestore bundle loaded successfully');
     }
   } catch (err) {

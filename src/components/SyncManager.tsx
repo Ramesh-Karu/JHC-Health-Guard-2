@@ -123,11 +123,6 @@ export const SyncStatusIndicator: React.FC<{ inline?: boolean }> = ({ inline = f
       
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-500">Mode</span>
-          <span className="text-xs font-bold px-2 py-0.5 bg-green-50 text-green-600 rounded-full uppercase">Unlimited</span>
-        </div>
-
-        <div className="flex items-center justify-between">
           <span className="text-sm text-slate-500">Network</span>
           <span className={`text-sm font-medium ${isOnline ? 'text-green-500' : 'text-amber-500'}`}>
             {isOnline ? 'Online (Syncing)' : 'Offline (Local Only)'}
@@ -149,10 +144,6 @@ export const SyncStatusIndicator: React.FC<{ inline?: boolean }> = ({ inline = f
             </div>
           </div>
         )}
-
-        <p className="text-[10px] text-slate-400 italic">
-          Syncing is active and unlimited. It only stops if Firebase safety limits are reached.
-        </p>
       </div>
     </div>
   );
