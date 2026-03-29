@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, handleFirestoreError, OperationType, collection, query, orderBy, getDocs, addDoc, doc, updateDoc, increment, deleteDoc, where, onSnapshot, setDoc, getDoc } from '../firebase';
@@ -462,9 +463,10 @@ export default function Community() {
       </div>
 
       {/* Create Post Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+      {createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -599,18 +601,21 @@ export default function Community() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       {/* Comments Modal */}
-      <AnimatePresence>
-        {selectedPost && (
-          <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-md">
-            <motion.div 
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              className="bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-[32px] w-full max-w-lg h-[85vh] sm:h-[80vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
-            >
+      {createPortal(
+        <AnimatePresence>
+          {selectedPost && (
+            <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-md">
+              <motion.div 
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                className="bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-[32px] w-full max-w-lg h-[75vh] sm:h-[80vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
+              >
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
@@ -651,16 +656,16 @@ export default function Community() {
                 )}
               </div>
 
-              <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="p-4 sm:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <form onSubmit={handleAddComment} className="flex gap-2">
                   <input 
                     type="text" 
                     placeholder="Write a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    className="flex-1 px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                    className="flex-1 px-4 sm:px-5 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
                   />
-                  <button type="submit" className="p-3.5 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 shadow-lg shadow-blue-100 dark:shadow-none transition-all active:scale-90">
+                  <button type="submit" className="p-3 sm:p-3.5 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 shadow-lg shadow-blue-100 dark:shadow-none transition-all active:scale-90">
                     <Send size={20} />
                   </button>
                 </form>
@@ -668,12 +673,15 @@ export default function Community() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       {/* User Profile Modal */}
-      <AnimatePresence>
-        {viewingUser && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+      {createPortal(
+        <AnimatePresence>
+          {viewingUser && (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -754,7 +762,9 @@ export default function Community() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
     </div>
   );
 }

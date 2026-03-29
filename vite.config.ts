@@ -13,7 +13,7 @@ export default defineConfig(({mode}) => {
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: 'auto',
-        includeAssets: ['favicon.ico'],
+        includeAssets: ['app-icon.svg'],
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
@@ -55,14 +55,14 @@ export default defineConfig(({mode}) => {
           start_url: '/',
           icons: [
             {
-              src: 'https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg',
+              src: 'https://image2url.com/r2/default/images/1774754416429-810c18e5-b0b9-4310-bcbe-b39ad8e778d4.png',
               sizes: '512x512',
-              type: 'image/jpeg'
+              type: 'image/png'
             },
             {
-              src: 'https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg',
+              src: 'https://image2url.com/r2/default/images/1774754416429-810c18e5-b0b9-4310-bcbe-b39ad8e778d4.png',
               sizes: '512x512',
-              type: 'image/jpeg',
+              type: 'image/png',
               purpose: 'any maskable'
             }
           ]
