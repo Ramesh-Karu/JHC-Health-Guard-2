@@ -91,7 +91,7 @@ export default function AdminTeachers() {
   };
 
   const handleExportCSV = () => {
-    const dataToExport = teachers.map((t: any) => ({
+    const dataToExport = teachers.length > 0 ? teachers.map((t: any) => ({
       fullName: t.fullName,
       email: t.email,
       class: t.class || '',
@@ -99,7 +99,15 @@ export default function AdminTeachers() {
       phone: t.phone || '',
       indexNumber: t.indexNumber || '',
       password: '' // Blank password for template
-    }));
+    })) : [{
+      fullName: 'Example Teacher',
+      email: 'teacher@school.com',
+      class: '10',
+      division: 'A',
+      phone: '1234567890',
+      indexNumber: 'T001',
+      password: 'password123'
+    }];
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -142,7 +150,7 @@ export default function AdminTeachers() {
   const handleConfirmImport = async () => {
     setIsImporting(true);
     // Filter valid rows first
-    const validRows = importPreviewData.filter(row => row.email && row.fullName && row.password);
+    const validRows = importPreviewData.filter(row => row.email && row.fullName);
     const total = validRows.length;
     let completed = 0;
     let skipped = 0;
@@ -151,7 +159,7 @@ export default function AdminTeachers() {
 
     try {
       // Use Firestore batches for high performance
-      const batchSize = 500;
+      const batchSize = 250; // 2 operations per row (user + stats)
       const checkBatchSize = 30; // Firestore 'in' query limit
 
       for (let i = 0; i < validRows.length; i += batchSize) {
@@ -201,7 +209,7 @@ export default function AdminTeachers() {
               indexNumber: row.indexNumber || '',
               role: 'teacher',
               authCreated: false,
-              tempPassword: row.password,
+              tempPassword: row.password || '123456',
               createdAt: new Date().toISOString()
             });
             
@@ -233,6 +241,12 @@ export default function AdminTeachers() {
     } catch (err) {
       console.error('Bulk import failed:', err);
       setToast({ message: 'Bulk import failed. Please try again.', type: 'error' });
+      setIsImporting(false);
+      setIsImportPreviewOpen(false);
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      fetchTeachers();
+      return;
     }
     
     setIsImporting(false);

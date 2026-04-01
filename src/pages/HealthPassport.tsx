@@ -86,6 +86,21 @@ export default function HealthPassport() {
     pdf.save(`Health_Passport_${student?.fullName || 'Student'}.pdf`);
   };
 
+  const CardWrapper = ({ children }: { children: React.ReactNode }) => (
+    <motion.div
+      whileHover={{ 
+        y: -10, 
+        rotateX: 5, 
+        rotateY: 5, 
+        scale: 1.02,
+        transition: { duration: 0.2 } 
+      }}
+      style={{ perspective: 1000 }}
+    >
+      {children}
+    </motion.div>
+  );
+
   if (loading) return (
     <div className="space-y-8 pb-12 px-4">
       <div className="flex items-center justify-between">
@@ -172,7 +187,12 @@ export default function HealthPassport() {
         </div>
         
         {/* Passport Header Card */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[40px] p-6 md:p-12 text-white shadow-2xl relative overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[40px] p-6 md:p-12 text-white shadow-2xl relative overflow-hidden"
+        >
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center md:items-start">
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-[32px] border-4 border-white/20 overflow-hidden shadow-2xl flex-shrink-0 bg-white">
@@ -214,143 +234,164 @@ export default function HealthPassport() {
               <p className="text-[10px] font-bold text-slate-400 text-center mt-2 uppercase tracking-widest">Verify Passport</p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        >
           {/* Left Column: Health Metrics & History */}
           <div className="lg:col-span-2 space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center">
-                    <Scale size={20} />
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              <CardWrapper>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center">
+                      <Scale size={20} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Weight</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Weight</span>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.weight || 0} kg</p>
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.weight || 0} kg</p>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 dark:text-indigo-400 rounded-xl flex items-center justify-center">
-                    <Ruler size={20} />
+              </CardWrapper>
+              <CardWrapper>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 dark:text-indigo-400 rounded-xl flex items-center justify-center">
+                      <Ruler size={20} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Height</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Height</span>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.height || 0} cm</p>
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.height || 0} cm</p>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400 rounded-xl flex items-center justify-center">
-                    <Ruler size={20} />
+              </CardWrapper>
+              <CardWrapper>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400 rounded-xl flex items-center justify-center">
+                      <Ruler size={20} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Hip/Waist</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Hip/Waist</span>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.hip || 0} / {latestRecord?.waist || 0} cm</p>
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.hip || 0} / {latestRecord?.waist || 0} cm</p>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400 rounded-xl flex items-center justify-center">
-                    <Activity size={20} />
+              </CardWrapper>
+              <CardWrapper>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400 rounded-xl flex items-center justify-center">
+                      <Activity size={20} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Grip</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Grip</span>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.gripStrength || 0} kg</p>
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.gripStrength || 0} kg</p>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-violet-50 dark:bg-violet-900/20 text-violet-500 dark:text-violet-400 rounded-xl flex items-center justify-center">
-                    <Activity size={20} />
+              </CardWrapper>
+              <CardWrapper>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-violet-50 dark:bg-violet-900/20 text-violet-500 dark:text-violet-400 rounded-xl flex items-center justify-center">
+                      <Activity size={20} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">BMI</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">BMI</span>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.bmi?.toFixed(1) || '0.0'}</p>
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{latestRecord?.bmi?.toFixed(1) || '0.0'}</p>
-              </div>
+              </CardWrapper>
             </div>
 
             {/* Growth Charts */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-2">
-                <TrendingUp size={20} className="text-blue-500" />
-                Growth Pattern Analysis
-              </h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={[...healthHistory].reverse()}>
-                    <defs>
-                      <linearGradient id="colorBmi" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="bmi" stroke="#3b82f6" fillOpacity={1} fill="url(#colorBmi)" strokeWidth={4} />
-                  </AreaChart>
-                </ResponsiveContainer>
+            <CardWrapper>
+              <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-2">
+                  <TrendingUp size={20} className="text-blue-500" />
+                  Growth Pattern Analysis
+                </h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={[...healthHistory].reverse()}>
+                      <defs>
+                        <linearGradient id="colorBmi" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="bmi" stroke="#3b82f6" fillOpacity={1} fill="url(#colorBmi)" strokeWidth={4} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div>
+            </CardWrapper>
 
             {/* Activity History */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                <Award size={20} className="text-amber-500" />
-                Activity & Achievement Records
-              </h3>
-              <div className="space-y-4">
-                {activities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
-                        <Activity className="text-blue-500" size={20} />
+            <CardWrapper>
+              <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                  <Award size={20} className="text-amber-500" />
+                  Activity & Achievement Records
+                </h3>
+                <div className="space-y-4">
+                  {activities.slice(0, 5).map((activity) => (
+                    <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
+                          <Activity className="text-blue-500" size={20} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white">{activity.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">{activity.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
+                      <div className="text-right">
+                        <p className="text-blue-600 dark:text-blue-400 font-bold">+{activity.points} pts</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activity.type}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-blue-600 dark:text-blue-400 font-bold">+{activity.points} pts</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activity.type}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            </CardWrapper>
           </div>
 
           {/* Right Column: AI Insights & Nutrition */}
           <div className="space-y-8">
             {/* Contact Info */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Emergency Contact</h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <User size={18} className="text-slate-400" />
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parent/Guardian</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.parentName}</p>
+            <CardWrapper>
+              <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Emergency Contact</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <User size={18} className="text-slate-400" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parent/Guardian</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.parentName}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone size={18} className="text-slate-400" />
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Number</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.parentContact}</p>
+                  <div className="flex items-center gap-3">
+                    <Phone size={18} className="text-slate-400" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Number</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.parentContact}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin size={18} className="text-slate-400" />
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Address</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.address}</p>
+                  <div className="flex items-center gap-3">
+                    <MapPin size={18} className="text-slate-400" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Address</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{student?.address}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </CardWrapper>
           </div>
-        </div>
+          </motion.div>
 
         <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 text-center text-slate-400 text-xs">
           <p>This is an official Digital Health Passport issued by Jaffna Hindu College.</p>

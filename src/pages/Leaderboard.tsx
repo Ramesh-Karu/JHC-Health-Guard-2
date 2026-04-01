@@ -91,13 +91,26 @@ export default function Leaderboard() {
       ) : (
         <>
           {/* Top 3 Podium */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pb-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pb-10"
+          >
             {/* 2nd Place */}
             {filteredData[1] && (
               <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
+                initial={{ opacity: 0, rotateX: -20, y: 50 }}
+                animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                transition={{ duration: 0.8, type: "spring", delay: 0.1 }}
+                whileHover={{ 
+                  y: -10, 
+                  rotateX: 5, 
+                  rotateY: 5, 
+                  scale: 1.05,
+                  transition: { duration: 0.2 } 
+                }}
+                style={{ perspective: 1000 }}
                 className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center relative order-2 md:order-1"
               >
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-md">
@@ -120,8 +133,17 @@ export default function Leaderboard() {
             {/* 1st Place */}
             {filteredData[0] && (
               <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
+                initial={{ opacity: 0, rotateX: -20, y: 50 }}
+                animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                transition={{ duration: 0.8, type: "spring", delay: 0.2 }}
+                whileHover={{ 
+                  y: -10, 
+                  rotateX: 5, 
+                  rotateY: 5, 
+                  scale: 1.05,
+                  transition: { duration: 0.2 } 
+                }}
+                style={{ perspective: 1000 }}
                 className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-blue-100 dark:border-blue-900 shadow-xl shadow-blue-100/50 dark:shadow-none text-center relative z-10 order-1 md:order-2"
               >
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg">
@@ -144,9 +166,17 @@ export default function Leaderboard() {
             {/* 3rd Place */}
             {filteredData[2] && (
               <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
+                initial={{ opacity: 0, rotateX: -20, y: 50 }}
+                animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                transition={{ duration: 0.8, type: "spring", delay: 0.3 }}
+                whileHover={{ 
+                  y: -10, 
+                  rotateX: 5, 
+                  rotateY: 5, 
+                  scale: 1.05,
+                  transition: { duration: 0.2 } 
+                }}
+                style={{ perspective: 1000 }}
                 className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center relative order-3"
               >
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-md">
@@ -165,10 +195,15 @@ export default function Leaderboard() {
                 </div>
               </motion.div>
             )}
-          </div>
+          </motion.div>
 
           {/* Full List */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden"
+          >
             <div className="p-6 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-bold text-slate-900 dark:text-white">Rankings</h3>
             </div>
@@ -206,7 +241,7 @@ export default function Leaderboard() {
                 <div className="p-10 text-center text-slate-400">No more rankings to display.</div>
               )}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </div>

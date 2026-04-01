@@ -12,11 +12,10 @@ import {
   Activity as ActivityIcon,
   Plus,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Heart
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { EXERCISES, SPORTS_TYPES, SCORING_RULES } from '../constants';
-import { Activity } from '../types';
 
 import { useStudentActivities } from '../lib/queries';
 
@@ -27,6 +26,19 @@ export default function Activities() {
   const { data: activities = [], isLoading: loading } = useStudentActivities(user?.id || '');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
+  const [masterActivities, setMasterActivities] = useState<any[]>([]);
+  const [loadingMaster, setLoadingMaster] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'master_activities'), (snapshot) => {
+      setMasterActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoadingMaster(false);
+    }, (err) => {
+      console.error("Error fetching master activities:", err);
+      setLoadingMaster(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   if (!user) {
     return (
@@ -39,43 +51,32 @@ export default function Activities() {
     );
   }
 
+  const sports = masterActivities.filter(a => a.type === 'sport');
+  const exercises = masterActivities.filter(a => a.type === 'exercise');
+  const habits = masterActivities.filter(a => a.type === 'habit');
+
   const [formData, setFormData] = useState({
     userId: '',
     type: 'sport',
-    name: SPORTS_TYPES[0],
+    name: '',
     date: new Date().toISOString().split('T')[0],
     duration: '',
     performance: 'Good',
     remarks: '',
-    points: SCORING_RULES.sport
-  });
-
-  const [students, setStudents] = useState<any[]>([]);
-  const [pointSettings, setPointSettings] = useState({
-    sport: SCORING_RULES.sport,
-    exercise: SCORING_RULES.exercise,
-    habit: SCORING_RULES.habit
+    points: 0
   });
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
-        if (settingsDoc.exists()) {
-          const data = settingsDoc.data();
-          setPointSettings({
-            sport: data.pointsPerSport || SCORING_RULES.sport,
-            exercise: data.pointsPerExercise || SCORING_RULES.exercise,
-            habit: data.pointsPerHabit || SCORING_RULES.habit
-          });
-          setFormData(prev => ({ ...prev, points: data.pointsPerSport || SCORING_RULES.sport }));
-        }
-      } catch (err) {
-        console.error("Error fetching settings:", err);
-      }
-    };
-    fetchSettings();
-  }, []);
+    if (sports.length > 0 && !formData.name) {
+      setFormData(prev => ({ 
+        ...prev, 
+        name: sports[0].name,
+        points: sports[0].points
+      }));
+    }
+  }, [sports]);
+
+  const [students, setStudents] = useState<any[]>([]);
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -96,12 +97,18 @@ export default function Activities() {
   const handleLogActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'activities'), formData);
+      const activity = masterActivities.find(a => a.name === formData.name && a.type === formData.type);
+      const points = activity ? activity.points : formData.points;
+
+      await addDoc(collection(db, 'activities'), {
+        ...formData,
+        points
+      });
       
       // Update user points
       const userRef = doc(db, 'users', formData.userId);
       await updateDoc(userRef, {
-        points: increment(formData.points)
+        points: increment(points)
       });
 
       setIsModalOpen(false);
@@ -110,50 +117,49 @@ export default function Activities() {
     }
   };
 
-  const handleCompleteExercise = async (exercise: any) => {
+  const handleCompleteActivity = async (activity: any) => {
     try {
       if (!user?.id) return;
+      
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if already completed today
+      const q = query(
+        collection(db, 'activities'),
+        where('userId', '==', user.id),
+        where('name', '==', activity.name),
+        where('date', '==', today)
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        alert("You have already completed this activity today!");
+        return;
+      }
+
       await addDoc(collection(db, 'activities'), {
         userId: user.id,
-        type: 'exercise',
-        name: exercise.title,
-        date: new Date().toISOString().split('T')[0],
-        points: pointSettings.exercise || exercise.points
+        type: activity.type,
+        name: activity.name,
+        date: today,
+        points: activity.points
       });
 
       // Update user points
       const userRef = doc(db, 'users', user.id);
       await updateDoc(userRef, {
-        points: increment(pointSettings.exercise || exercise.points)
+        points: increment(activity.points)
       });
 
-      alert(`Great job! You earned ${pointSettings.exercise || exercise.points} points.`);
+      alert(`Great job! You earned ${activity.points} points.`);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'activities');
     }
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 pb-24">
       <Helmet>
         <title>Activities | JHC Health Guard</title>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [{
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Home",
-              "item": "https://jhchealthguard.online/"
-            },{
-              "@type": "ListItem",
-              "position": 2,
-              "name": "Activities",
-              "item": "https://jhchealthguard.online/activities"
-            }]
-          })}
-        </script>
       </Helmet>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -171,6 +177,49 @@ export default function Activities() {
         )}
       </div>
 
+      {/* Healthy Habits */}
+      <section>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+          <Heart size={24} className="text-rose-500" />
+          Daily Healthy Habits
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {habits.map((habit) => (
+            <motion.button
+              key={habit.id}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleCompleteActivity(habit)}
+              disabled={activities.some(a => a.name === habit.name && a.date === new Date().toISOString().split('T')[0])}
+              className={`p-6 rounded-3xl border text-left transition-all ${
+                activities.some(a => a.name === habit.name && a.date === new Date().toISOString().split('T')[0])
+                ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800'
+                : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-800 shadow-sm'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                  activities.some(a => a.name === habit.name && a.date === new Date().toISOString().split('T')[0])
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                }`}>
+                  {activities.some(a => a.name === habit.name && a.date === new Date().toISOString().split('T')[0]) ? <CheckCircle2 size={24} /> : <ActivityIcon size={24} />}
+                </div>
+                <span className="text-xs font-bold text-blue-600 dark:text-blue-400">+{habit.points} pts</span>
+              </div>
+              <h3 className="font-bold text-slate-900 dark:text-white">{habit.name}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {activities.some(a => a.name === habit.name && a.date === new Date().toISOString().split('T')[0]) ? 'Completed today' : 'Mark as done'}
+              </p>
+            </motion.button>
+          ))}
+          {habits.length === 0 && !loadingMaster && (
+            <div className="col-span-full p-8 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-3xl text-slate-400 italic">
+              No healthy habits configured by admin.
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Exercise Tutorials */}
       <section>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
@@ -178,43 +227,59 @@ export default function Activities() {
           Fitness Tutorials
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {EXERCISES.map((exercise) => (
+          {exercises.map((exercise) => (
             <motion.div 
               key={exercise.id}
               whileHover={{ y: -5 }}
               className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden group"
             >
               <div className="aspect-video bg-slate-100 dark:bg-slate-900 relative">
-                <iframe 
-                  src={exercise.videoUrl} 
-                  className="w-full h-full" 
-                  title={exercise.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
+                {exercise.videoUrl ? (
+                  <iframe 
+                    src={exercise.videoUrl} 
+                    className="w-full h-full" 
+                    title={exercise.name}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  ></iframe>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <Play size={48} />
+                  </div>
+                )}
               </div>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">{exercise.difficulty}</span>
                   <span className="text-xs font-bold text-slate-400">{exercise.ageGroup}</span>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{exercise.title}</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{exercise.name}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">{exercise.description}</p>
                 <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-700">
                   <div className="flex items-center gap-1 text-blue-600 font-bold">
                     <Award size={16} />
-                    <span>{pointSettings.exercise || exercise.points} pts</span>
+                    <span>{exercise.points} pts</span>
                   </div>
                   <button 
-                    onClick={() => handleCompleteExercise(exercise)}
-                    className="flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 transition-colors"
+                    onClick={() => handleCompleteActivity(exercise)}
+                    disabled={activities.some(a => a.name === exercise.name && a.date === new Date().toISOString().split('T')[0])}
+                    className={`flex items-center gap-1 text-sm font-bold transition-colors ${activities.some(a => a.name === exercise.name && a.date === new Date().toISOString().split('T')[0]) ? 'text-emerald-600 dark:text-emerald-400 cursor-default' : 'text-slate-900 dark:text-white hover:text-blue-600'}`}
                   >
-                    Mark as Done <ChevronRight size={16} />
+                    {activities.some(a => a.name === exercise.name && a.date === new Date().toISOString().split('T')[0]) ? (
+                      <>Done <CheckCircle2 size={16} /></>
+                    ) : (
+                      <>Mark as Done <ChevronRight size={16} /></>
+                    )}
                   </button>
                 </div>
               </div>
             </motion.div>
           ))}
+          {exercises.length === 0 && !loadingMaster && (
+            <div className="col-span-full p-12 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-3xl text-slate-400 italic">
+              No fitness tutorials configured by admin.
+            </div>
+          )}
         </div>
       </section>
 
@@ -305,10 +370,14 @@ export default function Activities() {
                 <select 
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => {
+                    const sport = sports.find(s => s.name === e.target.value);
+                    setFormData({...formData, name: e.target.value, points: sport?.points || 0});
+                  }}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                 >
-                  {SPORTS_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+                  <option value="">Select a sport...</option>
+                  {sports.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">

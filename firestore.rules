@@ -68,6 +68,14 @@ service cloud.firestore {
       return isAdmin() || isTeacher();
     }
     
+    function canPostInCommunity() {
+      let settingsDoc = /databases/$(database)/documents/settings/community;
+      let settings = exists(settingsDoc) ? get(settingsDoc).data : {"allowedRoles": ["admin", "teacher"]};
+      let userDoc = /databases/$(database)/documents/users/$(request.auth.uid);
+      let userRole = exists(userDoc) ? get(userDoc).data.role : "student";
+      return isAdmin() || (isAuthenticated() && userRole in settings.allowedRoles);
+    }
+    
     function isCoachOrAdmin() {
       return isAdmin() || isCoach();
     }
@@ -116,6 +124,11 @@ service cloud.firestore {
     // ===============================================================
     
     match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /metadata/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -169,6 +182,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /master_activities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /modules/{moduleId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
@@ -183,7 +201,7 @@ service cloud.firestore {
 
     match /announcements/{announcementId} {
       allow read: if true;
-      allow create: if isTeacherOrAdmin();
+      allow create: if canPostInCommunity();
       allow update: if isTeacherOrAdmin() || (
         isAuthenticated() && 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'likesCount', 'commentsCount', 'poll'])
@@ -277,6 +295,12 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated() && isOwner(request.resource.data.authorId) && isValidComment(request.resource.data);
       allow update, delete: if isAdmin() || isOwner(resource.data.authorId);
+    }
+
+    match /pets/{petId} {
+      allow read: if isAuthenticated() && (isOwner(petId) || isAdmin());
+      allow create, update: if isAuthenticated() && isOwner(petId);
+      allow delete: if isAdmin();
     }
 
     match /notifications/{notificationId} {

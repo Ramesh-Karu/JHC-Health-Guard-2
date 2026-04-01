@@ -123,22 +123,22 @@ export default function StudentTracking() {
   return (
     <div className="space-y-6 p-4 md:p-8 max-w-6xl mx-auto pb-24 md:pb-8">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">My Progress Tracker</h1>
-        <p className="text-slate-500 mt-1">Monitor your health and activity journey.</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">My Progress Tracker</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Monitor your health and activity journey.</p>
       </div>
  
       {/* Wellness Badge Application Section */}
-      <div className="bg-white p-5 md:p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 p-5 md:p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/40 dark:shadow-none relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start gap-6 relative z-10">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${user?.wellnessBadge ? 'bg-emerald-500 shadow-emerald-200' : 'bg-slate-800 shadow-slate-300'}`}>
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${user?.wellnessBadge ? 'bg-emerald-500 shadow-emerald-200' : 'bg-slate-800 dark:bg-slate-700 shadow-slate-300'}`}>
             <ShieldCheck className="text-white" size={32} />
           </div>
           
           <div className="flex-1 w-full">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-2">Wellness Badge</h2>
-            <p className="text-sm md:text-base text-slate-600 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-2">Wellness Badge</h2>
+            <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 mb-6">
               Earn the prestigious Wellness Badge by maintaining a healthy lifestyle, participating in sports, and eating well.
             </p>
  
@@ -149,12 +149,12 @@ export default function StudentTracking() {
                 { label: 'Muscle Strength', value: 'Recorded', sub: 'Health Check', active: true },
                 { label: 'Hip & Waist', value: 'Recorded', sub: 'Health Check', active: hasCircumference },
               ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md hover:shadow-slate-100">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                <div key={idx} className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 transition-all hover:bg-white dark:hover:bg-slate-800 hover:shadow-md hover:shadow-slate-100 dark:hover:shadow-none">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${item.active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'}`}>
                     {item.active ? <CheckCircle2 size={16} /> : <div className="w-2 h-2 rounded-full bg-slate-400" />}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">{item.value}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{item.value}</p>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</p>
                   </div>
                 </div>
@@ -162,27 +162,27 @@ export default function StudentTracking() {
             </div>
  
             {user?.wellnessBadge ? (
-              <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl border border-emerald-200 font-bold text-sm flex items-center gap-3 shadow-sm shadow-emerald-100">
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800 font-bold text-sm flex items-center gap-3 shadow-sm shadow-emerald-100 dark:shadow-none">
                 <ShieldCheck size={24} className="shrink-0" />
                 You are a proud holder of the Wellness Badge!
               </div>
             ) : user?.badgeStatus === 'pending' ? (
-              <div className="bg-blue-50 text-blue-700 p-4 rounded-2xl border border-blue-200 font-bold text-sm flex items-center gap-3 shadow-sm shadow-blue-100">
+              <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-4 rounded-2xl border border-blue-200 dark:border-blue-800 font-bold text-sm flex items-center gap-3 shadow-sm shadow-blue-100 dark:shadow-none">
                 <AlertCircle size={24} className="shrink-0" />
                 Your application is currently under review by an administrator.
               </div>
             ) : user?.badgeStatus === 'rejected' ? (
-              <div className="bg-red-50 text-red-700 p-4 rounded-2xl border border-red-200 font-bold text-sm flex items-center gap-3 shadow-sm shadow-red-100">
+              <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-4 rounded-2xl border border-red-200 dark:border-red-800 font-bold text-sm flex items-center gap-3 shadow-sm shadow-red-100 dark:shadow-none">
                 <AlertCircle size={24} className="shrink-0" />
                 Your previous application was not approved. Please ensure you meet all criteria and try again.
               </div>
             ) : (
-              <div className="bg-slate-50 p-5 md:p-6 rounded-2xl border border-slate-200">
-                <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <div className="bg-slate-50 dark:bg-slate-900 p-5 md:p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <h3 className="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                   <TrendingUp size={18} className="text-blue-500" />
                   Application Pledge
                 </h3>
-                <p className="text-sm text-slate-600 italic mb-6 border-l-4 border-slate-300 pl-4 py-1 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-400 italic mb-6 border-l-4 border-slate-300 dark:border-slate-600 pl-4 py-1 leading-relaxed">
                   "I assure that I maintain my health and I follow the guidelines. And if I get off from my healthy points, then it's my concern to leverage my opportunity to be a to be the holder of the wellness Badge."
                 </p>
                 
@@ -198,8 +198,8 @@ export default function StudentTracking() {
                   disabled={!isEligible || applying}
                   className={`w-full md:w-auto px-10 py-3.5 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${
                     isEligible 
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 active:scale-[0.98]' 
-                      : 'bg-slate-800 text-slate-400 cursor-not-allowed opacity-80'
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 dark:shadow-none active:scale-[0.98]' 
+                      : 'bg-slate-800 dark:bg-slate-700 text-slate-400 cursor-not-allowed opacity-80'
                   }`}
                 >
                   {applying ? 'Submitting Application...' : 'Apply for Wellness Badge'}
@@ -218,38 +218,38 @@ export default function StudentTracking() {
  
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {[
-          { icon: Scale, label: 'Weight', value: `${healthHistory[0]?.weight || 0} kg`, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { icon: Ruler, label: 'Height', value: `${healthHistory[0]?.height || 0} cm`, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-          { icon: Award, label: 'Total Points', value: user?.points || 0, color: 'text-amber-500', bg: 'bg-amber-50' },
+          { icon: Scale, label: 'Weight', value: `${healthHistory[0]?.weight || 0} kg`, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+          { icon: Ruler, label: 'Height', value: `${healthHistory[0]?.height || 0} cm`, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+          { icon: Award, label: 'Total Points', value: user?.points || 0, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+          <div key={idx} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
                 <stat.icon size={20} />
               </div>
-              <h3 className="font-bold text-slate-500 uppercase text-xs tracking-wider">{stat.label}</h3>
+              <h3 className="font-bold text-slate-500 dark:text-slate-400 uppercase text-xs tracking-wider">{stat.label}</h3>
             </div>
-            <p className="text-3xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
           </div>
         ))}
       </div>
  
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-900">My Badges</h3>
-            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wider">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">My Badges</h3>
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full uppercase tracking-wider">
               {badges.length} Earned
             </span>
           </div>
           <div className="flex flex-wrap gap-4">
             {badges.length > 0 ? badges.map((b: any, i: number) => (
-              <div key={i} className="flex flex-col items-center gap-2 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 w-[calc(50%-8px)] sm:w-32 transition-all hover:scale-105">
+              <div key={i} className="flex flex-col items-center gap-2 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800 w-[calc(50%-8px)] sm:w-32 transition-all hover:scale-105">
                 <span className="text-4xl">{b.icon}</span>
-                <span className="font-bold text-emerald-800 text-xs text-center">{b.name}</span>
+                <span className="font-bold text-emerald-800 dark:text-emerald-300 text-xs text-center">{b.name}</span>
               </div>
             )) : (
-              <div className="w-full py-12 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <div className="w-full py-12 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                 <Award size={48} className="mb-2 opacity-20" />
                 <p className="font-medium">No badges earned yet.</p>
                 <p className="text-xs">Keep active to unlock achievements!</p>
@@ -258,8 +258,8 @@ export default function StudentTracking() {
           </div>
         </div>
  
-        <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">BMI Trend</h3>
+        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">BMI Trend</h3>
           <div className="h-64 md:h-80 -ml-6">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
@@ -299,31 +299,31 @@ export default function StudentTracking() {
         </div>
       </div>
  
-      <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-slate-900">Recent Activities</h3>
-          <button className="text-xs font-bold text-blue-600 hover:underline uppercase tracking-wider">View All</button>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Activities</h3>
+          <button className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline uppercase tracking-wider">View All</button>
         </div>
         <div className="space-y-3">
           {activities.slice(0, 5).map((activity: any) => (
-            <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-md">
+            <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 transition-all hover:bg-white dark:hover:bg-slate-700 hover:shadow-md">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                   <Activity size={20} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-sm md:text-base">{activity.name}</p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{new Date(activity.date).toLocaleDateString()}</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm md:text-base">{activity.name}</p>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{new Date(activity.date).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-bold text-blue-600">+{activity.points}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Points</p>
+                <p className="font-bold text-blue-600 dark:text-blue-400">+{activity.points}</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Points</p>
               </div>
             </div>
           ))}
           {activities.length === 0 && (
-            <div className="py-12 text-center text-slate-400">
+            <div className="py-12 text-center text-slate-400 dark:text-slate-500">
               <p className="font-medium">No activities recorded yet.</p>
             </div>
           )}

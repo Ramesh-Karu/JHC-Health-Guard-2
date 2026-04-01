@@ -268,7 +268,7 @@ export default function UserManagement() {
   const handleConfirmImport = async () => {
     setIsImporting(true);
     // Filter valid rows first
-    const validRows = importPreviewData.filter(row => row.username && row.fullName && row.password);
+    const validRows = importPreviewData.filter(row => row.username && row.fullName);
     const total = validRows.length;
     let completed = 0;
     let skipped = 0;
@@ -277,7 +277,7 @@ export default function UserManagement() {
 
     try {
       // Use Firestore batches for high performance
-      const batchSize = 500;
+      const batchSize = 250; // 2 operations per row (user + stats)
       const checkBatchSize = 30; // Firestore 'in' query limit
 
       for (let i = 0; i < validRows.length; i += batchSize) {
@@ -327,7 +327,7 @@ export default function UserManagement() {
               role: role,
               dob: row.dob || '',
               authCreated: false,
-              tempPassword: row.password,
+              tempPassword: row.password || '123456',
               passwordChanged: false,
               profileCompleted: false,
               createdAt: new Date().toISOString()
@@ -361,6 +361,14 @@ export default function UserManagement() {
     } catch (err) {
       console.error('Bulk import failed:', err);
       setToast({ message: 'Bulk import failed. Please try again.', type: 'error' });
+      setIsImporting(false);
+      setIsImportPreviewOpen(false);
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
+      refetch();
+      return;
     }
     
     setIsImporting(false);

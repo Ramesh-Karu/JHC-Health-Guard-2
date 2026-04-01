@@ -140,12 +140,41 @@
         "pointsPerEntry": { "type": "number" }
       },
       "required": ["pointsPerEntry"]
+    },
+    "CommunitySettings": {
+      "title": "Community Settings",
+      "description": "Configuration for community features",
+      "type": "object",
+      "properties": {
+        "allowedRoles": { 
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of roles allowed to create posts"
+        }
+      },
+      "required": ["allowedRoles"]
+    },
+    "MasterActivity": {
+      "title": "MasterActivity",
+      "description": "Admin-defined activity template",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["exercise", "sport", "habit"] },
+        "name": { "type": "string" },
+        "points": { "type": "number" },
+        "description": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "ageGroup": { "type": "string" }
+      },
+      "required": ["type", "name", "points"]
     }
   },
   "firestore": {
     "/users/{userId}": { "schema": "User", "description": "User profiles" },
     "/health_records/{recordId}": { "schema": "HealthRecord", "description": "Student health records" },
     "/activities/{activityId}": { "schema": "Activity", "description": "Student activities" },
+    "/master_activities/{activityId}": { "schema": "MasterActivity", "description": "Admin-defined activities" },
     "/announcements/{announcementId}": { "schema": "Announcement", "description": "Class announcements" },
     "/modules/{moduleId}": { "schema": "Module", "description": "Learning modules" },
     "/comments/{commentId}": { "schema": "Comment", "description": "User comments" },
@@ -154,6 +183,7 @@
     "/vegetables/{itemId}": { "schema": "Product", "description": "Vegetables" },
     "/breakfast_purchases/{purchaseId}": { "schema": "BreakfastPurchase", "description": "Breakfast purchase records" },
     "/settings/breakfast": { "schema": "BreakfastSettings", "description": "Breakfast settings" },
+    "/settings/community": { "schema": "CommunitySettings", "description": "Community settings" },
     "/system/leaderboard": { "schema": "LeaderboardCache", "description": "Cached leaderboard" }
   }
 }

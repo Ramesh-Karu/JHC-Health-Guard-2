@@ -31,23 +31,23 @@ export default function DeveloperTools() {
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+    <div className="w-full bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm">
       <div className="flex items-center gap-4 mb-4">
         <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white">
           <User size={24} />
         </div>
         <div>
-          <h3 className="font-bold text-slate-900">Rameshnathan Karuvoolan</h3>
-          <p className="text-xs text-slate-500">Developer</p>
+          <h3 className="font-bold text-slate-900 dark:text-white">Rameshnathan Karuvoolan</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Developer</p>
         </div>
       </div>
 
-      <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+      <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
         <div className="flex items-center justify-between text-xs font-bold mb-1">
-          <span className="text-slate-500 uppercase tracking-wider">System Status</span>
+          <span className="text-slate-500 dark:text-slate-400 uppercase tracking-wider">System Status</span>
           <div className={`w-2 h-2 rounded-full ${isFirebaseConfigured ? 'bg-emerald-500' : 'bg-red-500'}`} />
         </div>
-        <p className="text-[10px] text-slate-400">
+        <p className="text-[10px] text-slate-400 dark:text-slate-500">
           {isFirebaseConfigured 
             ? 'Firebase is configured and ready.' 
             : `Missing: ${missingVars.join(', ')}`}
@@ -59,7 +59,7 @@ export default function DeveloperTools() {
           href="https://github.com/Ramesh-Karu" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex items-center gap-3 w-full p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all text-slate-700 font-medium"
+          className="flex items-center gap-3 w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-slate-700 dark:text-slate-300 font-medium"
         >
           <Github size={20} />
           GitHub Profile

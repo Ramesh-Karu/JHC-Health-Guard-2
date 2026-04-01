@@ -80,6 +80,7 @@ import { FloatingLoginBar } from './components/FloatingLoginBar';
 import Others from './pages/Others';
 import HealthPass from './pages/HealthPass';
 import Modules from './pages/Modules';
+import AdminModules from './pages/AdminModules';
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherStudents from './pages/TeacherStudents';
 import TeacherHealthRecords from './pages/TeacherHealthRecords';
@@ -108,7 +109,9 @@ import BreakfastAdminDashboard from './pages/BreakfastAdminDashboard';
 import AdminHealthUpdate from './pages/AdminHealthUpdate';
 import StudentTracking from './pages/StudentTracking';
 import AdminBadgeApplications from './pages/AdminBadgeApplications';
+import AdminActivities from './pages/AdminActivities';
 import AdminStudentManagement from './pages/AdminStudentManagement';
+import HealthPet from './pages/HealthPet';
 
 import Onboarding from './components/Onboarding';
 import HeartLoader from './components/HeartLoader';
@@ -179,6 +182,7 @@ const Layout = () => {
     { icon: Users, label: 'Students', path: '/students', roles: ['admin'] },
     { icon: Users, label: 'Teachers', path: '/admin/teachers', roles: ['admin'] },
     { icon: ShieldCheck, label: 'Badge Applications', path: '/admin/badges', roles: ['admin'] },
+    { icon: Activity, label: 'Manage Activities', path: '/admin/activities', roles: ['admin'] },
     { icon: BookOpen, label: 'Classrooms', path: '/admin/classrooms', roles: ['admin'] },
     { icon: Activity, label: 'Health Update', path: '/admin/health-update', roles: ['admin'] },
     { icon: Award, label: 'Sports Management', path: '/admin/sports', roles: ['admin'] },
@@ -196,7 +200,8 @@ const Layout = () => {
     { icon: MessageSquare, label: 'Community', path: '/community', roles: ['admin', 'student'] },
     { icon: HelpCircle, label: 'Queries', path: '/queries', roles: ['admin', 'student'] },
     { icon: Microscope, label: 'STEM Innovation', path: '/stem-innovation', roles: ['admin'] },
-    { icon: BookOpen, label: 'Modules', path: '/modules', roles: ['admin'] },
+    { icon: BookOpen, label: 'Modules', path: '/modules', roles: ['admin', 'student', 'teacher'] },
+    { icon: ShieldCheck, label: 'Admin Modules', path: '/admin/modules', roles: ['admin'] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role || 'student'));
@@ -483,7 +488,7 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
   const location = useLocation();
   
   if (loading) return (
-    <div className="h-screen w-screen flex items-center justify-center bg-white">
+    <div className="h-screen w-screen flex items-center justify-center bg-white dark:bg-slate-900">
       <HeartLoader />
     </div>
   );
@@ -566,12 +571,14 @@ export default function App() {
                 <Route path="/health-records" element={<HealthRecords />} />
                 <Route path="/tracking" element={<StudentTracking />} />
                 <Route path="/others" element={<Others />} />
+                <Route path="/health-pet" element={<HealthPet />} />
               </Route>
               
               <Route path="/health-passport/:id" element={<HealthPassport />} />
 
               <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
                 <Route path="/health-pass" element={<HealthPass />} />
+                <Route path="/modules" element={<Modules />} />
               </Route>
 
               {/* Teacher Only Routes */}
@@ -616,6 +623,7 @@ export default function App() {
 
               {/* Admin Only Routes */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/admin/modules" element={<AdminModules />} />
                 <Route path="/organic-admin" element={<OrganicClubAdmin />} />
                 <Route path="/breakfast-admin" element={<HealthyCanteenAdmin />} />
                 <Route path="/admin/users" element={<UserManagement />} />
@@ -625,9 +633,9 @@ export default function App() {
                 <Route path="/admin/classrooms" element={<AdminClassrooms />} />
                 <Route path="/admin/sports" element={<AdminSports />} />
                 <Route path="/admin/badges" element={<AdminBadgeApplications />} />
+                <Route path="/admin/activities" element={<AdminActivities />} />
                 <Route path="/admin/health-update" element={<AdminHealthUpdate />} />
                 <Route path="/stem-innovation" element={<STEMInnovation />} />
-                <Route path="/modules" element={<Modules />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" />} />

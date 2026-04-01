@@ -7,7 +7,7 @@ import { User as UserType } from '../types';
 import Toast from '../components/Toast';
 import HeartLoader from '../components/HeartLoader';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { doc, collection, getDocs, query, where, writeBatch, setDoc, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { doc, collection, getDocs, query, where, writeBatch, setDoc, deleteDoc, updateDoc, addDoc, increment } from 'firebase/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -224,7 +224,7 @@ export default function Students() {
       return dateStr;
     };
 
-    const dataToExport = allStudents.map(s => ({
+    const dataToExport = allStudents.length > 0 ? allStudents.map(s => ({
       username: s.username,
       fullName: s.fullName,
       email: s.email,
@@ -233,7 +233,16 @@ export default function Students() {
       class: s.class,
       division: s.division,
       password: '' // Blank password for template
-    }));
+    })) : [{
+      username: 'student001',
+      fullName: 'Example Student',
+      email: 'student@school.com',
+      indexNumber: 'S001',
+      dob: '2010.01.01',
+      class: '10',
+      division: 'A',
+      password: 'password123'
+    }];
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -294,7 +303,7 @@ export default function Students() {
 
     setIsImporting(true);
     // Filter valid rows first
-    const validRows = importPreviewData.filter(row => row.username && row.fullName && row.password && row.indexNumber);
+    const validRows = importPreviewData.filter(row => row.username && row.fullName && row.indexNumber);
     const total = validRows.length;
     let completed = 0;
     let skipped = 0;
@@ -307,8 +316,8 @@ export default function Students() {
       const existingIndexNumbers = new Set(existingSnapshot.docs.map(d => d.data().indexNumber));
       const existingUsernames = new Set(existingSnapshot.docs.map(d => d.data().username?.toLowerCase()));
 
-      // Use Firestore batches for high performance (500 docs per batch)
-      const batchSize = 500;
+      // Use Firestore batches for high performance
+      const batchSize = 250; // 2 operations per row (user + stats)
       for (let i = 0; i < validRows.length; i += batchSize) {
         const batch = writeBatch(db);
         const currentBatchRows = validRows.slice(i, i + batchSize);
@@ -342,9 +351,16 @@ export default function Students() {
               profileCompleted: false,
               points: 0,
               authCreated: false,
-              tempPassword: row.password,
+              tempPassword: row.password || '123456',
               createdAt: new Date().toISOString()
             });
+            
+            // Update global stats in the same batch
+            const statsRef = doc(db, 'metadata', 'global_stats');
+            batch.set(statsRef, {
+              totalUsers: increment(1),
+              'roleCounts.student': increment(1)
+            }, { merge: true });
             
             // Add to local sets to prevent duplicates within the same import file
             existingIndexNumbers.add(row.indexNumber);
@@ -374,6 +390,12 @@ export default function Students() {
     } catch (err) {
       console.error('Bulk import failed:', err);
       setToast({ message: 'Bulk import failed. Please try again.', type: 'error' });
+      setIsImporting(false);
+      setIsImportPreviewOpen(false);
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
+      refetch();
+      return;
     }
     
     setIsImporting(false);

@@ -23,7 +23,8 @@ import {
   BarChart2,
   User,
   Calendar,
-  Clock
+  Clock,
+  Settings
 } from 'lucide-react';
 import { useAuth, cn } from '../App';
 import { Post, Comment, User as UserType } from '../types';
@@ -62,6 +63,19 @@ export default function Community() {
     options: ['', '']
   });
   const [viewingUser, setViewingUser] = useState<UserType | null>(null);
+  const [communitySettings, setCommunitySettings] = useState<{ allowedRoles: string[] }>({ allowedRoles: ['admin', 'teacher'] });
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'community'), (doc) => {
+      if (doc.exists()) {
+        setCommunitySettings(doc.data() as any);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const canUserPost = user && (user.role === 'admin' || communitySettings.allowedRoles.includes(user.role));
 
   const filteredPosts = posts.filter(post => {
     const searchLower = searchQuery.toLowerCase();
@@ -76,6 +90,10 @@ export default function Community() {
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!canUserPost) {
+      alert('You do not have permission to create posts.');
+      return;
+    }
     try {
       const postData: any = {
         ...newPost,
@@ -223,6 +241,15 @@ export default function Community() {
     }
   };
 
+  const handleUpdateSettings = async (roles: string[]) => {
+    try {
+      await setDoc(doc(db, 'settings', 'community'), { allowedRoles: roles });
+      setIsSettingsModalOpen(false);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, 'settings/community');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Helmet>
@@ -252,14 +279,25 @@ export default function Community() {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Community Feed</h1>
             <p className="text-slate-500 dark:text-slate-400">Share your health journey with others</p>
           </div>
-          {user && (
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-600 transition-all active:scale-95"
-            >
-              <Plus size={24} />
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {user?.role === 'admin' && (
+              <button 
+                onClick={() => setIsSettingsModalOpen(true)}
+                className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                title="Community Settings"
+              >
+                <Settings size={24} />
+              </button>
+            )}
+            {canUserPost && (
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-600 transition-all active:scale-95"
+              >
+                <Plus size={24} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -461,6 +499,62 @@ export default function Community() {
           ))
         )}
       </div>
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {isSettingsModalOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">Community Settings</h2>
+                <button onClick={() => setIsSettingsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-4 block">
+                    Who can create posts?
+                  </label>
+                  <div className="space-y-3">
+                    {['admin', 'teacher', 'student', 'coach', 'organic-admin', 'breakfast-admin'].map((role) => (
+                      <label key={role} className="flex items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={communitySettings.allowedRoles.includes(role)}
+                          onChange={(e) => {
+                            const newRoles = e.target.checked
+                              ? [...communitySettings.allowedRoles, role]
+                              : communitySettings.allowedRoles.filter(r => r !== role);
+                            handleUpdateSettings(newRoles);
+                          }}
+                          className="w-5 h-5 rounded-lg border-slate-300 text-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="ml-3 font-bold text-slate-700 dark:text-slate-200 capitalize">{role.replace('-', ' ')}s</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <button
+                  onClick={() => setIsSettingsModalOpen(false)}
+                  className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black hover:opacity-90 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Create Post Modal */}
       {createPortal(

@@ -46,7 +46,17 @@ import { CACHE_KEYS } from '../lib/queries';
 
 const StatCard = ({ icon: Icon, label, value, trend, trendValue, color }: any) => (
   <motion.div 
-    whileHover={{ y: -5 }}
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.3 }}
+    whileHover={{ 
+      y: -5, 
+      rotateX: 5, 
+      rotateY: 5, 
+      scale: 1.02,
+      transition: { duration: 0.2 } 
+    }}
+    style={{ perspective: 1000 }}
     className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
   >
     <div className="flex items-start justify-between mb-4">
@@ -156,7 +166,13 @@ export default function Dashboard() {
             })}
           </script>
         </Helmet>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <motion.div
+          initial={{ opacity: 0, rotateX: -20, y: 50 }}
+          animate={{ opacity: 1, rotateX: 0, y: 0 }}
+          transition={{ duration: 0.8, type: "spring" }}
+          style={{ perspective: 1000 }}
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        >
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admin Overview</h1>
             <p className="text-slate-500 dark:text-slate-400">Real-time school health analytics</p>
@@ -169,7 +185,7 @@ export default function Dashboard() {
             <RefreshCw size={18} className={adminRefetching ? "animate-spin" : ""} />
             {adminRefetching ? "Refreshing..." : "Refresh Data"}
           </button>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
