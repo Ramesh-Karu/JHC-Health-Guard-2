@@ -10,6 +10,7 @@ export default function PostureScanner() {
   const [feedback, setFeedback] = useState('Initializing...');
   const [score, setScore] = useState(() => Number(localStorage.getItem('posture_score')) || 0);
   const [status, setStatus] = useState<'Good' | 'Moderate' | 'Needs Improvement'>(() => (localStorage.getItem('posture_status') as any) || 'Good');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem('posture_score', score.toString());
@@ -120,8 +121,18 @@ export default function PostureScanner() {
         ref={webcamRef} 
         className="absolute inset-0 w-full h-full object-cover"
         videoConstraints={{ facingMode: "environment" }}
+        onUserMediaError={(err) => {
+          console.error("Webcam error:", err);
+          setError("Camera access failed. Please ensure you've granted camera permissions in your device settings.");
+        }}
       />
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" />
+      
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 p-8 text-center">
+          <p className="text-red-500 font-bold">{error}</p>
+        </div>
+      )}
       
       <div className="absolute top-4 left-4 bg-blue-600/80 backdrop-blur text-white px-4 py-2 rounded-full text-sm font-semibold">
         Score: {score} | {status}
