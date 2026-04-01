@@ -526,7 +526,6 @@ const queryClient = new QueryClient({
 });
 
 import { loadInitialData } from './lib/queries';
-import { Toaster, toast as sonnerToast } from 'sonner';
 import { SyncProvider } from './components/SyncManager';
 
 export default function App() {
@@ -549,7 +548,6 @@ export default function App() {
       <ThemeProvider>
         <SyncProvider>
           <AuthProvider>
-            <Toaster position="top-center" richColors />
             {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
             <Router>
               <BirdToy />

@@ -8,7 +8,6 @@ interface MasterActivity {
   type: 'exercise' | 'sport' | 'habit';
   name: string;
   points: number;
-  maxPoints?: number;
   description?: string;
   videoUrl?: string;
   difficulty?: string;
@@ -24,7 +23,6 @@ export default function AdminActivities() {
     type: 'sport',
     name: '',
     points: 100,
-    maxPoints: 500,
     description: '',
     videoUrl: '',
     difficulty: 'Beginner',
@@ -57,7 +55,6 @@ export default function AdminActivities() {
         type: 'sport',
         name: '',
         points: 100,
-        maxPoints: 500,
         description: '',
         videoUrl: '',
         difficulty: 'Beginner',
@@ -83,7 +80,6 @@ export default function AdminActivities() {
       type: activity.type || 'sport',
       name: activity.name || '',
       points: activity.points || 0,
-      maxPoints: activity.maxPoints || 500,
       description: activity.description || '',
       videoUrl: activity.videoUrl || '',
       difficulty: activity.difficulty || 'Beginner',
@@ -115,7 +111,7 @@ export default function AdminActivities() {
         <button 
           onClick={() => {
             setEditingActivity(null);
-            setFormData({ type: 'sport', name: '', points: 100, maxPoints: 500, description: '', videoUrl: '', difficulty: 'Beginner', ageGroup: 'All Ages' });
+            setFormData({ type: 'sport', name: '', points: 100, description: '', videoUrl: '', difficulty: 'Beginner', ageGroup: 'All Ages' });
             setIsModalOpen(true);
           }}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
@@ -192,15 +188,6 @@ export default function AdminActivities() {
                       type="number"
                       value={formData.points}
                       onChange={(e) => setFormData({...formData, points: Number(e.target.value)})}
-                      className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Max Points Limit</label>
-                    <input 
-                      type="number"
-                      value={formData.maxPoints}
-                      onChange={(e) => setFormData({...formData, maxPoints: Number(e.target.value)})}
                       className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
                     />
                   </div>

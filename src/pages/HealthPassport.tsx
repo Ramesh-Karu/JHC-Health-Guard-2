@@ -75,6 +75,20 @@ export default function HealthPassport() {
     documentTitle: `Health_Passport_${student?.fullName || 'Student'}`,
   });
 
+  const handleDownloadImage = async () => {
+    if (!cardRef.current) return;
+    
+    const canvas = await html2canvas(cardRef.current, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    
+    const link = document.createElement('a');
+    link.href = imgData;
+    link.download = `Health_Passport_${student?.fullName || 'Student'}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
     
@@ -171,11 +185,18 @@ export default function HealthPassport() {
             <span className="whitespace-nowrap">Print Report</span>
           </button>
           <button 
+            onClick={handleDownloadImage}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 dark:shadow-none"
+          >
+            <Download size={18} />
+            <span className="whitespace-nowrap">Download Image</span>
+          </button>
+          <button 
             onClick={handleDownloadPDF}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
           >
             <Download size={18} />
-            <span className="whitespace-nowrap">Download Card</span>
+            <span className="whitespace-nowrap">Download PDF</span>
           </button>
         </div>
       </div>
