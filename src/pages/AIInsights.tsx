@@ -87,7 +87,7 @@ export default function AIInsights() {
           setAnalysis(aiAnalysis);
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.GET, 'users/health_records/activities');
+        console.error("AI Insights data fetch error:", err);
       } finally {
         setLoading(false);
       }

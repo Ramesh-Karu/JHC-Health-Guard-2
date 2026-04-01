@@ -124,33 +124,68 @@ export default function Activities() {
       const today = new Date().toISOString().split('T')[0];
       
       // Check if already completed today
-      const q = query(
+      const qToday = query(
         collection(db, 'activities'),
         where('userId', '==', user.id),
         where('name', '==', activity.name),
         where('date', '==', today)
       );
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
+      const snapshotToday = await getDocs(qToday);
+      if (!snapshotToday.empty) {
         alert("You have already completed this activity today!");
         return;
       }
 
-      await addDoc(collection(db, 'activities'), {
-        userId: user.id,
-        type: activity.type,
-        name: activity.name,
-        date: today,
-        points: activity.points
-      });
+      // Check max points limit if defined
+      if (activity.maxPoints) {
+        const qAll = query(
+          collection(db, 'activities'),
+          where('userId', '==', user.id),
+          where('name', '==', activity.name)
+        );
+        const snapshotAll = await getDocs(qAll);
+        const totalEarned = snapshotAll.docs.reduce((sum, doc) => sum + (doc.data().points || 0), 0);
+        
+        if (totalEarned >= activity.maxPoints) {
+          alert(`You have reached the maximum points limit (${activity.maxPoints}) for this activity!`);
+          return;
+        }
 
-      // Update user points
-      const userRef = doc(db, 'users', user.id);
-      await updateDoc(userRef, {
-        points: increment(activity.points)
-      });
+        // Adjust points if it would exceed max
+        const pointsToAward = Math.min(activity.points, activity.maxPoints - totalEarned);
+        
+        await addDoc(collection(db, 'activities'), {
+          userId: user.id,
+          type: activity.type,
+          name: activity.name,
+          date: today,
+          points: pointsToAward
+        });
 
-      alert(`Great job! You earned ${activity.points} points.`);
+        // Update user points
+        const userRef = doc(db, 'users', user.id);
+        await updateDoc(userRef, {
+          points: increment(pointsToAward)
+        });
+
+        alert(`Great job! You earned ${pointsToAward} points.`);
+      } else {
+        await addDoc(collection(db, 'activities'), {
+          userId: user.id,
+          type: activity.type,
+          name: activity.name,
+          date: today,
+          points: activity.points
+        });
+
+        // Update user points
+        const userRef = doc(db, 'users', user.id);
+        await updateDoc(userRef, {
+          points: increment(activity.points)
+        });
+
+        alert(`Great job! You earned ${activity.points} points.`);
+      }
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'activities');
     }

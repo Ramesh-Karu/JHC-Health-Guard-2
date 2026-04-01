@@ -34,7 +34,19 @@ export default function AdminStudentManagement() {
   const [selectedStudent, setSelectedStudent] = useState<UserType | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [formData, setFormData] = useState<Partial<UserType>>({});
+  const [formData, setFormData] = useState<Partial<UserType>>({
+    fullName: '',
+    indexNumber: '',
+    admissionNumber: '',
+    dob: '',
+    class: '',
+    division: '',
+    address: '',
+    parentName: '',
+    parentContact: '',
+    guardianName: '',
+    guardianContact: ''
+  });
   const [pointAdjustment, setPointAdjustment] = useState(0);
 
   const searchResults = useMemo(() => {
@@ -57,7 +69,19 @@ export default function AdminStudentManagement() {
 
   const openEditModal = (student: UserType) => {
     setSelectedStudent(student);
-    setFormData({ ...student });
+    setFormData({
+      fullName: student.fullName || '',
+      indexNumber: student.indexNumber || '',
+      admissionNumber: student.admissionNumber || '',
+      dob: student.dob || '',
+      class: student.class || '',
+      division: student.division || '',
+      address: student.address || '',
+      parentName: student.parentName || '',
+      parentContact: student.parentContact || '',
+      guardianName: student.guardianName || '',
+      guardianContact: student.guardianContact || ''
+    });
     setPointAdjustment(0);
     setIsEditModalOpen(true);
   };

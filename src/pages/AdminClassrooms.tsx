@@ -78,8 +78,8 @@ export default function AdminClassrooms() {
   const openEditModal = (classroom: any) => {
     setEditingClassroom(classroom);
     setFormData({
-      grade: classroom.grade,
-      division: classroom.division,
+      grade: classroom.grade || '',
+      division: classroom.division || '',
       teacherId: classroom.teacherId || ''
     });
     setShowAddModal(true);

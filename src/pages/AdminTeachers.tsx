@@ -293,8 +293,8 @@ export default function AdminTeachers() {
   const openEditModal = (teacher: any) => {
     setEditingTeacher(teacher);
     setFormData({
-      fullName: teacher.fullName,
-      email: teacher.email,
+      fullName: teacher.fullName || '',
+      email: teacher.email || '',
       password: '', // Don't populate password on edit
       class: teacher.class || '',
       division: teacher.division || '',

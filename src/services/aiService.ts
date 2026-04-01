@@ -53,6 +53,9 @@ export const analyzeStudentHealth = async (studentData: any, healthHistory: any[
     Recent Activities:
     ${activities.slice(0, 5).map(a => `- Date: ${a.date}, Type: ${a.type}, Name: ${a.name}, Points: ${a.points}`).join('\n')}
     
+    Please provide a deep analysis of growth velocity, BMI trends, and activity levels. 
+    Identify potential health risks (obesity, underweight, sedentary lifestyle) and provide specific, actionable nutritional and lifestyle advice.
+    
     Please provide the analysis in JSON format with the following structure:
     {
       "risks": [
@@ -136,6 +139,10 @@ export const getAdminAIInsights = async (allStudentsData: any[]): Promise<any> =
     Data Summary:
     - Total Students: ${allStudentsData.length}
     - BMI Categories: ${JSON.stringify(countBy(allStudentsData, 'category'))}
+    - Average BMI: ${allStudentsData.length > 0 ? (allStudentsData.reduce((acc, s) => acc + (s.bmi || 0), 0) / allStudentsData.length).toFixed(1) : 'N/A'}
+    
+    Identify school-wide health trends, classes that may need intervention, and provide a summary of the overall health status of the student body.
+    Predict potential future health issues if current trends continue.
     
     Please provide the insights in JSON format with the following structure:
     {
