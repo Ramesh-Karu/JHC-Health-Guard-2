@@ -57,7 +57,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
 
     qrScanner.start().catch((err) => {
       console.error("Failed to start scanner", err);
-      setError("Camera access failed. If you're using the app version, please ensure you've granted camera permissions in your device settings. For web users, check your browser's site permissions.");
+      setError("Camera permission denied or camera not accessible. Please allow camera access in your browser settings.");
     });
 
     return () => {
