@@ -13,7 +13,7 @@
     "capacitor:update:after": "node scripts/update-manifest.js"
   },
   "dependencies": {
-    "@capacitor-community/text-to-speech": "^6.1.0",
+    "@capacitor-community/text-to-speech": "^5.0.0",
     "@capacitor/android": "^6.2.1",
     "@capacitor/camera": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
