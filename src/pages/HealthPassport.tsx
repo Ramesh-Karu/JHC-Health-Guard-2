@@ -42,6 +42,9 @@ import { HealthPassportCard } from '../components/HealthPassportCard';
 import { Skeleton } from '../components/Skeleton';
 import jsPDF from 'jspdf';
 import * as htmlToImage from 'html-to-image';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
 
 import { useStudentProfile, useStudentHealthRecords, useStudentActivities } from '../lib/queries';
 
@@ -108,39 +111,65 @@ export default function HealthPassport() {
     }
   };
 
+  const latestRecord = healthHistory[0];
+  const passportUrl = `https://jhchealthguard.online/health-passport/${student?.id}`;
+
   const handleShare = async () => {
     if (!cardRef.current) return;
     
     try {
-      const blob = await htmlToImage.toBlob(cardRef.current, { pixelRatio: 2 });
+      const shareText = `Check out ${student?.fullName}'s Health Passport!\nClass: ${student?.class}\nIndex: ${student?.indexNumber}\nHealth Status: ${latestRecord?.category || 'Normal'}`;
+      const branding = `Powered by JHC Health Guard - AI Integrated Health Management System of Jaffna Hindu College`;
       
-      if (!blob) {
-        throw new Error('Could not generate image blob');
-      }
-      
-      const file = new File([blob], `Health_Passport_${student?.fullName || 'Student'}.png`, { type: 'image/png' });
-      
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: `${student?.fullName}'s Health Passport`,
-          text: `Check out ${student?.fullName}'s Health Passport!`,
-          url: passportUrl,
-          files: [file]
+      if (Capacitor.isNativePlatform()) {
+        const dataUrl = await htmlToImage.toPng(cardRef.current, { pixelRatio: 2 });
+        const base64Data = dataUrl.split(',')[1];
+        
+        const fileName = `Health_Passport_${student?.id}.png`;
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
         });
-      } else if (navigator.share) {
-        await navigator.share({
+        
+        await Share.share({
           title: `${student?.fullName}'s Health Passport`,
-          text: `Check out ${student?.fullName}'s Health Passport!`,
-          url: passportUrl
+          text: `${shareText}\n\n${passportUrl}\n\n${branding}`,
+          url: savedFile.uri,
+          dialogTitle: 'Share Health Passport'
         });
       } else {
-        await navigator.clipboard.writeText(passportUrl);
-        alert('Link copied to clipboard!');
+        const blob = await htmlToImage.toBlob(cardRef.current, { pixelRatio: 2 });
+        
+        if (!blob) {
+          throw new Error('Could not generate image blob');
+        }
+        
+        const file = new File([blob], `Health_Passport_${student?.fullName || 'Student'}.png`, { type: 'image/png' });
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: `${student?.fullName}'s Health Passport`,
+            text: `${shareText}\n\n${branding}`,
+            url: passportUrl,
+            files: [file]
+          });
+        } else if (navigator.share) {
+          await navigator.share({
+            title: `${student?.fullName}'s Health Passport`,
+            text: `${shareText}\n\n${branding}`,
+            url: passportUrl
+          });
+        } else {
+          await navigator.clipboard.writeText(`${shareText}\n\n${passportUrl}\n\n${branding}`);
+          alert('Link copied to clipboard!');
+        }
       }
     } catch (error) {
       console.error('Error sharing:', error);
       try {
-        await navigator.clipboard.writeText(passportUrl);
+        const fallbackText = `Check out ${student?.fullName}'s Health Passport!\nClass: ${student?.class}\nIndex: ${student?.indexNumber}\nHealth Status: ${latestRecord?.category || 'Normal'}\n\n${passportUrl}\n\nPowered by JHC Health Guard - AI Integrated Health Management System of Jaffna Hindu College`;
+        await navigator.clipboard.writeText(fallbackText);
         alert('Link copied to clipboard!');
       } catch (clipboardError) {
         alert('Sharing is not supported on this device.');
@@ -205,9 +234,6 @@ export default function HealthPassport() {
       </div>
     );
   }
-
-  const latestRecord = healthHistory[0];
-  const passportUrl = `${window.location.origin}/health-passport/${student?.id}`;
 
   return (
     <div className="space-y-8 pb-12">

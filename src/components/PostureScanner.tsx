@@ -21,6 +21,7 @@ import {
   Minimize
 } from 'lucide-react';
 import { takePhoto, isNative, requestCameraPermissions } from '../lib/capacitorCamera';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from '../firebase';
 import { getPostureInsights } from '../services/aiService';
@@ -125,14 +126,29 @@ export default function PostureScanner() {
     return () => clearInterval(interval);
   }, [isSessionActive]);
 
-  const speak = useCallback((text: string) => {
+  const speak = useCallback(async (text: string) => {
     if (!isAudioEnabled) return;
     const now = Date.now();
     if (now - lastAlertTime.current < 10000) return; // Limit alerts to every 10 seconds
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.1;
-    window.speechSynthesis.speak(utterance);
+    try {
+      if (isNative) {
+        await TextToSpeech.speak({
+          text: text,
+          lang: 'en-US',
+          rate: 1.1,
+          pitch: 1.0,
+          volume: 1.0,
+          category: 'ambient',
+        });
+      } else {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.1;
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (err) {
+      console.error("TTS Error:", err);
+    }
     lastAlertTime.current = now;
   }, [isAudioEnabled]);
 
@@ -195,8 +211,9 @@ export default function PostureScanner() {
         } else {
           pose.close();
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Pose initialization error:", err);
+        setFeedback("Failed to load AI model. Check internet connection.");
       }
     };
 
@@ -494,7 +511,11 @@ export default function PostureScanner() {
             audio={false}
             ref={webcamRef} 
             className="absolute inset-0 w-full h-full object-cover"
-            videoConstraints={{ facingMode: facingMode }}
+            videoConstraints={{ 
+              facingMode: facingMode,
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }}
             onUserMedia={() => setFeedback('Scanning...')}
             onUserMediaError={(err) => {
               console.error("Webcam error:", err);
