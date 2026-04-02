@@ -1,5 +1,6 @@
 import React from 'react';
-import { Camera } from 'lucide-react';
+import { Camera as CameraIcon } from 'lucide-react';
+import { takePhoto, isNative } from '../lib/capacitorCamera';
 
 interface PassportImageUploaderProps {
   photoUrl: string;
@@ -16,6 +17,15 @@ export const PassportImageUploader: React.FC<PassportImageUploaderProps> = ({ ph
     }
   };
 
+  const handleCapacitorCamera = async () => {
+    if (isNative) {
+      const result = await takePhoto();
+      if (result) {
+        onUpload(result.file);
+      }
+    }
+  };
+
   return (
     <div className="relative w-32 h-32 group">
       <img
@@ -23,9 +33,14 @@ export const PassportImageUploader: React.FC<PassportImageUploaderProps> = ({ ph
         alt={fullName}
         className="w-full h-full object-cover rounded-3xl border-4 border-white shadow-lg"
       />
-      <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer">
-        <Camera className="text-white" size={24} />
-        <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+      <label 
+        className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl cursor-pointer"
+        onClick={handleCapacitorCamera}
+      >
+        <CameraIcon className="text-white" size={24} />
+        {!isNative && (
+          <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+        )}
       </label>
     </div>
   );

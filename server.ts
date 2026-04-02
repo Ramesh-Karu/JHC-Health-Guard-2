@@ -10,6 +10,7 @@ import crypto from "crypto";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
+import multer from "multer";
 
 dotenv.config();
 
@@ -20,20 +21,19 @@ const __dirname = path.dirname(__filename);
 const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
 if (fs.existsSync(firebaseConfigPath)) {
   const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
-  // In this environment, initializeApp() without arguments often works better
-  // as it picks up the environment's service account automatically.
-  try {
-    admin.initializeApp();
-  } catch (e) {
-    // If already initialized or fails, try with project ID
+  if (admin.apps.length === 0) {
     try {
+      // Try default initialization first (works in many cloud environments)
       admin.initializeApp({
         projectId: firebaseConfig.projectId
       });
-    } catch (e2) {
-      console.warn("Firebase Admin already initialized or failed to initialize:", e2);
+      console.log("Firebase Admin initialized with project ID:", firebaseConfig.projectId);
+    } catch (e: any) {
+      console.error("Firebase Admin failed to initialize:", e.message);
     }
   }
+} else {
+  console.warn("firebase-applet-config.json not found, Firebase Admin not initialized");
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -265,11 +265,48 @@ async function startServer() {
   const PORT = 3000;
   app.use(express.json());
 
+  // Ensure uploads directory exists
+  const uploadsDir = path.join(__dirname, "uploads", "profile-photos");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Serve uploads statically
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+  // Configure multer for profile photo uploads
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadsDir);
+    },
+    filename: (req: any, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, `profile-${req.user.id}-${uniqueSuffix}${ext}`);
+    },
+  });
+
+  const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith("image/")) {
+        cb(null, true);
+      } else {
+        cb(new Error("Only images are allowed"));
+      }
+    },
+  });
+
   // Middleware
   const authenticate = async (req: any, res: any, next: any) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ error: "Unauthorized" });
     const token = authHeader.split(" ")[1];
+
+    if (!token || token === "null" || token === "undefined") {
+      return res.status(401).json({ error: "No token provided" });
+    }
 
     try {
       // Try verifying as Firebase ID Token first
@@ -284,15 +321,22 @@ async function startServer() {
           role: isAdminEmail ? 'admin' : 'student' // Default to student unless it's the admin email
         };
         return next();
-      } catch (firebaseErr) {
+      } catch (firebaseErr: any) {
         // Not a valid Firebase token, try JWT
-        const decoded: any = jwt.verify(token, JWT_SECRET);
-        const user = db.prepare("SELECT id, email, role, fullName FROM users WHERE id = ?").get(decoded.id);
-        if (!user) return res.status(401).json({ error: "User not found" });
-        req.user = user;
-        next();
+        console.log("Firebase token verification failed, trying JWT:", firebaseErr.message);
+        try {
+          const decoded: any = jwt.verify(token, JWT_SECRET);
+          const user = db.prepare("SELECT id, email, role, fullName FROM users WHERE id = ?").get(decoded.id);
+          if (!user) return res.status(401).json({ error: "User not found" });
+          req.user = user;
+          return next();
+        } catch (jwtErr: any) {
+          console.error("JWT verification failed:", jwtErr.message);
+          return res.status(401).json({ error: "Invalid token" });
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Authentication error:", err.message);
       res.status(401).json({ error: "Invalid token" });
     }
   };
@@ -345,15 +389,63 @@ async function startServer() {
   });
 
   app.put("/api/me", authenticate, (req: any, res) => {
-    const { address, parentName, parentContact, photoUrl } = req.body;
-    db.prepare(`
-      UPDATE users 
-      SET address = ?, parentName = ?, parentContact = ?, photoUrl = ?
-      WHERE id = ?
-    `).run(address, parentName, parentContact, photoUrl, req.user.id);
+    const allowedFields = [
+      'fullName', 'indexNumber', 'admissionNumber', 'dob', 'gender', 
+      'class', 'division', 'address', 'parentName', 'parentContact', 
+      'guardianName', 'guardianContact', 'phone', 'photoUrl'
+    ];
+    
+    const updates = Object.keys(req.body)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj: any, key) => {
+        obj[key] = req.body[key];
+        return obj;
+      }, {});
+
+    if (Object.keys(updates).length > 0) {
+      const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+      const values = Object.values(updates);
+      values.push(req.user.id);
+
+      try {
+        db.prepare(`UPDATE users SET ${setClause} WHERE id = ?`).run(...values);
+      } catch (error) {
+        console.error("Error updating user profile:", error);
+        return res.status(500).json({ error: "Failed to update profile" });
+      }
+    }
     
     const updatedUser = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.id);
     res.json(updatedUser);
+  });
+
+  app.post("/api/upload-profile-photo", authenticate, upload.single("photo"), (req: any, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const photoUrl = `/uploads/profile-photos/${req.file.filename}`;
+    
+    try {
+      // Cleanup old photo if it exists on the server
+      const oldUser = db.prepare("SELECT photoUrl FROM users WHERE id = ?").get(req.user.id);
+      if (oldUser?.photoUrl && oldUser.photoUrl.startsWith('/uploads/')) {
+        const oldPath = path.join(__dirname, oldUser.photoUrl);
+        if (fs.existsSync(oldPath)) {
+          try {
+            fs.unlinkSync(oldPath);
+          } catch (e) {
+            console.warn("Failed to delete old photo:", e);
+          }
+        }
+      }
+
+      db.prepare("UPDATE users SET photoUrl = ? WHERE id = ?").run(photoUrl, req.user.id);
+      res.json({ photoUrl });
+    } catch (error) {
+      console.error("Error updating profile photo:", error);
+      res.status(500).json({ error: "Failed to update profile photo" });
+    }
   });
 
   // Teachers (Admin)

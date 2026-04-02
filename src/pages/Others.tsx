@@ -26,7 +26,8 @@ import {
   Scan,
   Heart,
   Scale,
-  Camera
+  Camera,
+  Wind
 } from 'lucide-react';
 import DeveloperPopup from '../components/DeveloperPopup';
 import QRScanner from '../components/QRScanner';
@@ -35,8 +36,6 @@ import { SyncStatusIndicator } from '../components/SyncManager';
 import { InstallPWAButton } from '../components/InstallPWAButton';
 import NotificationForm from '../components/NotificationForm';
 import NotificationsModal from '../components/NotificationsModal';
-import BMIModal from '../components/BMIModal';
-import PostureScannerModal from '../components/PostureScannerModal';
 
 export default function Others() {
   const { user, logout } = useAuth();
@@ -45,8 +44,6 @@ export default function Others() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isNotificationFormOpen, setIsNotificationFormOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
-  const [isBMICalculatorOpen, setIsBMICalculatorOpen] = useState(false);
-  const [isPostureScannerOpen, setIsPostureScannerOpen] = useState(false);
   const [scannedStudentId, setScannedStudentId] = useState<string | null>(null);
 
   const handleLogout = async () => {
@@ -86,8 +83,10 @@ export default function Others() {
         { icon: Heart, label: 'Health Pet', path: '/health-pet', color: 'bg-pink-500' },
         { icon: Brain, label: 'AI Insights', path: '/ai-insights', color: 'bg-purple-500' },
         { icon: QrCode, label: 'Health Passport', path: '/health-passport', color: 'bg-indigo-500' },
-        { icon: Scale, label: 'BMI Calculator', path: '#', color: 'bg-rose-500', onClick: () => setIsBMICalculatorOpen(true) },
-        { icon: Camera, label: 'Posture Scanner', path: '#', color: 'bg-blue-600', onClick: () => setIsPostureScannerOpen(true) },
+        { icon: Scale, label: 'BMI Calculator', path: '/bmi-calculator', color: 'bg-rose-500' },
+        { icon: Camera, label: 'Posture Scanner', path: '/posture-scanner', color: 'bg-blue-600' },
+        { icon: Brain, label: 'Mood Tracker', path: '/mood-tracker', color: 'bg-purple-600' },
+        { icon: Wind, label: 'Breathing System', path: '/breathing-system', color: 'bg-cyan-600' },
       ]
     },
     {
@@ -307,8 +306,6 @@ export default function Others() {
         </div>
       )}
       <NotificationsModal isOpen={isNotificationsModalOpen} onClose={() => setIsNotificationsModalOpen(false)} />
-      <BMIModal isOpen={isBMICalculatorOpen} onClose={() => setIsBMICalculatorOpen(false)} />
-      <PostureScannerModal isOpen={isPostureScannerOpen} onClose={() => setIsPostureScannerOpen(false)} />
     </div>
   );
 }

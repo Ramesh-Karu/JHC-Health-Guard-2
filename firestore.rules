@@ -182,6 +182,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /posture_scans/{scanId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin());
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /master_activities/{activityId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();

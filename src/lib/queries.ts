@@ -305,6 +305,7 @@ export const useLeaderboard = () => {
           class: student.class || 'N/A',
           division: student.division || 'N/A',
           points: student.points || 0,
+          wellnessBadge: student.wellnessBadge || false,
           avatar: student.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.fullName || 'U')}&background=random`
         };
       });

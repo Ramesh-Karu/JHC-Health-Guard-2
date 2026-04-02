@@ -100,6 +100,7 @@ export default function Community() {
         authorId: user.id,
         authorName: user.fullName || 'Unknown',
         authorPhoto: user.photoUrl || '',
+        authorWellnessBadge: user.wellnessBadge || false,
         likesCount: 0,
         commentsCount: 0,
         reactions: {},
@@ -227,6 +228,7 @@ export default function Community() {
         authorId: user.id,
         authorName: user.fullName || 'Unknown',
         authorPhoto: user.photoUrl || '',
+        authorWellnessBadge: user.wellnessBadge || false,
         content: newComment,
         createdAt: new Date().toISOString()
       });
@@ -367,9 +369,12 @@ export default function Community() {
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => handleViewUser(post.authorId)}
-                        className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-500 transition-colors"
+                        className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-500 transition-colors flex items-center gap-1"
                       >
                         {post.authorName}
+                        {post.authorWellnessBadge && (
+                          <CheckCircle2 size={14} className="text-emerald-500 fill-emerald-500/10" />
+                        )}
                       </button>
                       {post.category && (
                         <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-full uppercase tracking-wider">
@@ -730,7 +735,12 @@ export default function Community() {
                     </div>
                     <div className="flex-1 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{comment.authorName}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                          {comment.authorName}
+                          {comment.authorWellnessBadge && (
+                            <CheckCircle2 size={12} className="text-emerald-500 fill-emerald-500/10" />
+                          )}
+                        </p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{new Date(comment.createdAt).toLocaleDateString()}</p>
                       </div>
                       <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{comment.content}</p>
@@ -806,7 +816,12 @@ export default function Community() {
                 </div>
 
                 <div className="space-y-1 mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{viewingUser.fullName}</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    {viewingUser.fullName}
+                    {viewingUser.wellnessBadge && (
+                      <CheckCircle2 size={20} className="text-emerald-500 fill-emerald-500/10" />
+                    )}
+                  </h2>
                   <p className="text-slate-500 dark:text-slate-400 font-medium">@{viewingUser.username}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-full uppercase tracking-wider">

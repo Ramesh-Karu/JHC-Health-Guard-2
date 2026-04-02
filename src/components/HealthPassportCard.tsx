@@ -1,6 +1,6 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Heart, Activity, Award, User, ShieldCheck } from 'lucide-react';
+import { Heart, Activity, Award, User, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 interface Props {
   student: any;
@@ -31,7 +31,12 @@ export const HealthPassportCard = React.forwardRef<HTMLDivElement, Props>(({ stu
         
         <div className="flex-1 flex flex-col justify-center gap-4">
           <div>
-            <h2 className="text-3xl font-black tracking-tight">{student?.fullName}</h2>
+            <h2 className="text-3xl font-black tracking-tight flex items-center gap-2">
+              {student?.fullName}
+              {student?.wellnessBadge && (
+                <CheckCircle2 size={24} className="text-emerald-400 fill-emerald-400/10" />
+              )}
+            </h2>
             <div className="flex items-center gap-2 text-blue-100 font-bold text-sm mt-1">
               <ShieldCheck size={16} />
               {student?.class} • Jaffna Hindu College

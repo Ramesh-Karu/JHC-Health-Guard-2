@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import QrScanner from 'qr-scanner';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, Camera as CameraIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { takePhoto, isNative } from '../lib/capacitorCamera';
 
 interface QRScannerProps {
   onScan?: (decodedText: string) => void;
@@ -37,6 +38,19 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
     } catch (err) {
       console.error("Failed to scan file", err);
       setError("Failed to scan QR code from image. Please try another image.");
+    }
+  };
+
+  const handleCapacitorCamera = async () => {
+    const result = await takePhoto();
+    if (result) {
+      try {
+        const scanResult = await QrScanner.scanImage(result.file);
+        handleScanResult(scanResult);
+      } catch (err) {
+        console.error("Failed to scan Capacitor photo", err);
+        setError("Failed to scan QR code from photo. Please try again.");
+      }
     }
   };
 
@@ -101,11 +115,23 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
           </>
         )}
         
-        <label className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold cursor-pointer hover:bg-blue-700 transition-all">
-          <Upload size={20} />
-          Upload QR Image
-          <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-        </label>
+        <div className="flex flex-wrap justify-center gap-3">
+          {isNative && (
+            <button 
+              onClick={handleCapacitorCamera}
+              className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all"
+            >
+              <CameraIcon size={20} />
+              Take Photo to Scan
+            </button>
+          )}
+          
+          <label className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold cursor-pointer hover:bg-blue-700 transition-all">
+            <Upload size={20} />
+            Upload QR Image
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </label>
+        </div>
       </div>
 
       <style>{`

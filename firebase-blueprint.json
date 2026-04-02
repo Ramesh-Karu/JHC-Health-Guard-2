@@ -168,12 +168,32 @@
         "ageGroup": { "type": "string" }
       },
       "required": ["type", "name", "points"]
+    },
+    "PostureScan": {
+      "title": "PostureScan",
+      "description": "Record of a posture analysis scan",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "overallScore": { "type": "number" },
+        "neckAngle": { "type": "number" },
+        "shoulderTilt": { "type": "number" },
+        "slouchScore": { "type": "number" },
+        "issues": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "aiCoachSummary": { "type": "string" }
+      },
+      "required": ["userId", "date", "overallScore"]
     }
   },
   "firestore": {
     "/users/{userId}": { "schema": "User", "description": "User profiles" },
     "/health_records/{recordId}": { "schema": "HealthRecord", "description": "Student health records" },
     "/activities/{activityId}": { "schema": "Activity", "description": "Student activities" },
+    "/posture_scans/{scanId}": { "schema": "PostureScan", "description": "Posture analysis records" },
     "/master_activities/{activityId}": { "schema": "MasterActivity", "description": "Admin-defined activities" },
     "/announcements/{announcementId}": { "schema": "Announcement", "description": "Class announcements" },
     "/modules/{moduleId}": { "schema": "Module", "description": "Learning modules" },

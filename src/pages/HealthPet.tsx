@@ -143,7 +143,9 @@ export default function HealthPet() {
     setTimeout(() => setIsAnimating(false), 500);
 
     try {
-      const newExp = (pet.experience || 0) + (updates.experience || 0);
+      let newExp = (pet.experience || 0) + (updates.experience || 0);
+      if (newExp < 0) newExp = 0;
+      
       let newLevel = pet.level;
       let expRemainder = newExp;
       
@@ -186,14 +188,19 @@ export default function HealthPet() {
       return;
     }
     
-    const xpGain = calculateXp(pet!.health);
+    const xpLoss = 50; // Cost to feed
+    if (pet!.experience < xpLoss) {
+      setToast({ message: 'Not enough XP! Take a quiz to earn more.', type: 'error' });
+      return;
+    }
+
     addFloatingText('+30 Food', 'text-orange-500');
-    addFloatingText(`+${xpGain} XP`, 'text-indigo-500');
+    addFloatingText(`-${xpLoss} XP`, 'text-rose-500');
     
     updatePetState({ 
       hunger: pet!.hunger + 30, 
       health: pet!.health + 5, 
-      experience: xpGain 
+      experience: -xpLoss 
     });
   };
 
@@ -204,14 +211,19 @@ export default function HealthPet() {
       return;
     }
     
-    const xpGain = calculateXp(pet!.health);
+    const xpLoss = 30; // Cost to play
+    if (pet!.experience < xpLoss) {
+      setToast({ message: 'Not enough XP! Take a quiz to earn more.', type: 'error' });
+      return;
+    }
+
     addFloatingText('+30 Happy', 'text-pink-500');
-    addFloatingText(`+${xpGain} XP`, 'text-indigo-500');
+    addFloatingText(`-${xpLoss} XP`, 'text-rose-500');
     
     updatePetState({ 
       happiness: pet!.happiness + 30, 
       energy: pet!.energy - 20, 
-      experience: xpGain 
+      experience: -xpLoss 
     });
   };
 
@@ -221,11 +233,23 @@ export default function HealthPet() {
       setToast({ message: 'Your pet is not tired!', type: 'error' });
       return;
     }
+
+    const xpLoss = 20; // Cost to sleep
+    if (pet!.experience < xpLoss) {
+      setToast({ message: 'Not enough XP! Take a quiz to earn more.', type: 'error' });
+      return;
+    }
+
     setIsSleeping(true);
     addFloatingText('Zzz...', 'text-blue-400');
+    addFloatingText(`-${xpLoss} XP`, 'text-rose-500');
     
     setTimeout(() => {
-      updatePetState({ energy: 100, hunger: Math.max(0, pet!.hunger - 10) });
+      updatePetState({ 
+        energy: 100, 
+        hunger: Math.max(0, pet!.hunger - 10),
+        experience: -xpLoss
+      });
       setIsSleeping(false);
       addFloatingText('Woke up!', 'text-amber-500');
     }, 3000);
@@ -517,6 +541,7 @@ export default function HealthPet() {
             <Coffee size={22} />
           </div>
           <span className="font-semibold text-sm text-slate-700 dark:text-slate-200 relative z-10">Feed</span>
+          <span className="text-[10px] font-bold text-rose-500 relative z-10">-50 XP</span>
         </button>
         
         <button 
@@ -529,6 +554,7 @@ export default function HealthPet() {
             <Activity size={22} />
           </div>
           <span className="font-semibold text-sm text-slate-700 dark:text-slate-200 relative z-10">Play</span>
+          <span className="text-[10px] font-bold text-rose-500 relative z-10">-30 XP</span>
         </button>
 
         <button 
@@ -541,6 +567,7 @@ export default function HealthPet() {
             <Moon size={22} />
           </div>
           <span className="font-semibold text-sm text-slate-700 dark:text-slate-200 relative z-10">Sleep</span>
+          <span className="text-[10px] font-bold text-rose-500 relative z-10">-20 XP</span>
         </button>
 
         <button 

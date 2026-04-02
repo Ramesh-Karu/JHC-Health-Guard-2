@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
-import { db, storage, handleFirestoreError, OperationType, doc, updateDoc, ref, uploadBytes, getDownloadURL } from '../firebase';
+import { db, handleFirestoreError, OperationType, doc, updateDoc, auth } from '../firebase';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   User as UserIcon, 
@@ -52,24 +52,46 @@ export default function HealthPass() {
     if (!user?.id) return;
     setUploading(true);
     try {
-      const storageRef = ref(storage, `profiles/${user.id}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      setFormData(prev => ({ ...prev, photoUrl: downloadURL }));
+      const formDataUpload = new FormData();
+      formDataUpload.append('photo', file);
       
-      // Also update Firestore immediately for the photo
-      try {
-        await updateDoc(doc(db, 'users', user.id), { photoUrl: downloadURL });
-      } catch (err) {
-        handleFirestoreError(err, OperationType.UPDATE, `users/${user.id}`);
+      // Get token from Firebase or LocalStorage
+      let token = localStorage.getItem('token');
+      if (auth.currentUser) {
+        token = await auth.currentUser.getIdToken();
       }
-      login({ ...user, photoUrl: downloadURL });
-    } catch (error) {
+      
+      const response = await fetch('/api/upload-profile-photo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataUpload
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+      
+      const data = await response.json();
+      const photoUrl = data.photoUrl;
+      
+      setFormData(prev => ({ ...prev, photoUrl }));
+      
+      // Also update Firestore immediately for the photo if using Firebase
+      if (auth.currentUser) {
+        try {
+          await updateDoc(doc(db, 'users', user.id), { photoUrl });
+        } catch (err) {
+          console.warn("Failed to update Firestore photoUrl, but server upload succeeded:", err);
+        }
+      }
+      
+      login({ ...user, photoUrl });
+    } catch (error: any) {
       console.error("Error uploading image:", error);
-      // If it's not a Firestore error, we still want to show a message
-      if (!(error instanceof Error && error.message.startsWith('{'))) {
-        alert("Failed to upload image. Make sure Firebase Storage is enabled.");
-      }
+      alert(error.message || "Failed to upload image to server.");
     } finally {
       setUploading(false);
     }
@@ -86,11 +108,35 @@ export default function HealthPass() {
       // Remove undefined values to prevent Firebase errors
       Object.keys(updatedData).forEach(key => {
         if (updatedData[key as keyof typeof updatedData] === undefined) {
-          delete updatedData[key as keyof typeof updatedData];
+          delete (updatedData as any)[key];
         }
       });
 
-      await updateDoc(userRef, updatedData);
+      // Update Firestore
+      try {
+        await updateDoc(userRef, updatedData);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, `users/${user.id}`);
+      }
+      
+      // Sync to Server
+      try {
+        let token = localStorage.getItem('token');
+        if (auth.currentUser) {
+          token = await auth.currentUser.getIdToken();
+        }
+        
+        await fetch('/api/me', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(updatedData)
+        });
+      } catch (e) {
+        console.warn("Failed to sync profile to server:", e);
+      }
       
       const updatedUser = { ...user, ...updatedData };
       login(updatedUser);
@@ -98,7 +144,7 @@ export default function HealthPass() {
       navigate('/dashboard');
     } catch (err) {
       console.error("Error saving profile:", err);
-      handleFirestoreError(err, OperationType.UPDATE, `users/${user.id}`);
+      alert("Failed to save profile.");
     } finally {
       setLoading(false);
     }
@@ -137,9 +183,9 @@ export default function HealthPass() {
       </div>
 
       {/* Passport Info Card */}
-      <div className="relative -mt-24 px-4 md:px-8">
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-8">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
+      <div className="relative -mt-16 md:-mt-24 px-4 md:px-8">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-6 md:p-8">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start text-center md:text-left">
             {/* Avatar Section */}
             <div className="relative group">
               <PassportImageUploader 
@@ -155,25 +201,25 @@ export default function HealthPass() {
             </div>
 
             {/* Name & Basic Info */}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <div className="flex-1 space-y-4 md:space-y-2 w-full">
+              <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4 w-full">
+                <div className="flex flex-col items-center md:items-start">
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
                     {user.fullName}
                     {user.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={28} className="text-emerald-500 fill-emerald-100 dark:fill-emerald-900/30" /></span>}
                   </h1>
-                  <p className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
+                  <p className="text-slate-500 dark:text-slate-400 font-medium flex items-center justify-center md:justify-start gap-2 mt-1">
                     <Shield size={16} className="text-blue-500" />
                     {user.role === 'admin' ? 'System Administrator' : `Student • Class ${user.class}`}
                   </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 w-full md:w-auto">
                   {isEditing ? (
                     <>
                       {!user.profileCompleted ? null : (
                         <button 
                           onClick={() => setIsEditing(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+                          className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
                         >
                           <X size={18} />
                           Cancel
@@ -182,7 +228,7 @@ export default function HealthPass() {
                       <button 
                         onClick={handleSave}
                         disabled={loading}
-                        className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-600 transition-all disabled:opacity-70"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-600 transition-all disabled:opacity-70"
                       >
                         <Save size={18} />
                         {loading ? 'Saving...' : user.profileCompleted ? 'Save Changes' : 'Continue'}
@@ -191,7 +237,7 @@ export default function HealthPass() {
                   ) : (
                     <button 
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-6 py-2 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl shadow-lg dark:shadow-none hover:bg-slate-800 dark:hover:bg-slate-700 transition-all"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl shadow-lg dark:shadow-none hover:bg-slate-800 dark:hover:bg-slate-700 transition-all"
                     >
                       <Edit3 size={18} />
                       Edit Health Pass
@@ -200,7 +246,7 @@ export default function HealthPass() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-4 pt-4">
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-4">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-bold">
                   <Award size={16} />
                   {user.points} Health Points
@@ -214,7 +260,7 @@ export default function HealthPass() {
           </div>
 
           {/* Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12 pt-12 border-t border-slate-100 dark:border-slate-800">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mt-8 md:mt-12 pt-8 md:pt-12 border-t border-slate-100 dark:border-slate-800">
             {/* Personal Information */}
             <div className="space-y-6">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -237,7 +283,7 @@ export default function HealthPass() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Index Number</label>
                     <p className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
@@ -263,7 +309,7 @@ export default function HealthPass() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gender</label>
                     {isEditing ? (

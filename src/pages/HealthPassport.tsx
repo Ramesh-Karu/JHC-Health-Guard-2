@@ -20,7 +20,8 @@ import {
   TrendingUp,
   Scale,
   Ruler,
-  Brain
+  Brain,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { QRCodeSVG } from 'qrcode.react';
@@ -226,7 +227,12 @@ export default function HealthPassport() {
             </div>
             <div className="flex-1 text-center md:text-left w-full">
               <div className="flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-4 mb-6">
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight break-words text-center md:text-left w-full md:w-auto">{student?.fullName}</h2>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight break-words text-center md:text-left w-full md:w-auto flex items-center justify-center md:justify-start gap-2">
+                  {student?.fullName}
+                  {student?.wellnessBadge && (
+                    <CheckCircle2 size={28} className="text-emerald-400 fill-emerald-400/10" />
+                  )}
+                </h2>
                 <span className="px-4 py-1 bg-blue-500/30 backdrop-blur-md rounded-full text-sm font-bold border border-white/20 whitespace-nowrap">
                   {student?.class}
                 </span>

@@ -236,3 +236,33 @@ function countBy(arr: any[], key: string) {
     return acc;
   }, {});
 }
+
+export const getPostureInsights = async (metrics: any, issues: any[]): Promise<string> => {
+  const model = "gemini-3-flash-preview";
+  
+  const prompt = `
+    Analyze the following posture scan metrics and detected issues. Provide a personalized, encouraging "Posture Coach" summary.
+    
+    Metrics:
+    - Overall Score: ${metrics.overallScore}/100
+    - Neck Angle: ${metrics.neckAngle}° (Forward Head Posture)
+    - Shoulder Tilt: ${metrics.shoulderTilt}% (Symmetry)
+    - Slouch Score: ${metrics.slouchScore}% (Spine Compression)
+    
+    Detected Issues:
+    ${issues.map(i => `- ${i.title}: ${i.description}`).join('\n')}
+    
+    Provide a 2-3 sentence summary that explains the impact of these metrics and offers a motivational tip for improvement.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+    });
+    return response.text || "Your posture is looking good! Keep focusing on sitting tall.";
+  } catch (error) {
+    console.error("Posture Insights Error:", error);
+    return "Keep focusing on maintaining a straight back and relaxed shoulders.";
+  }
+};

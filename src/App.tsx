@@ -30,7 +30,8 @@ import {
   ShoppingCart,
   ShieldCheck,
   Github,
-  Coffee
+  Coffee,
+  CheckCircle2
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -112,6 +113,10 @@ import AdminBadgeApplications from './pages/AdminBadgeApplications';
 import AdminActivities from './pages/AdminActivities';
 import AdminStudentManagement from './pages/AdminStudentManagement';
 import HealthPet from './pages/HealthPet';
+import BMICalculatorPage from './pages/BMICalculatorPage';
+import PostureScannerPage from './pages/PostureScannerPage';
+import MoodTracker from './pages/MoodTracker';
+import BreathingSystem from './pages/BreathingSystem';
 
 import Onboarding from './components/Onboarding';
 import HeartLoader from './components/HeartLoader';
@@ -324,7 +329,7 @@ const Layout = () => {
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center justify-end gap-1">
                   {user?.fullName || 'Guest User'}
-                  {user?.wellnessBadge && <span title="Wellness Badge"><ShieldCheck size={14} className="text-emerald-500 fill-emerald-100" /></span>}
+                  {user?.wellnessBadge && <span title="Wellness Badge"><CheckCircle2 size={14} className="text-emerald-500 fill-emerald-500/10" /></span>}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role || 'Public Access'}</p>
               </div>
@@ -572,6 +577,10 @@ export default function App() {
                 <Route path="/tracking" element={<StudentTracking />} />
                 <Route path="/others" element={<Others />} />
                 <Route path="/health-pet" element={<HealthPet />} />
+                <Route path="/bmi-calculator" element={<BMICalculatorPage />} />
+                <Route path="/posture-scanner" element={<PostureScannerPage />} />
+                <Route path="/mood-tracker" element={<MoodTracker />} />
+                <Route path="/breathing-system" element={<BreathingSystem />} />
               </Route>
               
               <Route path="/health-passport/:id" element={<HealthPassport />} />

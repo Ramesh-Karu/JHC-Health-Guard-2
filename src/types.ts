@@ -70,6 +70,7 @@ export interface Post {
   authorId: string;
   authorName: string;
   authorPhoto?: string;
+  authorWellnessBadge?: boolean;
   content: string;
   imageUrl?: string;
   videoUrl?: string;
@@ -88,6 +89,7 @@ export interface Comment {
   authorId: string;
   authorName: string;
   authorPhoto?: string;
+  authorWellnessBadge?: boolean;
   content: string;
   createdAt: string;
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
-import { Trophy, Medal, Star, ShieldCheck } from 'lucide-react';
+import { Trophy, Medal, Star, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useLeaderboard } from '../lib/queries';
 import { Skeleton } from '../components/Skeleton';
@@ -121,6 +121,9 @@ export default function Leaderboard() {
                 </div>
                 <h3 className="font-bold text-slate-900 dark:text-white flex items-center justify-center gap-1">
                   {filteredData[1].name}
+                  {filteredData[1].wellnessBadge && (
+                    <CheckCircle2 size={16} className="text-emerald-500 fill-emerald-500/10" />
+                  )}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{filteredData[1].class}</p>
                 <div className="inline-flex items-center gap-1 px-3 py-1 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-sm font-bold">
@@ -154,6 +157,9 @@ export default function Leaderboard() {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center justify-center gap-1">
                   {filteredData[0].name}
+                  {filteredData[0].wellnessBadge && (
+                    <CheckCircle2 size={20} className="text-emerald-500 fill-emerald-500/10" />
+                  )}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{filteredData[0].class}</p>
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full text-lg font-bold shadow-lg shadow-blue-200 dark:shadow-none">
@@ -187,6 +193,9 @@ export default function Leaderboard() {
                 </div>
                 <h3 className="font-bold text-slate-900 dark:text-white flex items-center justify-center gap-1">
                   {filteredData[2].name}
+                  {filteredData[2].wellnessBadge && (
+                    <CheckCircle2 size={16} className="text-emerald-500 fill-emerald-500/10" />
+                  )}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{filteredData[2].class}</p>
                 <div className="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-500 rounded-full text-sm font-bold">
@@ -225,6 +234,9 @@ export default function Leaderboard() {
                       <div>
                         <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
                           {student.name} 
+                          {student.wellnessBadge && (
+                            <CheckCircle2 size={14} className="text-emerald-500 fill-emerald-500/10" />
+                          )}
                           {student.id === currentUser?.id && <span className="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full ml-1">YOU</span>}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{student.class}</p>
