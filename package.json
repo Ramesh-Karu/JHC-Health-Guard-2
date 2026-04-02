@@ -13,13 +13,13 @@
     "capacitor:update:after": "node scripts/update-manifest.js"
   },
   "dependencies": {
-    "@capacitor-community/text-to-speech": "^8.0.0",
+    "@capacitor-community/text-to-speech": "^6.1.0",
     "@capacitor/android": "^6.2.1",
     "@capacitor/camera": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0",
-    "@capacitor/filesystem": "^8.1.2",
-    "@capacitor/share": "^8.0.1",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/share": "^6.0.4",
     "@google/genai": "^1.44.0",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/pose": "^0.5.1675469404",
