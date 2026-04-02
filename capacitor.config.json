@@ -1,0 +1,10 @@
+{
+  "appId": "com.jhchealthguard.app",
+  "appName": "JHC Health Guard",
+  "webDir": "dist",
+  "plugins": {
+    "Camera": {
+      "permissions": ["camera", "photos"]
+    }
+  }
+}
