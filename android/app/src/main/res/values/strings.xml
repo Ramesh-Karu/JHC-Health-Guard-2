@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">JHC Health Guard</string>
+    <string name="title_activity_main">JHC Health Guard</string>
+    <string name="package_name">com.jhchealthguard.app</string>
+    <string name="custom_url_scheme">com.jhchealthguard.app</string>
+</resources>

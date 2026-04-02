@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /teacher
+Disallow: /coach
+Disallow: /profile
+Disallow: /marketplace
+Disallow: /breakfast
+Sitemap: https://jhchealthguard.online/sitemap.xml
