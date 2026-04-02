@@ -20,7 +20,7 @@ import {
   Maximize,
   Minimize
 } from 'lucide-react';
-import { takePhoto, isNative } from '../lib/capacitorCamera';
+import { takePhoto, isNative, requestCameraPermissions } from '../lib/capacitorCamera';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from '../firebase';
 import { getPostureInsights } from '../services/aiService';
@@ -80,6 +80,13 @@ export default function PostureScanner() {
 
   // Load History
   useEffect(() => {
+    const initCamera = async () => {
+      if (isNative) {
+        await requestCameraPermissions();
+      }
+    };
+    initCamera();
+
     const fetchHistory = async () => {
       if (!auth.currentUser) return;
       try {

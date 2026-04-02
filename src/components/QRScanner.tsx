@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import QrScanner from 'qr-scanner';
 import { X, Upload, Camera as CameraIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { takePhoto, isNative } from '../lib/capacitorCamera';
+import { takePhoto, isNative, requestCameraPermissions } from '../lib/capacitorCamera';
 
 interface QRScannerProps {
   onScan?: (decodedText: string) => void;
@@ -58,24 +58,40 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
-    const qrScanner = new QrScanner(
-      videoElement,
-      (result) => handleScanResult(result.data),
-      {
-        onDecodeError: (error) => {
-          // console.log(error);
-        },
-        highlightScanRegion: true,
-      }
-    );
+    let qrScanner: QrScanner | null = null;
 
-    qrScanner.start().catch((err) => {
-      console.error("Failed to start scanner", err);
-      setError("Camera permission denied or camera not accessible. Please allow camera access in your browser settings.");
-    });
+    const initScanner = async () => {
+      if (isNative) {
+        const granted = await requestCameraPermissions();
+        if (!granted) {
+          setError("Camera permission denied. Please allow camera access in your device settings.");
+          return;
+        }
+      }
+
+      qrScanner = new QrScanner(
+        videoElement,
+        (result) => handleScanResult(result.data),
+        {
+          onDecodeError: (error) => {
+            // console.log(error);
+          },
+          highlightScanRegion: true,
+        }
+      );
+
+      qrScanner.start().catch((err) => {
+        console.error("Failed to start scanner", err);
+        setError("Camera permission denied or camera not accessible. Please allow camera access in your browser settings.");
+      });
+    };
+
+    initScanner();
 
     return () => {
-      qrScanner.destroy();
+      if (qrScanner) {
+        qrScanner.destroy();
+      }
     };
   }, []);
 

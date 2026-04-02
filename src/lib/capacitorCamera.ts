@@ -3,8 +3,35 @@ import { Capacitor } from '@capacitor/core';
 
 export const isNative = Capacitor.isNativePlatform();
 
+export const requestCameraPermissions = async () => {
+  if (isNative) {
+    try {
+      const permissions = await Camera.checkPermissions();
+      if (permissions.camera !== 'granted') {
+        const request = await Camera.requestPermissions();
+        return request.camera === 'granted';
+      }
+      return true;
+    } catch (e) {
+      console.error('Error requesting camera permissions:', e);
+      return false;
+    }
+  }
+  return true;
+};
+
 export const takePhoto = async () => {
   try {
+    if (isNative) {
+      const permissions = await Camera.checkPermissions();
+      if (permissions.camera !== 'granted' || permissions.photos !== 'granted') {
+        const request = await Camera.requestPermissions();
+        if (request.camera !== 'granted') {
+          throw new Error('Camera permission denied');
+        }
+      }
+    }
+
     const image = await Camera.getPhoto({
       quality: 90,
       allowEditing: false,
