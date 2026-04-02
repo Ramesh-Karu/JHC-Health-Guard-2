@@ -21,7 +21,8 @@ import {
   Scale,
   Ruler,
   Brain,
-  CheckCircle2
+  CheckCircle2,
+  Share2
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { QRCodeSVG } from 'qrcode.react';
@@ -40,7 +41,7 @@ import {
 import { HealthPassportCard } from '../components/HealthPassportCard';
 import { Skeleton } from '../components/Skeleton';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 
 import { useStudentProfile, useStudentHealthRecords, useStudentActivities } from '../lib/queries';
 
@@ -79,26 +80,72 @@ export default function HealthPassport() {
   const handleDownloadImage = async () => {
     if (!cardRef.current) return;
     
-    const canvas = await html2canvas(cardRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    
-    const link = document.createElement('a');
-    link.href = imgData;
-    link.download = `Health_Passport_${student?.fullName || 'Student'}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const imgData = await htmlToImage.toPng(cardRef.current, { pixelRatio: 2 });
+      
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `Health_Passport_${student?.fullName || 'Student'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
   };
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
     
-    const canvas = await html2canvas(cardRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
+    try {
+      const imgData = await htmlToImage.toPng(cardRef.current, { pixelRatio: 2 });
+      
+      const pdf = new jsPDF('l', 'mm', [150, 87]); // Card size in mm
+      pdf.addImage(imgData, 'PNG', 0, 0, 150, 87);
+      pdf.save(`Health_Passport_${student?.fullName || 'Student'}.pdf`);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!cardRef.current) return;
     
-    const pdf = new jsPDF('l', 'mm', [150, 87]); // Card size in mm
-    pdf.addImage(imgData, 'PNG', 0, 0, 150, 87);
-    pdf.save(`Health_Passport_${student?.fullName || 'Student'}.pdf`);
+    try {
+      const blob = await htmlToImage.toBlob(cardRef.current, { pixelRatio: 2 });
+      
+      if (!blob) {
+        throw new Error('Could not generate image blob');
+      }
+      
+      const file = new File([blob], `Health_Passport_${student?.fullName || 'Student'}.png`, { type: 'image/png' });
+      
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `${student?.fullName}'s Health Passport`,
+          text: `Check out ${student?.fullName}'s Health Passport!`,
+          url: passportUrl,
+          files: [file]
+        });
+      } else if (navigator.share) {
+        await navigator.share({
+          title: `${student?.fullName}'s Health Passport`,
+          text: `Check out ${student?.fullName}'s Health Passport!`,
+          url: passportUrl
+        });
+      } else {
+        await navigator.clipboard.writeText(passportUrl);
+        alert('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      try {
+        await navigator.clipboard.writeText(passportUrl);
+        alert('Link copied to clipboard!');
+      } catch (clipboardError) {
+        alert('Sharing is not supported on this device.');
+      }
+    }
   };
 
   const CardWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -179,6 +226,13 @@ export default function HealthPassport() {
         </div>
         <div className="flex flex-wrap gap-3">
           <button 
+            onClick={handleShare}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+          >
+            <Share2 size={18} />
+            <span className="whitespace-nowrap">Share</span>
+          </button>
+          <button 
             onClick={() => handlePrint()}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
           >
@@ -203,8 +257,8 @@ export default function HealthPassport() {
       </div>
 
       <div ref={componentRef} className="print:p-8 space-y-8">
-        {/* Passport Card for PDF */}
-        <div className="hidden print:block">
+        {/* Passport Card for PDF and Image Generation */}
+        <div className="absolute left-[-9999px] top-[-9999px] print:static print:block">
           <HealthPassportCard ref={cardRef} student={student} passportUrl={passportUrl} />
         </div>
         
