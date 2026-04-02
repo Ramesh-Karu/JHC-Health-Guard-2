@@ -6,12 +6,11 @@ export const isNative = Capacitor.isNativePlatform();
 export const requestCameraPermissions = async () => {
   if (isNative) {
     try {
-      const permissions = await Camera.checkPermissions();
-      if (permissions.camera !== 'granted') {
-        const request = await Camera.requestPermissions();
-        return request.camera === 'granted';
+      let permissions = await Camera.checkPermissions();
+      if (permissions.camera !== 'granted' || permissions.photos !== 'granted') {
+        permissions = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
       }
-      return true;
+      return permissions.camera === 'granted';
     } catch (e) {
       console.error('Error requesting camera permissions:', e);
       return false;
@@ -23,10 +22,10 @@ export const requestCameraPermissions = async () => {
 export const takePhoto = async () => {
   try {
     if (isNative) {
-      const permissions = await Camera.checkPermissions();
+      let permissions = await Camera.checkPermissions();
       if (permissions.camera !== 'granted' || permissions.photos !== 'granted') {
-        const request = await Camera.requestPermissions();
-        if (request.camera !== 'granted') {
+        permissions = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
+        if (permissions.camera !== 'granted') {
           throw new Error('Camera permission denied');
         }
       }
