@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { OledToggle } from '../components/OledToggle';
 import { 
   UserCircle, 
   Settings, 
@@ -27,7 +28,9 @@ import {
   Heart,
   Scale,
   Camera,
-  Wind
+  Wind,
+  Moon,
+  Circle
 } from 'lucide-react';
 import DeveloperPopup from '../components/DeveloperPopup';
 import QRScanner from '../components/QRScanner';
@@ -103,7 +106,8 @@ export default function Others() {
     {
       title: 'Appearance',
       items: [
-        { icon: Settings, label: 'Dark Mode', path: '#', color: 'bg-slate-500', component: <ThemeToggle /> },
+        { icon: Moon, label: 'Dark Mode', path: '#', color: 'bg-slate-500', component: <ThemeToggle /> },
+        { icon: Circle, label: 'OLED Black Mode', path: '#', color: 'bg-black', component: <OledToggle /> },
       ]
     },
     {

@@ -17,6 +17,29 @@
   }
 }
 
+.oled {
+  --color-slate-950: #000000;
+  --color-slate-900: #000000;
+  --color-slate-800: #0a0a0a;
+  --color-slate-950-rgb: 0 0 0;
+  --color-slate-900-rgb: 0 0 0;
+  --color-slate-800-rgb: 10 10 10;
+}
+
+.oled body,
+.oled .dark\:bg-slate-950,
+.oled .dark\:bg-slate-900 {
+  background-color: #000000 !important;
+}
+
+.oled .dark\:bg-slate-800 {
+  background-color: #0a0a0a !important;
+}
+
+.oled .dark\:border-slate-800 {
+  border-color: #1a1a1a !important;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
