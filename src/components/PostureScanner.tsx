@@ -78,11 +78,16 @@ export default function PostureScanner() {
   const animationFrameRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
 
+  const [hasPermission, setHasPermission] = useState(!isNative);
+
   // Load History
   useEffect(() => {
     const initCamera = async () => {
       if (isNative) {
-        await requestCameraPermissions();
+        const granted = await requestCameraPermissions();
+        setHasPermission(granted);
+      } else {
+        setHasPermission(true);
       }
     };
     initCamera();
@@ -484,13 +489,22 @@ export default function PostureScanner() {
       )}>
         {isPhotoMode && photoUrl ? (
           <img src={photoUrl} className="absolute inset-0 w-full h-full object-cover" alt="Captured posture" />
-        ) : (
+        ) : hasPermission ? (
           <Webcam 
+            audio={false}
             ref={webcamRef} 
             className="absolute inset-0 w-full h-full object-cover"
             videoConstraints={{ facingMode: facingMode }}
             onUserMedia={() => setFeedback('Scanning...')}
+            onUserMediaError={(err) => {
+              console.error("Webcam error:", err);
+              setFeedback('Camera access denied or unavailable.');
+            }}
           />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white">
+            <p>Requesting camera permission...</p>
+          </div>
         )}
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
         

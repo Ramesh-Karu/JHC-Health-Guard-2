@@ -7,8 +7,8 @@ export const requestCameraPermissions = async () => {
   if (isNative) {
     try {
       let permissions = await Camera.checkPermissions();
-      if (permissions.camera !== 'granted' || permissions.photos !== 'granted') {
-        permissions = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
+      if (permissions.camera !== 'granted') {
+        permissions = await Camera.requestPermissions({ permissions: ['camera'] });
       }
       return permissions.camera === 'granted';
     } catch (e) {
