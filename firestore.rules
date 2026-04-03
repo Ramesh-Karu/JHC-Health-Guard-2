@@ -169,14 +169,14 @@ service cloud.firestore {
     }
 
     match /health_records/{recordId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin() || isMigratingRead(resource.data.userId));
+      allow read: if true;
       allow create: if isTeacherOrAdmin();
       allow update: if isAdmin() || isMigratingWrite(resource.data.userId);
       allow delete: if isAdmin();
     }
 
     match /activities/{activityId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isTeacherOrAdmin() || isMigratingRead(resource.data.userId));
+      allow read: if true;
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
       allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isMigratingWrite(resource.data.userId));
       allow delete: if isAdmin();

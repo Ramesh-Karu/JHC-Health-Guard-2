@@ -191,8 +191,8 @@
   },
   "firestore": {
     "/users/{userId}": { "schema": "User", "description": "User profiles" },
-    "/health_records/{recordId}": { "schema": "HealthRecord", "description": "Student health records" },
-    "/activities/{activityId}": { "schema": "Activity", "description": "Student activities" },
+    "/health_records/{recordId}": { "schema": "HealthRecord", "description": "Student health records (publicly readable)" },
+    "/activities/{activityId}": { "schema": "Activity", "description": "Student activities (publicly readable)" },
     "/posture_scans/{scanId}": { "schema": "PostureScan", "description": "Posture analysis records" },
     "/master_activities/{activityId}": { "schema": "MasterActivity", "description": "Admin-defined activities" },
     "/announcements/{announcementId}": { "schema": "Announcement", "description": "Class announcements" },

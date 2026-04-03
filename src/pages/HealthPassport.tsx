@@ -111,7 +111,7 @@ export default function HealthPassport() {
     }
   };
 
-  const latestRecord = healthHistory[0];
+  const latestRecord = healthHistory && healthHistory.length > 0 ? healthHistory[0] : null;
   const passportUrl = `https://healthguard.online/health-passport/${student?.id}`;
 
   const handleShare = async () => {
