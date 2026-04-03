@@ -350,7 +350,7 @@ export const useStudentHealthRecords = (userId: string) => {
   return useQuery({
     queryKey: CACHE_KEYS.STUDENT_HEALTH_RECORDS(userId),
     queryFn: async () => {
-      const q = query(collection(db, 'health_records'), where('userId', '==', userId));
+      const q = query(collection(db, 'health_records'), where('userId', '==', userId), orderBy('date', 'desc'), limit(20));
       const snapshot = await fetchWithFallback(
         () => getDocs(q),
         () => getDocsFromCache(q),
@@ -360,7 +360,7 @@ export const useStudentHealthRecords = (userId: string) => {
       );
       if (!snapshot) return [];
       const records = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as HealthRecord));
-      return records.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return records;
     },
     enabled: !!userId,
     staleTime: Infinity, // Permanent caching
@@ -372,7 +372,7 @@ export const useStudentActivities = (userId: string) => {
   return useQuery({
     queryKey: CACHE_KEYS.STUDENT_ACTIVITIES(userId),
     queryFn: async () => {
-      const q = query(collection(db, 'activities'), where('userId', '==', userId));
+      const q = query(collection(db, 'activities'), where('userId', '==', userId), orderBy('date', 'desc'), limit(20));
       const snapshot = await fetchWithFallback(
         () => getDocs(q),
         () => getDocsFromCache(q),
@@ -382,7 +382,7 @@ export const useStudentActivities = (userId: string) => {
       );
       if (!snapshot) return [];
       const activities = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Activity));
-      return activities.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return activities;
     },
     enabled: !!userId,
     staleTime: Infinity, // Permanent caching

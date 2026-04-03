@@ -33,18 +33,12 @@ import {
   Coffee,
   CheckCircle2
 } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from './lib/utils';
 import { HelmetProvider } from 'react-helmet-async';
 
 // Types
 import BirdToy from './components/BirdToy';
 import { User } from './types';
-
-// Utils
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 // Auth Context
 interface AuthContextType {

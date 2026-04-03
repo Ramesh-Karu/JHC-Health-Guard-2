@@ -30,7 +30,8 @@ import {
   Camera,
   Wind,
   Moon,
-  Circle
+  Circle,
+  Play
 } from 'lucide-react';
 import DeveloperPopup from '../components/DeveloperPopup';
 import QRScanner from '../components/QRScanner';
@@ -120,6 +121,13 @@ export default function Others() {
         { icon: Apple, label: 'Add to iOS Home Screen', path: '/ios-shortcut', color: 'bg-slate-900' },
         { icon: Shield, label: 'Privacy & Security', path: '/privacy-security', color: 'bg-blue-600' },
         { icon: HelpCircle, label: 'Help & Support', path: '/queries', color: 'bg-emerald-600' },
+        { 
+          icon: Play, 
+          label: 'Rate on Google Play', 
+          path: '#', 
+          color: 'bg-brand-blue', 
+          onClick: () => window.open('https://play.google.com/store/apps/details?id=com.healthguard.jhc', '_blank') 
+        },
         { icon: Code, label: 'Developer', path: '#', color: 'bg-slate-800', onClick: () => setIsDeveloperOpen(true) },
       ]
     }

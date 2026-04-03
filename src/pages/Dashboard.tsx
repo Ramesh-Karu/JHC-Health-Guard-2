@@ -23,6 +23,7 @@ import {
   WifiOff,
   RefreshCw
 } from 'lucide-react';
+import { cn } from '../lib/utils';
 import { 
   LineChart, 
   Line, 
@@ -78,17 +79,17 @@ const StatCard = ({ icon: Icon, label, value, trend, trendValue, color }: any) =
   </motion.div>
 );
 
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
-}
-
 import { useAdminDashboard, useStudentHealthRecords, useStudentActivities, useAnnouncements } from '../lib/queries';
+
+import { useTheme } from '../components/ThemeProvider';
+import { HealthPassportCard } from '../components/HealthPassportCard';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const queryClient = useQueryClient();
   const { data: adminAnalytics, isLoading: adminLoading, isRefetching: adminRefetching } = useAdminDashboard();
-  const { data: studentHealthRecords, isLoading: hrLoading } = useStudentHealthRecords(user?.role === 'student' ? user?.id : '');
+  const { data: studentHealthRecords, isLoading: hrLoading } = useStudentHealthRecords(user?.id || '');
   const { data: studentActivities, isLoading: actLoading } = useStudentActivities(user?.role === 'student' ? user?.id : '');
   const { data: studentAnnouncements, isLoading: annLoading } = useAnnouncements(user?.role === 'student' ? user?.class || '' : '');
 
@@ -185,6 +186,19 @@ export default function Dashboard() {
             <RefreshCw size={18} className={adminRefetching ? "animate-spin" : ""} />
             {adminRefetching ? "Refreshing..." : "Refresh Data"}
           </button>
+        </motion.div>
+
+        {/* Health Passport Card for Admin */}
+        <motion.div
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <HealthPassportCard 
+            student={user} 
+            latestRecord={studentHealthRecords?.[0]}
+            passportUrl={`https://jhchealthguard.online/health-passport/${user?.id}`}
+          />
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -334,6 +348,20 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Health Passport Card */}
+      {user?.role === 'student' && (
+        <motion.div
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <HealthPassportCard 
+            student={user} 
+            latestRecord={latestRecord}
+            passportUrl={`https://jhchealthguard.online/health-passport/${user?.id}`}
+          />
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 

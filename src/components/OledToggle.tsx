@@ -1,7 +1,7 @@
 import React from 'react';
 import { Circle, CheckCircle2 } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
-import { cn } from '../App';
+import { cn } from '../lib/utils';
 
 export const OledToggle = () => {
   const { theme, setTheme } = useTheme();

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "621021579821",
+    "project_id": "gen-lang-client-0745299538",
+    "storage_bucket": "gen-lang-client-0745299538.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621021579821:android:3dc36564617bcadf8186a4",
+        "android_client_info": {
+          "package_name": "com.healthguard.jhc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "621021579821-s64ak6dpg0ea1vssffia5k80t73japba.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhlFWUe-EzY07F3z0ohhj3KjkuaA_rMfA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "621021579821-ob5lakfakj2htbitrqrvlhd5gce9ehmi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

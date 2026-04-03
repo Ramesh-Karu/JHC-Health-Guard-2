@@ -26,7 +26,8 @@ import {
   Clock,
   Settings
 } from 'lucide-react';
-import { useAuth, cn } from '../App';
+import { useAuth } from '../App';
+import { cn } from '../lib/utils';
 import { Post, Comment, User as UserType } from '../types';
 
 const CATEGORIES = ['All', 'General', 'Nutrition', 'Fitness', 'Success Story', 'Announcement'] as const;

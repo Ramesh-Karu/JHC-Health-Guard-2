@@ -85,3 +85,8 @@
 .mb-safe {
   margin-bottom: env(safe-area-inset-bottom);
 }
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}

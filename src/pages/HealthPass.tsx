@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, doc, updateDoc, auth } from '../firebase';
+import { db, handleFirestoreError, OperationType, doc, updateDoc, auth, GoogleAuthProvider, signInWithPopup } from '../firebase';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   User as UserIcon, 
@@ -214,6 +214,30 @@ export default function HealthPass() {
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-center md:justify-start gap-3 w-full md:w-auto">
+                  {!user.googleId && (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          const provider = new GoogleAuthProvider();
+                          const result = await signInWithPopup(auth, provider);
+                          const userRef = doc(db, 'users', user.id);
+                          await updateDoc(userRef, {
+                            googleEmail: result.user.email,
+                            googleId: result.user.uid
+                          });
+                          login({ ...user, googleEmail: result.user.email, googleId: result.user.uid });
+                          alert('Google account connected successfully!');
+                        } catch (error) {
+                          console.error('Error connecting Google account:', error);
+                          alert('Failed to connect Google account.');
+                        }
+                      }}
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
+                    >
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" referrerPolicy="no-referrer" />
+                      <span className="whitespace-nowrap">Connect Google</span>
+                    </button>
+                  )}
                   {isEditing ? (
                     <>
                       {!user.profileCompleted ? null : (
@@ -274,7 +298,7 @@ export default function HealthPass() {
                   {isEditing ? (
                     <input 
                       type="text" 
-                      value={formData.fullName}
+                      value={formData.fullName || ''}
                       onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                       className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                     />
@@ -296,7 +320,7 @@ export default function HealthPass() {
                     {isEditing ? (
                       <input 
                         type="date" 
-                        value={formData.dob}
+                        value={formData.dob || ''}
                         onChange={(e) => setFormData({...formData, dob: e.target.value})}
                         className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       />
@@ -314,7 +338,7 @@ export default function HealthPass() {
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gender</label>
                     {isEditing ? (
                       <select 
-                        value={formData.gender}
+                        value={formData.gender || ''}
                         onChange={(e) => setFormData({...formData, gender: e.target.value})}
                         className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       >
@@ -336,7 +360,7 @@ export default function HealthPass() {
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Residential Address</label>
                   {isEditing ? (
                     <textarea 
-                      value={formData.address}
+                      value={formData.address || ''}
                       onChange={(e) => setFormData({...formData, address: e.target.value})}
                       rows={2}
                       className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none dark:text-white"
@@ -365,7 +389,7 @@ export default function HealthPass() {
                     {isEditing ? (
                       <input 
                         type="text" 
-                        value={formData.parentName}
+                        value={formData.parentName || ''}
                         onChange={(e) => setFormData({...formData, parentName: e.target.value})}
                         className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       />
@@ -378,7 +402,7 @@ export default function HealthPass() {
                     {isEditing ? (
                       <input 
                         type="text" 
-                        value={formData.parentContact}
+                        value={formData.parentContact || ''}
                         onChange={(e) => setFormData({...formData, parentContact: e.target.value})}
                         className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                       />

@@ -9,8 +9,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "capacitor:sync:after": "node scripts/update-manifest.js",
-    "capacitor:update:after": "node scripts/update-manifest.js"
+    "capacitor:sync:after": "node scripts/update-manifest.js && npm run copy-google-services",
+    "capacitor:update:after": "node scripts/update-manifest.js && npm run copy-google-services",
+    "copy-google-services": "node scripts/copy-google-services.js"
   },
   "dependencies": {
     "@capacitor-community/text-to-speech": "^5.0.0",

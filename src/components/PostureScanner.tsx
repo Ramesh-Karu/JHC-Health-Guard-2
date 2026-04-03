@@ -273,7 +273,8 @@ export default function PostureScanner() {
     ctx.moveTo(leftShoulder.x, leftShoulder.y);
     ctx.lineTo(rightShoulder.x, rightShoulder.y);
     ctx.strokeStyle = Math.abs(leftShoulder.y - rightShoulder.y) < 20 ? '#10b981' : '#f59e0b';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 6; // Increased width
+    ctx.lineCap = 'round';
     ctx.stroke();
 
     // 2. Draw Neck/Head Alignment
@@ -281,19 +282,20 @@ export default function PostureScanner() {
     ctx.beginPath();
     ctx.moveTo(midShoulder.x, midShoulder.y);
     ctx.lineTo(nose.x, nose.y);
-    ctx.setLineDash([5, 5]);
+    ctx.setLineDash([10, 10]); // Increased dash spacing
     ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 4; // Increased width
     ctx.stroke();
     ctx.setLineDash([]);
 
     // Draw circles at key points
     [leftShoulder, rightShoulder, nose].forEach(p => {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); // Increased radius
       ctx.fillStyle = '#3b82f6';
       ctx.fill();
       ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3; // Increased stroke width
       ctx.stroke();
     });
   };
@@ -393,19 +395,11 @@ export default function PostureScanner() {
   const handleSaveScan = async () => {
     setIsSaving(true);
     try {
-      let coachSummary = aiSummary;
-      if (!coachSummary) {
-        setIsAiLoading(true);
-        coachSummary = await getPostureInsights(metrics, detectedIssues);
-        setAiSummary(coachSummary);
-        setIsAiLoading(false);
-      }
-
       const newScan: ScanHistory = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
         overallScore: metrics.overallScore,
-        aiCoachSummary: coachSummary || undefined
+        aiCoachSummary: aiSummary || undefined
       };
       
       const updatedHistory = [newScan, ...history].slice(0, 5);

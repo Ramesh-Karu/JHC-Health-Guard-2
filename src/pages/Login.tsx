@@ -236,26 +236,15 @@ export default function Login() {
         throw err;
       }
       
-      let userData;
       if (!userDoc.exists()) {
-        // Create new user document
-        userData = {
-          uid: result.user.uid,
-          email: result.user.email,
-          fullName: result.user.displayName || 'User',
-          role: 'student', // Default role
-          createdAt: new Date().toISOString()
-        };
-        try {
-          await setDoc(userRef, userData);
-        } catch (err) {
-          handleFirestoreError(err, OperationType.WRITE, 'users');
-          throw err;
-        }
-      } else {
-        userData = userDoc.data();
+        // User does not exist, do not allow login
+        await auth.signOut();
+        setError('Account not found. Please contact an administrator.');
+        setLoading(false);
+        return;
       }
 
+      const userData = userDoc.data();
       login({ ...userData, id: result.user.uid });
       
       // Navigate based on role
@@ -272,7 +261,7 @@ export default function Login() {
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      setError('Failed to sign in with Google. Please try again.');
+      setError('Registration is not possible on our platform. If you have lost your password or have any other issues, please contact the administrator.');
     } finally {
       setLoading(false);
     }
@@ -364,27 +353,31 @@ export default function Login() {
 
         <div className="mt-8 flex flex-col items-center gap-4">
           <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Download App</span>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-col gap-4">
+            <a 
+              href="https://play.google.com/store/apps/details?id=com.healthguard.jhc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm hover:shadow-md mx-auto"
+            >
+              <Play size={20} className="text-brand-blue shrink-0" />
+              <span className="font-semibold text-slate-900 dark:text-white">Google Play</span>
+            </a>
+
             <a 
               title="Download Health Guard latest version xapk From APKPure" 
               rel="nofollow" 
               download="HealthGuard_latest_version" 
               href="https://d.apkpure.com/b/APK/com.healthguard.jhc?version=latest"
-              className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm hover:shadow-md"
+              className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm hover:shadow-md mx-auto"
             >
               <Download size={20} className="text-slate-400 shrink-0" />
-              <img src="https://static.apkpure.com/www/static/imgs/logo_new@2x.png" alt="APKPure Logo" className="h-6 object-contain" />
+              <span className="font-semibold text-slate-900 dark:text-white">APK Pure</span>
             </a>
 
-            <div className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl opacity-60 cursor-not-allowed relative">
+            <div className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl opacity-60 cursor-not-allowed relative mx-auto">
               <Apple size={20} className="text-slate-400 shrink-0" />
               <span className="font-semibold text-slate-500 dark:text-slate-400">App Store</span>
-              <span className="absolute -top-2 -right-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-600">Soon</span>
-            </div>
-
-            <div className="flex items-center justify-center gap-3 w-[200px] h-[52px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl opacity-60 cursor-not-allowed relative">
-              <Play size={20} className="text-slate-400 shrink-0" />
-              <span className="font-semibold text-slate-500 dark:text-slate-400">Google Play</span>
               <span className="absolute -top-2 -right-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-600">Soon</span>
             </div>
           </div>

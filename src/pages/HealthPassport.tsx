@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, getDoc, orderBy, onSnapshot } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, doc, getDoc, updateDoc, orderBy, onSnapshot, GoogleAuthProvider, signInWithPopup, auth } from '../firebase';
 import { 
   User, 
   ShieldCheck, 
@@ -60,6 +60,7 @@ export default function HealthPassport() {
   const { data: healthHistory, isLoading: hrLoading } = useStudentHealthRecords(targetId);
   const { data: activities, isLoading: actLoading } = useStudentActivities(targetId);
   
+  const [sharing, setSharing] = useState(false);
   const loading = studentLoading || hrLoading || actLoading;
   const componentRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -104,14 +105,19 @@ export default function HealthPassport() {
   const passportUrl = `https://jhchealthguard.online/health-passport/${student?.id}`;
 
   const handleShare = async () => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || sharing) return;
     
+    setSharing(true);
     try {
       const shareText = `Check out ${student?.fullName}'s Health Passport!\nClass: ${student?.class}\nIndex: ${student?.indexNumber}\nHealth Status: ${latestRecord?.category || 'Normal'}`;
       const branding = `Powered by JHC Health Guard - AI Integrated Health Management System of Jaffna Hindu College`;
       
       if (Capacitor.isNativePlatform()) {
-        const dataUrl = await htmlToImage.toPng(cardRef.current, { pixelRatio: 2 });
+        const dataUrl = await htmlToImage.toPng(cardRef.current, { 
+          pixelRatio: 2,
+          backgroundColor: 'transparent',
+          cacheBust: true
+        });
         const base64Data = dataUrl.split(',')[1];
         
         const fileName = `Health_Passport_${student?.id}.png`;
@@ -128,28 +134,30 @@ export default function HealthPassport() {
           dialogTitle: 'Share Health Passport'
         });
       } else {
-        const blob = await htmlToImage.toBlob(cardRef.current, { pixelRatio: 2 });
-        
-        if (!blob) {
-          throw new Error('Could not generate image blob');
-        }
-        
-        const file = new File([blob], `Health_Passport_${student?.fullName || 'Student'}.png`, { type: 'image/png' });
-        
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `${student?.fullName}'s Health Passport`,
-            text: `${shareText}\n\n${branding}`,
-            url: passportUrl,
-            files: [file]
+        // Web Sharing
+        try {
+          const blob = await htmlToImage.toBlob(cardRef.current, { 
+            pixelRatio: 2,
+            backgroundColor: 'transparent',
+            cacheBust: true
           });
-        } else if (navigator.share) {
-          await navigator.share({
-            title: `${student?.fullName}'s Health Passport`,
-            text: `${shareText}\n\n${branding}`,
-            url: passportUrl
-          });
-        } else {
+          
+          if (blob && navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'passport.png', { type: 'image/png' })] })) {
+            const file = new File([blob], `Health_Passport_${student?.fullName || 'Student'}.png`, { type: 'image/png' });
+            await navigator.share({
+              title: `${student?.fullName}'s Health Passport`,
+              text: `${shareText}\n\n${passportUrl}\n\n${branding}`,
+              files: [file]
+            });
+          } else if (navigator.share) {
+            await navigator.share({
+              title: `${student?.fullName}'s Health Passport`,
+              text: `${shareText}\n\n${passportUrl}\n\n${branding}`
+            });
+          } else {
+            throw new Error('Web Share not supported');
+          }
+        } catch (shareErr) {
           await navigator.clipboard.writeText(`${shareText}\n\n${passportUrl}\n\n${branding}`);
           alert('Link copied to clipboard!');
         }
@@ -163,6 +171,8 @@ export default function HealthPassport() {
       } catch (clipboardError) {
         alert('Sharing is not supported on this device.');
       }
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -242,10 +252,11 @@ export default function HealthPassport() {
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={handleShare}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+            disabled={sharing}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50"
           >
-            <Share2 size={18} />
-            <span className="whitespace-nowrap">Share</span>
+            <Share2 size={18} className={sharing ? "animate-pulse" : ""} />
+            <span className="whitespace-nowrap">{sharing ? 'Preparing...' : 'Share'}</span>
           </button>
           <button 
             onClick={() => handlePrint()}
@@ -274,7 +285,7 @@ export default function HealthPassport() {
       <div ref={componentRef} className="print:p-8 space-y-8">
         {/* Passport Card for PDF and Image Generation */}
         <div className="absolute left-[-9999px] top-[-9999px] print:static print:block">
-          <HealthPassportCard ref={cardRef} student={student} passportUrl={passportUrl} />
+          <HealthPassportCard ref={cardRef} student={student} passportUrl={passportUrl} forceFront={true} />
         </div>
         
         {/* Passport Header Card */}
