@@ -112,7 +112,7 @@ export default function HealthPassport() {
   };
 
   const latestRecord = healthHistory[0];
-  const passportUrl = `https://jhchealthguard.online/health-passport/${student?.id}`;
+  const passportUrl = `https://healthguard.online/health-passport/${student?.id}`;
 
   const handleShare = async () => {
     if (!cardRef.current) return;
