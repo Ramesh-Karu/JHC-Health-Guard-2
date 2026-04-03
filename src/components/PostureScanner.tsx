@@ -23,8 +23,8 @@ import {
 import { takePhoto, isNative, requestCameraPermissions } from '../lib/capacitorCamera';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { motion, AnimatePresence } from 'motion/react';
-import { db, auth, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from '../firebase';
 import { getPostureInsights } from '../services/aiService';
+import { cn } from '../lib/utils';
 
 interface PostureMetrics {
   neckAngle: number;
@@ -43,7 +43,7 @@ interface PostureIssue {
 
 interface ScanHistory {
   id: string;
-  date: any;
+  date: string;
   overallScore: number;
   aiCoachSummary?: string;
 }
@@ -93,23 +93,14 @@ export default function PostureScanner() {
     };
     initCamera();
 
-    const fetchHistory = async () => {
-      if (!auth.currentUser) return;
-      try {
-        const q = query(
-          collection(db, 'posture_scans'),
-          where('userId', '==', auth.currentUser.uid),
-          orderBy('date', 'desc'),
-          limit(5)
-        );
-        const snapshot = await getDocs(q);
-        const historyData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as ScanHistory[];
-        setHistory(historyData);
-      } catch (err) {
-        console.error("Error fetching history:", err);
+    const fetchHistory = () => {
+      const savedHistory = localStorage.getItem('posture_scan_history');
+      if (savedHistory) {
+        try {
+          setHistory(JSON.parse(savedHistory));
+        } catch (e) {
+          console.error("Error parsing history:", e);
+        }
       }
     };
     fetchHistory();
@@ -400,7 +391,6 @@ export default function PostureScanner() {
   };
 
   const handleSaveScan = async () => {
-    if (!auth.currentUser) return;
     setIsSaving(true);
     try {
       let coachSummary = aiSummary;
@@ -411,24 +401,16 @@ export default function PostureScanner() {
         setIsAiLoading(false);
       }
 
-      await addDoc(collection(db, 'posture_scans'), {
-        userId: auth.currentUser.uid,
-        date: serverTimestamp(),
-        overallScore: metrics.overallScore,
-        neckAngle: metrics.neckAngle,
-        shoulderTilt: metrics.shoulderTilt,
-        slouchScore: metrics.slouchScore,
-        issues: detectedIssues.map(i => i.title),
-        aiCoachSummary: coachSummary
-      });
-      
-      // Update local history
-      setHistory(prev => [{
+      const newScan: ScanHistory = {
         id: Date.now().toString(),
-        date: new Date(),
+        date: new Date().toISOString(),
         overallScore: metrics.overallScore,
         aiCoachSummary: coachSummary || undefined
-      }, ...prev].slice(0, 5));
+      };
+      
+      const updatedHistory = [newScan, ...history].slice(0, 5);
+      setHistory(updatedHistory);
+      localStorage.setItem('posture_scan_history', JSON.stringify(updatedHistory));
 
       setFeedback('Scan saved successfully!');
     } catch (err) {

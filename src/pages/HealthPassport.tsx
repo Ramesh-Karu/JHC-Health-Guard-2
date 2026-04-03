@@ -56,17 +56,6 @@ export default function HealthPassport() {
   const navigate = useNavigate();
   const targetId = id || user?.id || '';
   
-  if (!user && !id) {
-    return (
-      <div className="max-w-7xl mx-auto px-4">
-        <LoginPrompt 
-          title="Digital Health Passport"
-          description="Access your official student health record, BMI history, and activity logs. Login to view your passport."
-        />
-      </div>
-    );
-  }
-
   const { data: student, isLoading: studentLoading } = useStudentProfile(targetId);
   const { data: healthHistory, isLoading: hrLoading } = useStudentHealthRecords(targetId);
   const { data: activities, isLoading: actLoading } = useStudentActivities(targetId);
@@ -112,7 +101,7 @@ export default function HealthPassport() {
   };
 
   const latestRecord = healthHistory && healthHistory.length > 0 ? healthHistory[0] : null;
-  const passportUrl = `https://healthguard.online/health-passport/${student?.id}`;
+  const passportUrl = `https://jhchealthguard.online/health-passport/${student?.id}`;
 
   const handleShare = async () => {
     if (!cardRef.current) return;
@@ -444,7 +433,7 @@ export default function HealthPassport() {
                   Activity & Achievement Records
                 </h3>
                 <div className="space-y-4">
-                  {activities.slice(0, 5).map((activity) => (
+                  {(activities || []).slice(0, 5).map((activity) => (
                     <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
