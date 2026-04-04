@@ -484,7 +484,7 @@ const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
 
   // Allow public access, but guard role checks
   if (user) {
-    if (user.role === 'student' && !user.passwordChanged && location.pathname !== '/change-password') {
+    if ((user.role === 'student' || user.role === 'teacher') && !user.passwordChanged && location.pathname !== '/change-password') {
       return <Navigate to="/change-password" />;
     }
 

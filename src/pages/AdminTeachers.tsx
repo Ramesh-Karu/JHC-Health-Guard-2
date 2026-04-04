@@ -30,7 +30,8 @@ export default function AdminTeachers() {
     class: '',
     division: '',
     phone: '',
-    indexNumber: ''
+    indexNumber: '',
+    username: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,6 +40,8 @@ export default function AdminTeachers() {
       const teacherData = {
         fullName: formData.fullName,
         email: formData.email,
+        username: formData.username,
+        systemEmail: formData.email,
         class: formData.class,
         division: formData.division,
         phone: formData.phone,
@@ -53,10 +56,13 @@ export default function AdminTeachers() {
         const tempApp = initializeApp(firebaseConfig as any, 'temp-create-teacher-' + Date.now());
         const tempAuth = getAuth(tempApp);
         
-        const userCredential = await createUserWithEmailAndPassword(tempAuth, formData.email, formData.password);
+        const password = formData.password || '123456';
+        const userCredential = await createUserWithEmailAndPassword(tempAuth, formData.email, password);
         
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           ...teacherData,
+          passwordChanged: false,
+          tempPassword: password,
           createdAt: new Date().toISOString()
         });
         
@@ -75,7 +81,7 @@ export default function AdminTeachers() {
       setShowAddModal(false);
       setEditingTeacher(null);
       setToast({ message: editingTeacher ? 'Teacher updated successfully' : 'Teacher added successfully', type: 'success' });
-      setFormData({ fullName: '', email: '', password: '', class: '', division: '', phone: '', indexNumber: '' });
+      setFormData({ fullName: '', email: '', password: '', class: '', division: '', phone: '', indexNumber: '', username: '' });
       fetchTeachers();
     } catch (err: any) {
       console.error("Error saving teacher:", err);
@@ -94,6 +100,7 @@ export default function AdminTeachers() {
     const dataToExport = teachers.length > 0 ? teachers.map((t: any) => ({
       fullName: t.fullName,
       email: t.email,
+      username: t.username || '',
       class: t.class || '',
       division: t.division || '',
       phone: t.phone || '',
@@ -102,6 +109,7 @@ export default function AdminTeachers() {
     })) : [{
       fullName: 'Example Teacher',
       email: 'teacher@school.com',
+      username: 'teacher1',
       class: '10',
       division: 'A',
       phone: '1234567890',
@@ -203,12 +211,15 @@ export default function AdminTeachers() {
             batch.set(userRef, {
               fullName: row.fullName,
               email: normalizedEmail,
+              username: row.username || normalizedEmail.split('@')[0],
+              systemEmail: normalizedEmail,
               class: row.class || '',
               division: row.division || '',
               phone: row.phone || '',
               indexNumber: row.indexNumber || '',
               role: 'teacher',
               authCreated: false,
+              passwordChanged: false,
               tempPassword: row.password || '123456',
               createdAt: new Date().toISOString()
             });
@@ -299,7 +310,8 @@ export default function AdminTeachers() {
       class: teacher.class || '',
       division: teacher.division || '',
       phone: teacher.phone || '',
-      indexNumber: teacher.indexNumber || ''
+      indexNumber: teacher.indexNumber || '',
+      username: teacher.username || ''
     });
     setShowAddModal(true);
   };
@@ -355,6 +367,7 @@ export default function AdminTeachers() {
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-slate-800">
                 <th className="p-4 font-medium">Name</th>
+                <th className="p-4 font-medium">Username</th>
                 <th className="p-4 font-medium">Email</th>
                 <th className="p-4 font-medium">Phone</th>
                 <th className="p-4 font-medium">Assigned Class</th>
@@ -376,6 +389,7 @@ export default function AdminTeachers() {
                       </div>
                     </div>
                   </td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">{teacher.username || 'N/A'}</td>
                   <td className="p-4 text-slate-600 dark:text-slate-300">{teacher.email}</td>
                   <td className="p-4 text-slate-600 dark:text-slate-300">{teacher.phone || 'N/A'}</td>
                   <td className="p-4">
@@ -421,6 +435,16 @@ export default function AdminTeachers() {
             <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">{editingTeacher ? 'Edit Teacher' : 'Add New Teacher'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.username}
+                    onChange={e => setFormData({...formData, username: e.target.value})}
+                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                   <input
@@ -576,6 +600,7 @@ export default function AdminTeachers() {
                     <thead>
                       <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                         <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Full Name</th>
+                        <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Username</th>
                         <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
                         <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Class</th>
                         <th className="px-6 py-4 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone</th>
@@ -585,6 +610,7 @@ export default function AdminTeachers() {
                       {importPreviewData.slice(0, 10).map((row, idx) => (
                         <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                           <td className="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">{row.fullName || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.username || '-'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.email || '-'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.class || '-'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{row.phone || '-'}</td>

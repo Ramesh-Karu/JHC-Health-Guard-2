@@ -61,7 +61,8 @@ export default function ChangePassword() {
           login({ ...user, passwordChanged: true, authCreated: true });
         }
         
-        navigate('/dashboard');
+        if (user?.role === 'teacher') navigate('/teacher/dashboard');
+        else navigate('/dashboard');
       } else {
         console.error('No current user found for password update');
         setError('No user found. Please login again.');

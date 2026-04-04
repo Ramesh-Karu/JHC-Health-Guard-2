@@ -204,7 +204,7 @@ export default function Login() {
       
       login({ ...userData, id: userId });
       
-      if (userData.role === 'student' && userData.passwordChanged === false) navigate('/change-password');
+      if ((userData.role === 'student' || userData.role === 'teacher') && userData.passwordChanged === false) navigate('/change-password');
       else if (userData.role === 'teacher') navigate('/teacher/dashboard');
       else if (userData.role === 'coach') navigate('/coach/dashboard');
       else if (userData.role === 'organic-admin') navigate('/organic-admin-dashboard');
