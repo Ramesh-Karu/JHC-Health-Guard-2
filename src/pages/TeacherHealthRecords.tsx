@@ -1,40 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { useQueryClient } from '@tanstack/react-query';
-import { db, handleFirestoreError, OperationType, collection, addDoc, updateDoc, doc, increment, getDoc } from '../firebase';
+import { db, handleFirestoreError, OperationType, collection, addDoc, updateDoc, doc, increment } from '../firebase';
 import { Plus, Search } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
-import { useAllStudents, useAllHealthRecords, CACHE_KEYS } from '../lib/queries';
+import { useTeacherStudents, useHealthPointSettings, CACHE_KEYS } from '../lib/queries';
 
 export default function TeacherHealthRecords() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: allStudents = [], isLoading: studentsLoading } = useAllStudents();
-  const { data: allHealthRecords = [], isLoading: healthLoading } = useAllHealthRecords();
-
-  const [pointSettings, setPointSettings] = useState({
-    normalBMI: 50,
-    goodStrength: 50
-  });
-
-  React.useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
-        if (settingsDoc.exists()) {
-          const data = settingsDoc.data();
-          setPointSettings({
-            normalBMI: data.pointsPerNormalBMI || 50,
-            goodStrength: data.pointsPerGoodStrength || 50
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching settings:", err);
-      }
-    };
-    fetchSettings();
-  }, []);
+  const { data: students = [], isLoading: loading } = useTeacherStudents(user?.class || '', user?.division || '');
+  const { data: pointSettings = { normalBMI: 50, goodStrength: 50 } } = useHealthPointSettings();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,46 +34,14 @@ export default function TeacherHealthRecords() {
     notes: ''
   });
 
-  const studentsWithHealth = useMemo(() => {
-    if (!user?.class || !user?.division) return [];
-
-    // Filter students in teacher's class
-    const myStudents = allStudents.filter(s => 
-      s.role === 'student' && 
-      s.class === user.class && 
-      s.division === user.division
-    );
-
-    return myStudents.map((student: any) => {
-      const studentRecords = allHealthRecords.filter(r => r.userId === student.id);
-      let latestBmi = null;
-      let healthCategory = 'N/A';
-      let latestDate = '';
-      
-      if (studentRecords.length > 0) {
-        const latestRecord: any = [...studentRecords].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-        latestBmi = latestRecord.bmi;
-        healthCategory = latestRecord.category;
-        latestDate = latestRecord.date;
-      }
-
-      return {
-        ...student,
-        latestBmi,
-        healthCategory,
-        latestDate
-      };
-    });
-  }, [allStudents, allHealthRecords, user]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const heightInMeters = parseFloat(formData.height) / 100;
       const weightInKg = parseFloat(formData.weight);
-      const hip = parseFloat(formData.hip);
-      const waist = parseFloat(formData.waist);
-      const gripStrength = parseFloat(formData.gripStrength);
+      const hip = parseFloat(formData.hip) || 0;
+      const waist = parseFloat(formData.waist) || 0;
+      const gripStrength = parseFloat(formData.gripStrength) || 0;
       
       const bmi = weightInKg / (heightInMeters * heightInMeters);
       
@@ -129,11 +74,10 @@ export default function TeacherHealthRecords() {
         });
       }
       
-      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_HEALTH_RECORDS });
+      queryClient.invalidateQueries({ queryKey: ['teacher-students', user?.class, user?.division] });
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.STUDENT_HEALTH_RECORDS(formData.userId) });
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ADMIN_DASHBOARD });
-      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_USERS });
-      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_STUDENTS });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_HEALTH_RECORDS });
 
       setShowAddModal(false);
       setToast({ message: `Health record saved successfully! Awarded ${pointsAwarded} points.`, type: 'success' });
@@ -152,11 +96,11 @@ export default function TeacherHealthRecords() {
     }
   };
 
-  const uniqueClasses = Array.from(new Set(studentsWithHealth.map((s: any) => s.class).filter(Boolean)));
-  const uniqueDivisions = Array.from(new Set(studentsWithHealth.map((s: any) => s.division).filter(Boolean)));
+  const uniqueClasses = Array.from(new Set(students.map((s: any) => s.class).filter(Boolean)));
+  const uniqueDivisions = Array.from(new Set(students.map((s: any) => s.division).filter(Boolean)));
 
   const filteredStudents = useMemo(() => {
-    return studentsWithHealth.filter((s: any) => {
+    return students.filter((s: any) => {
       const nameMatch = s.fullName ? s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) : false;
       const indexMatch = s.indexNumber ? s.indexNumber.toLowerCase().includes(searchTerm.toLowerCase()) : false;
       const matchesSearch = nameMatch || indexMatch;
@@ -182,15 +126,7 @@ export default function TeacherHealthRecords() {
       
       return matchesSearch && matchesClass && matchesDivision && matchesBmiCategory && matchesHealthStatus && matchesPoints && matchesDate;
     });
-  }, [studentsWithHealth, searchTerm, filterClass, filterDivision, filterBmiCategory, filterHealthStatus, filterPoints, filterDate]);
-
-  if (studentsLoading || healthLoading) {
-    return (
-      <div className="p-8 flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  }, [students, searchTerm, filterClass, filterDivision, filterBmiCategory, filterHealthStatus, filterPoints, filterDate]);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -252,61 +188,68 @@ export default function TeacherHealthRecords() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
-                <th className="p-4 font-medium">Student</th>
-                <th className="p-4 font-medium">Index Number</th>
-                <th className="p-4 font-medium">Class/Div</th>
-                <th className="p-4 font-medium">Points</th>
-                <th className="p-4 font-medium">Latest BMI</th>
-                <th className="p-4 font-medium">Health Status</th>
-                <th className="p-4 font-medium">Latest Date</th>
-                <th className="p-4 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((student: any) => (
-                <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-slate-900">{student.fullName}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-600">{student.indexNumber || 'N/A'}</td>
-                  <td className="p-4 text-slate-600">{student.class ? `${student.class} - ${student.division}` : 'N/A'}</td>
-                  <td className="p-4 font-bold text-blue-600">{student.points || 0}</td>
-                  <td className="p-4 font-mono text-slate-700">
-                    {student.latestBmi ? student.latestBmi.toFixed(1) : 'N/A'}
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      student.healthCategory === 'Normal' ? 'bg-emerald-100 text-emerald-700' :
-                      student.healthCategory === 'Underweight' ? 'bg-blue-100 text-blue-700' :
-                      student.healthCategory === 'Overweight' ? 'bg-orange-100 text-orange-700' :
-                      student.healthCategory === 'Obese' ? 'bg-red-100 text-red-700' :
-                      student.healthCategory === 'At Risk (Waist/Hip)' ? 'bg-purple-100 text-purple-700' :
-                      'bg-slate-100 text-slate-700'
-                    }`}>
-                      {student.healthCategory}
-                    </span>
-                  </td>
-                  <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
-                  <td className="p-4 text-right">
-                    <button 
-                      onClick={() => {
-                        setFormData({ ...formData, userId: student.id });
-                        setShowAddModal(true);
-                      }}
-                      className="text-blue-500 hover:text-blue-700 font-medium text-sm"
-                    >
-                      Update Record
-                    </button>
-                  </td>
+          {loading ? (
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-slate-500">Loading students...</p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
+                  <th className="p-4 font-medium">Student</th>
+                  <th className="p-4 font-medium">Index Number</th>
+                  <th className="p-4 font-medium">Class/Div</th>
+                  <th className="p-4 font-medium">Points</th>
+                  <th className="p-4 font-medium">Latest BMI</th>
+                  <th className="p-4 font-medium">Health Status</th>
+                  <th className="p-4 font-medium">Latest Date</th>
+                  <th className="p-4 font-medium text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredStudents.map((student: any) => (
+                  <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-slate-900">{student.fullName}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-slate-600">{student.indexNumber || 'N/A'}</td>
+                    <td className="p-4 text-slate-600">{student.class ? `${student.class} - ${student.division}` : 'N/A'}</td>
+                    <td className="p-4 font-bold text-blue-600">{student.points || 0}</td>
+                    <td className="p-4 font-mono text-slate-700">
+                      {student.latestBmi ? student.latestBmi.toFixed(1) : 'N/A'}
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        student.healthCategory === 'Normal' ? 'bg-emerald-100 text-emerald-700' :
+                        student.healthCategory === 'Underweight' ? 'bg-blue-100 text-blue-700' :
+                        student.healthCategory === 'Overweight' ? 'bg-orange-100 text-orange-700' :
+                        student.healthCategory === 'Obese' ? 'bg-red-100 text-red-700' :
+                        student.healthCategory === 'At Risk (Waist/Hip)' ? 'bg-purple-100 text-purple-700' :
+                        'bg-slate-100 text-slate-700'
+                      }`}>
+                        {student.healthCategory}
+                      </span>
+                    </td>
+                    <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
+                    <td className="p-4 text-right">
+                      <button 
+                        onClick={() => {
+                          setFormData({ ...formData, userId: student.id });
+                          setShowAddModal(true);
+                        }}
+                        className="text-blue-500 hover:text-blue-700 font-medium text-sm"
+                      >
+                        Update Record
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

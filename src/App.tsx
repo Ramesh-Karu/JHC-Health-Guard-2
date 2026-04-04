@@ -192,11 +192,11 @@ const Layout = () => {
     { icon: TrendingUp, label: 'Class Analytics', path: '/teacher/analytics', roles: ['teacher'] },
     { icon: MessageSquare, label: 'Announcements', path: '/teacher/announcements', roles: ['teacher'] },
     { icon: HelpCircle, label: 'Student Queries', path: '/teacher/queries', roles: ['teacher'] },
-    { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', roles: ['admin', 'student'] },
+    { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', roles: ['admin', 'student', 'teacher'] },
     { icon: Apple, label: 'Nutrition', path: '/nutrition', roles: ['admin', 'student'] },
     { icon: Brain, label: 'AI Insights', path: '/ai-insights', roles: ['admin', 'student'] },
-    { icon: QrCode, label: 'Health Passport', path: '/health-passport', roles: ['admin', 'student'] },
-    { icon: MessageSquare, label: 'Community', path: '/community', roles: ['admin', 'student'] },
+    { icon: QrCode, label: 'Health Passport', path: '/health-passport', roles: ['admin', 'student', 'teacher'] },
+    { icon: MessageSquare, label: 'Community', path: '/community', roles: ['admin', 'student', 'teacher'] },
     { icon: HelpCircle, label: 'Queries', path: '/queries', roles: ['admin', 'student'] },
     { icon: Microscope, label: 'STEM Innovation', path: '/stem-innovation', roles: ['admin'] },
     { icon: BookOpen, label: 'Modules', path: '/modules', roles: ['admin', 'student', 'teacher'] },
@@ -550,6 +550,9 @@ export default function App() {
               {/* Protected Routes with Persistent Layout */}
               <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
+              
+              <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher']} />}>
                 <Route path="/activities" element={<Activities />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/nutrition" element={<Nutrition />} />
@@ -577,6 +580,7 @@ export default function App() {
               {/* Teacher Only Routes */}
               <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
                 <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+                <Route path="/teacher/menu" element={<Others />} />
                 <Route path="/teacher/students" element={<TeacherStudents />} />
                 <Route path="/teacher/health-records" element={<TeacherHealthRecords />} />
                 <Route path="/teacher/activities" element={<TeacherActivities />} />

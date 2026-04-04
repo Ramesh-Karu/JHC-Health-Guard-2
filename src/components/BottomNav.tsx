@@ -18,9 +18,14 @@ export default function BottomNav() {
   const navItems = [
     { icon: QrCode, label: 'Pass', path: '/health-passport' },
     { icon: Trophy, label: 'Trophy', path: '/leaderboard' },
-    { icon: LayoutDashboard, label: 'Home', path: '/dashboard', isCenter: true },
+    { 
+      icon: LayoutDashboard, 
+      label: 'Home', 
+      path: user?.role === 'teacher' ? '/teacher/dashboard' : '/dashboard', 
+      isCenter: true 
+    },
     { icon: MessageSquare, label: 'Chat', path: '/community' },
-    { icon: Menu, label: 'Menu', path: '/others' },
+    { icon: Menu, label: 'Menu', path: user?.role === 'teacher' ? '/teacher/menu' : '/others' },
   ];
 
   return (

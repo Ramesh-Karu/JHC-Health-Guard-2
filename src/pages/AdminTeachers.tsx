@@ -7,11 +7,12 @@ import * as XLSX from 'xlsx';
 import { Plus, Search, Edit2, Trash2, UserPlus, FileDown, FileUp, X } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
-import { useTeachers, CACHE_KEYS } from '../lib/queries';
+import { useTeachers, useClassrooms, CACHE_KEYS } from '../lib/queries';
 
 export default function AdminTeachers() {
   const queryClient = useQueryClient();
   const { data: teachers = [], isLoading: loading, refetch: fetchTeachers } = useTeachers();
+  const { data: classrooms = [] } = useClassrooms();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
@@ -372,11 +373,15 @@ export default function AdminTeachers() {
                 <th className="p-4 font-medium">Phone</th>
                 <th className="p-4 font-medium">Assigned Class</th>
                 <th className="p-4 font-medium">Division</th>
+                <th className="p-4 font-medium">Student Count</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredTeachers.map((teacher: any) => (
+              {filteredTeachers.map((teacher: any) => {
+                const classroom = classrooms.find((c: any) => c.grade === teacher.class && c.division === teacher.division);
+                const studentCount = classroom ? (classroom as any).studentCount || 0 : 0;
+                return (
                 <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
@@ -402,6 +407,7 @@ export default function AdminTeachers() {
                       {teacher.division || 'N/A'}
                     </span>
                   </td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">{studentCount}</td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button 
@@ -419,7 +425,8 @@ export default function AdminTeachers() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

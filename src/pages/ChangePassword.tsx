@@ -34,8 +34,17 @@ export default function ChangePassword() {
 
         if (hasPasswordProvider) {
           console.log('Attempting to update password for:', auth.currentUser.uid);
-          await updatePassword(auth.currentUser, newPassword);
-          console.log('Password updated in Auth');
+          try {
+            await auth.currentUser.reload();
+            await updatePassword(auth.currentUser, newPassword);
+            console.log('Password updated in Auth');
+          } catch (err: any) {
+            console.error('Error updating password in Auth:', err);
+            if (err.code === 'auth/network-request-failed') {
+              throw new Error('Network error. Please check your internet connection and try again.');
+            }
+            throw new Error('Failed to update password. Please try again.');
+          }
         } else {
           console.log('User signed in with Google, skipping Auth password update');
         }

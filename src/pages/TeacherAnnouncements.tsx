@@ -1,38 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, orderBy } from '../firebase';
+import { useQueryClient } from '@tanstack/react-query';
+import { db, handleFirestoreError, OperationType, collection, addDoc } from '../firebase';
 import { Plus, MessageSquare, Clock } from 'lucide-react';
 import { useAuth } from '../App';
+import { useTeacherAnnouncements, CACHE_KEYS } from '../lib/queries';
 
 export default function TeacherAnnouncements() {
   const { user } = useAuth();
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: announcements = [], isLoading: loading } = useTeacherAnnouncements(user?.id || '');
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({ title: '', content: '' });
-
-  useEffect(() => {
-    if (user) {
-      fetchAnnouncements();
-    }
-  }, [user]);
-
-  const fetchAnnouncements = async () => {
-    try {
-      const q = query(
-        collection(db, 'announcements'), 
-        where('authorId', '==', user?.id),
-        orderBy('createdAt', 'desc')
-      );
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setAnnouncements(data as any);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'announcements');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,9 +25,11 @@ export default function TeacherAnnouncements() {
         createdAt: new Date().toISOString()
       });
       
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHER_ANNOUNCEMENTS(user?.id || '') });
+      queryClient.invalidateQueries({ queryKey: CACHE_KEYS.ALL_ANNOUNCEMENTS });
+      
       setShowAddModal(false);
       setFormData({ title: '', content: '' });
-      fetchAnnouncements();
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'announcements');
     }
@@ -71,23 +52,30 @@ export default function TeacherAnnouncements() {
       </div>
 
       <div className="space-y-6">
-        {announcements.map((announcement: any) => (
-          <motion.div 
-            key={announcement.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-slate-900">{announcement.title}</h3>
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <Clock size={16} />
-                {new Date(announcement.createdAt).toLocaleDateString()}
+        {loading ? (
+          <div className="text-center p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-slate-500">Loading announcements...</p>
+          </div>
+        ) : (
+          announcements.map((announcement: any) => (
+            <motion.div 
+              key={announcement.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-slate-900">{announcement.title}</h3>
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <Clock size={16} />
+                  {new Date(announcement.createdAt).toLocaleDateString()}
+                </div>
               </div>
-            </div>
-            <p className="text-slate-700 whitespace-pre-wrap">{announcement.content}</p>
-          </motion.div>
-        ))}
+              <p className="text-slate-700 whitespace-pre-wrap">{announcement.content}</p>
+            </motion.div>
+          ))
+        )}
         {announcements.length === 0 && !loading && (
           <div className="text-center p-12 bg-white rounded-2xl border border-slate-200">
             <MessageSquare size={48} className="mx-auto text-slate-300 mb-4" />

@@ -22,7 +22,8 @@ import {
   Ruler,
   Brain,
   CheckCircle2,
-  Share2
+  Share2,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { QRCodeSVG } from 'qrcode.react';
@@ -56,10 +57,24 @@ export default function HealthPassport() {
   const navigate = useNavigate();
   const targetId = id || user?.id || '';
   
+  // For teachers, restrict access to their assigned class
+  const isTeacher = user?.role === 'teacher';
+  const [accessDenied, setAccessDenied] = useState(false);
+  
   const { data: student, isLoading: studentLoading } = useStudentProfile(targetId);
   const { data: healthHistory, isLoading: hrLoading } = useStudentHealthRecords(targetId);
   const { data: activities, isLoading: actLoading } = useStudentActivities(targetId);
   
+  useEffect(() => {
+    if (isTeacher && student && user) {
+      if (student.class !== user.class || student.division !== user.division) {
+        setAccessDenied(true);
+      } else {
+        setAccessDenied(false);
+      }
+    }
+  }, [isTeacher, student, user]);
+
   const [sharing, setSharing] = useState(false);
   const loading = studentLoading || hrLoading || actLoading;
   const componentRef = useRef<HTMLDivElement>(null);
@@ -216,6 +231,24 @@ export default function HealthPassport() {
     </div>
   );
 
+  if (accessDenied) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center text-red-500 dark:text-red-400">
+          <ShieldCheck size={48} />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
+        <p className="text-slate-500 dark:text-slate-400">You do not have permission to view this student's health passport.</p>
+        <button 
+          onClick={() => navigate(-1)}
+          className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
   if (!student) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
@@ -224,6 +257,25 @@ export default function HealthPassport() {
         </div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Student Not Found</h2>
         <p className="text-slate-500 dark:text-slate-400">The health passport you are looking for does not exist or you do not have permission to view it.</p>
+        <button 
+          onClick={() => navigate(-1)}
+          className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // Check if teacher is unassigned
+  if (isTeacher && (!user?.class || !user?.division)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500">
+          <AlertCircle size={48} />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Class Not Assigned</h2>
+        <p className="text-slate-500 dark:text-slate-400">You have not been assigned to a classroom.</p>
         <button 
           onClick={() => navigate(-1)}
           className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 dark:shadow-none"

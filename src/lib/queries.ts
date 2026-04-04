@@ -66,8 +66,11 @@ export const CACHE_KEYS = {
   ALL_HEALTH_RECORDS: ['all-health-records'],
   ALL_ACTIVITIES: ['all-activities'],
   ALL_ANNOUNCEMENTS: ['all-announcements'],
+  TEACHER_ANNOUNCEMENTS: (teacherId: string) => ['teacher-announcements', teacherId],
   ADMIN_DASHBOARD: ['admin-dashboard'],
   TEACHER_DASHBOARD: (className: string) => ['teacher-dashboard', className],
+  POINT_SETTINGS: ['point-settings'],
+  HEALTH_POINT_SETTINGS: ['health-point-settings'],
   STUDENT_HEALTH_RECORDS: (userId: string) => ['student-health-records', userId],
   STUDENT_ACTIVITIES: (userId: string) => ['student-activities', userId],
   ANNOUNCEMENTS: (className: string) => ['announcements', className],
@@ -585,6 +588,60 @@ export const useTeacherDashboard = (className: string, division: string) => {
   });
 };
 
+// Fetch school summary data
+export const useSchoolSummary = () => {
+  return useQuery({
+    queryKey: ['school-summary'],
+    queryFn: async () => {
+      const summaryRef = doc(db, 'metadata', 'school_summary');
+      const snap = await fetchWithFallback(
+        () => getDoc(summaryRef),
+        () => getDocFromCache(summaryRef),
+        'school-summary'
+      );
+      
+      if (snap && snap.exists()) {
+        return snap.data() as { totalStudents: number, bmiStats: any[], activityStats: any[] };
+      }
+      
+      // Fallback: Calculate manually if summary document doesn't exist
+      console.warn('School summary document missing, calculating manually...');
+      const studentsQ = query(collection(db, 'users'), where('role', '==', 'student'));
+      const healthQ = collection(db, 'health_records');
+      const activitiesQ = collection(db, 'activities');
+
+      const [studentsSnap, healthSnap, activitiesSnap] = await Promise.all([
+        fetchWithFallback(() => getDocs(studentsQ), () => getDocsFromCache(studentsQ), 'school-students'),
+        fetchWithFallback(() => getDocs(healthQ), () => getDocsFromCache(healthQ), 'school-health'),
+        fetchWithFallback(() => getDocs(activitiesQ), () => getDocsFromCache(activitiesQ), 'school-activities')
+      ]);
+
+      if (!studentsSnap || !healthSnap || !activitiesSnap) return { totalStudents: 0, bmiStats: [], activityStats: [] };
+
+      const students = studentsSnap.docs;
+      const healthRecords = healthSnap.docs.map(doc => doc.data());
+      const activities = activitiesSnap.docs.map(doc => doc.data());
+
+      const bmiCategories = healthRecords.reduce((acc: any, curr: any) => {
+        acc[curr.category] = (acc[curr.category] || 0) + 1;
+        return acc;
+      }, {});
+
+      const activityTypes = activities.reduce((acc: any, curr: any) => {
+        acc[curr.type] = (acc[curr.type] || 0) + 1;
+        return acc;
+      }, {});
+
+      return {
+        totalStudents: students.length,
+        bmiStats: Object.entries(bmiCategories).map(([category, count]) => ({ category, count })),
+        activityStats: Object.entries(activityTypes).map(([type, count]) => ({ type, count }))
+      };
+    },
+    staleTime: 1000 * 60 * 60 * 24 * 7, // 1 week cache
+  });
+};
+
 // Fetch teachers with caching
 export const useTeachers = () => {
   return useQuery({
@@ -742,6 +799,126 @@ export const useAllActivities = () => {
       );
       if (!snapshot) return [];
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+    },
+    staleTime: Infinity,
+  });
+};
+
+// Fetch teacher's students
+export const useTeacherStudents = (className: string, division: string) => {
+  return useQuery({
+    queryKey: ['teacher-students', className, division],
+    queryFn: async () => {
+      const q = query(
+        collection(db, 'users'),
+        where('role', '==', 'student'),
+        where('class', '==', className),
+        where('division', '==', division),
+        orderBy('fullName')
+      );
+      const snapshot = await fetchWithFallback(
+        () => getDocs(q),
+        () => getDocsFromCache(q),
+        `teacher-students-${className}-${division}`
+      );
+      if (!snapshot) return [];
+      const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Fetch latest health record for each student
+      const studentsWithHealth = await Promise.all(students.map(async (student: any) => {
+        const healthQ = query(
+          collection(db, 'health_records'),
+          where('userId', '==', student.id),
+          orderBy('date', 'desc'),
+          limit(1)
+        );
+        const healthSnapshot = await fetchWithFallback(
+          () => getDocs(healthQ),
+          () => getDocsFromCache(healthQ),
+          `student-health-latest-${student.id}`
+        );
+        let latestBmi = null;
+        let healthCategory = 'N/A';
+        let latestDate = '';
+        
+        if (healthSnapshot && !healthSnapshot.empty) {
+          const latestRecord = healthSnapshot.docs[0].data();
+          latestBmi = latestRecord.bmi;
+          healthCategory = latestRecord.category;
+          latestDate = latestRecord.date;
+        }
+
+        return {
+          ...student,
+          latestBmi,
+          healthCategory,
+          latestDate
+        };
+      }));
+      
+      return studentsWithHealth;
+    },
+    enabled: !!className && !!division,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
+};
+
+// Fetch teacher's announcements
+export const useTeacherAnnouncements = (teacherId: string) => {
+  return useQuery({
+    queryKey: CACHE_KEYS.TEACHER_ANNOUNCEMENTS(teacherId),
+    queryFn: async () => {
+      const q = query(
+        collection(db, 'announcements'),
+        where('authorId', '==', teacherId),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await fetchWithFallback(
+        () => getDocs(q),
+        () => getDocsFromCache(q),
+        `teacher-announcements-${teacherId}`
+      );
+      if (!snapshot) return [];
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+    enabled: !!teacherId,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
+};
+
+// Fetch health point settings
+export const useHealthPointSettings = () => {
+  return useQuery({
+    queryKey: CACHE_KEYS.HEALTH_POINT_SETTINGS,
+    queryFn: async () => {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        return {
+          normalBMI: data.pointsPerNormalBMI || 50,
+          goodStrength: data.pointsPerGoodStrength || 50
+        };
+      }
+      return { normalBMI: 50, goodStrength: 50 };
+    },
+    staleTime: Infinity,
+  });
+};
+// Fetch point settings
+export const usePointSettings = () => {
+  return useQuery({
+    queryKey: CACHE_KEYS.POINT_SETTINGS,
+    queryFn: async () => {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        return {
+          sport: data.pointsPerSport || 20,
+          exercise: data.pointsPerExercise || 10,
+          habit: data.pointsPerHabit || 5
+        };
+      }
+      return { sport: 20, exercise: 10, habit: 5 };
     },
     staleTime: Infinity,
   });

@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment, getDoc, orderBy, limit } from '../firebase';
+import { useQueryClient } from '@tanstack/react-query';
+import { db, handleFirestoreError, OperationType, collection, addDoc, updateDoc, doc, increment } from '../firebase';
 import { Plus, Search, Activity } from 'lucide-react';
 import { useAuth } from '../App';
+import { useTeacherStudents, usePointSettings } from '../lib/queries';
 
 export default function TeacherActivities() {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: students = [], isLoading: loading } = useTeacherStudents(user?.class || '', user?.division || '');
+  const { data: pointSettings = { sport: 20, exercise: 10, habit: 5 } } = usePointSettings();
+  
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('');
@@ -16,31 +20,7 @@ export default function TeacherActivities() {
   const [filterHealthStatus, setFilterHealthStatus] = useState('');
   const [filterPoints, setFilterPoints] = useState('');
   const [filterDate, setFilterDate] = useState('');
-  const [pointSettings, setPointSettings] = useState({
-    sport: 20,
-    exercise: 10,
-    habit: 5
-  });
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
-        if (settingsDoc.exists()) {
-          const data = settingsDoc.data();
-          setPointSettings({
-            sport: data.pointsPerSport || 20,
-            exercise: data.pointsPerExercise || 10,
-            habit: data.pointsPerHabit || 5
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching settings:", err);
-      }
-    };
-    fetchSettings();
-  }, []);
-  
   const [formData, setFormData] = useState({
     userId: '',
     type: 'exercise',
@@ -50,72 +30,6 @@ export default function TeacherActivities() {
     remarks: '',
     date: new Date().toISOString().split('T')[0]
   });
-
-  useEffect(() => {
-    if (user) {
-      fetchStudents();
-    }
-  }, [user]);
-
-  const fetchStudents = async () => {
-    try {
-      if (!user?.class || !user?.division) return;
-      
-      const q = query(
-        collection(db, 'users'), 
-        where('role', '==', 'student'),
-        where('class', '==', user.class),
-        where('division', '==', user.division)
-      );
-      const querySnapshot = await getDocs(q);
-      const studentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const studentIds = studentsData.map(s => s.id);
-      
-      let allHealthRecords: any[] = [];
-      
-      if (studentIds.length > 0) {
-        // Chunk studentIds into arrays of 10 for Firestore 'in' queries
-        const chunks = [];
-        for (let i = 0; i < studentIds.length; i += 10) {
-          chunks.push(studentIds.slice(i, i + 10));
-        }
-
-        const healthPromises = chunks.map(chunk => 
-          getDocs(query(collection(db, 'health_records'), where('userId', 'in', chunk)))
-        );
-
-        const healthSnapshots = await Promise.all(healthPromises);
-        allHealthRecords = healthSnapshots.flatMap(snap => snap.docs.map(doc => doc.data()));
-      }
-
-      const studentsWithHealth = studentsData.map((student: any) => {
-        const studentRecords = allHealthRecords.filter(r => r.userId === student.id);
-        let latestBmi = null;
-        let healthCategory = 'N/A';
-        let latestDate = '';
-        
-        if (studentRecords.length > 0) {
-          const latestRecord: any = studentRecords.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-          latestBmi = latestRecord.bmi;
-          healthCategory = latestRecord.category;
-          latestDate = latestRecord.date;
-        }
-
-        return {
-          ...student,
-          latestBmi,
-          healthCategory,
-          latestDate
-        };
-      });
-
-      setStudents(studentsWithHealth as any);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, 'users');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +52,8 @@ export default function TeacherActivities() {
         points: increment(points)
       });
       
+      queryClient.invalidateQueries({ queryKey: ['teacher-students', user?.class, user?.division] });
+      
       setShowAddModal(false);
       setFormData({
         userId: '',
@@ -148,7 +64,6 @@ export default function TeacherActivities() {
         remarks: '',
         date: new Date().toISOString().split('T')[0]
       });
-      fetchStudents(); // Refresh to get latest points
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'activities');
     }
@@ -244,62 +159,69 @@ export default function TeacherActivities() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
-                <th className="p-4 font-medium">Student</th>
-                <th className="p-4 font-medium">Class/Div</th>
-                <th className="p-4 font-medium">Latest BMI</th>
-                <th className="p-4 font-medium">Health Status</th>
-                <th className="p-4 font-medium">Latest Date</th>
-                <th className="p-4 font-medium">Total Points</th>
-                <th className="p-4 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((student: any) => (
-                <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-slate-900">{student.fullName}</span>
-                      <span className="text-sm text-slate-500">({student.indexNumber || 'N/A'})</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-600">{student.class ? `${student.class} - ${student.division}` : 'N/A'}</td>
-                  <td className="p-4 font-mono text-slate-700">
-                    {student.latestBmi ? student.latestBmi.toFixed(1) : 'N/A'}
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      student.healthCategory === 'Normal' ? 'bg-emerald-100 text-emerald-700' :
-                      student.healthCategory === 'Underweight' ? 'bg-blue-100 text-blue-700' :
-                      student.healthCategory === 'Overweight' ? 'bg-orange-100 text-orange-700' :
-                      student.healthCategory === 'Obese' ? 'bg-red-100 text-red-700' :
-                      student.healthCategory === 'At Risk (Waist/Hip)' ? 'bg-purple-100 text-purple-700' :
-                      'bg-slate-100 text-slate-700'
-                    }`}>
-                      {student.healthCategory || 'N/A'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
-                  <td className="p-4 font-medium text-blue-600">
-                    {student.points || 0} pts
-                  </td>
-                  <td className="p-4 text-right">
-                    <button 
-                      onClick={() => {
-                        setFormData({ ...formData, userId: student.id });
-                        setShowAddModal(true);
-                      }}
-                      className="text-blue-500 hover:text-blue-700 font-medium text-sm"
-                    >
-                      Log Activity
-                    </button>
-                  </td>
+          {loading ? (
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-slate-500">Loading students...</p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
+                  <th className="p-4 font-medium">Student</th>
+                  <th className="p-4 font-medium">Class/Div</th>
+                  <th className="p-4 font-medium">Latest BMI</th>
+                  <th className="p-4 font-medium">Health Status</th>
+                  <th className="p-4 font-medium">Latest Date</th>
+                  <th className="p-4 font-medium">Total Points</th>
+                  <th className="p-4 font-medium text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredStudents.map((student: any) => (
+                  <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-slate-900">{student.fullName}</span>
+                        <span className="text-sm text-slate-500">({student.indexNumber || 'N/A'})</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-slate-600">{student.class ? `${student.class} - ${student.division}` : 'N/A'}</td>
+                    <td className="p-4 font-mono text-slate-700">
+                      {student.latestBmi ? student.latestBmi.toFixed(1) : 'N/A'}
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        student.healthCategory === 'Normal' ? 'bg-emerald-100 text-emerald-700' :
+                        student.healthCategory === 'Underweight' ? 'bg-blue-100 text-blue-700' :
+                        student.healthCategory === 'Overweight' ? 'bg-orange-100 text-orange-700' :
+                        student.healthCategory === 'Obese' ? 'bg-red-100 text-red-700' :
+                        student.healthCategory === 'At Risk (Waist/Hip)' ? 'bg-purple-100 text-purple-700' :
+                        'bg-slate-100 text-slate-700'
+                      }`}>
+                        {student.healthCategory || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-slate-600">{student.latestDate || 'N/A'}</td>
+                    <td className="p-4 font-medium text-blue-600">
+                      {student.points || 0} pts
+                    </td>
+                    <td className="p-4 text-right">
+                      <button 
+                        onClick={() => {
+                          setFormData({ ...formData, userId: student.id });
+                          setShowAddModal(true);
+                        }}
+                        className="text-blue-500 hover:text-blue-700 font-medium text-sm"
+                      >
+                        Log Activity
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
