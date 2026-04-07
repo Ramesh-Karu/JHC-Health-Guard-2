@@ -29,6 +29,16 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync
         
+      - name: Auto-fix Google Services Package Name
+        run: |
+          if [ -f android/app/google-services.json ]; then
+            APP_ID=$(grep -oP 'applicationIds+"K[^"]+' android/app/build.gradle || grep -oP "applicationIds+'K[^']+" android/app/build.gradle)
+            if [ ! -z "$APP_ID" ]; then
+              echo "Auto-fixing package_name to $APP_ID in google-services.json to prevent build failure"
+              sed -i -E "s/"package_name":s*"[^"]+"/"package_name": "$APP_ID"/g" android/app/google-services.json
+            fi
+          fi
+        
       - name: Build Android APK
         run: |
           cd android
