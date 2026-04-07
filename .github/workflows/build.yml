@@ -14,6 +14,12 @@ jobs:
         with:
           node-version: '20'
           
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          
       - name: Install Dependencies
         run: npm install
         
@@ -26,6 +32,7 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
+          gradle wrapper
           chmod +x gradlew
           ./gradlew assembleRelease
           
