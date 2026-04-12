@@ -351,7 +351,7 @@ export default function HealthPassport() {
           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center md:items-start">
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-[32px] border-4 border-white/20 overflow-hidden shadow-2xl flex-shrink-0 bg-white">
               <img 
-                src="https://image2url.com/r2/default/images/1773243015309-8d00926d-bd9c-4a4d-931d-e00cbf039414.jpg" 
+                src="https://i.postimg.cc/qvHpVXB1/images-(21).jpg" 
                 alt={student?.fullName} 
                 className="w-full h-full object-contain p-2"
                 referrerPolicy="no-referrer"
