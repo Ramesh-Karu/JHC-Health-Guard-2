@@ -73,7 +73,7 @@ export const HealthPassportCard = React.forwardRef<HTMLDivElement, Props>(
             <div className="w-24 sm:w-56 h-full flex flex-col items-center justify-center gap-4 sm:gap-6">
               <div className={cn("w-20 h-20 sm:w-48 sm:h-48 rounded-2xl sm:rounded-[2.5rem] border-2 sm:border-4 overflow-hidden shadow-2xl shrink-0", theme === 'oled' ? "border-slate-700 bg-slate-800" : "border-white/20 bg-white")}>
                 <img 
-                  src={student?.photoUrl || "https://image2url.com/r2/default/images/1773243015309-8d00926d-bd9c-4a4d-931d-e00cbf039414.jpg"} 
+                  src={student?.photoUrl || "https://i.postimg.cc/qvHpVXB1/images-(21).jpg"} 
                   alt={student?.fullName} 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
