@@ -285,7 +285,7 @@ export default function Login() {
               className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none border border-white dark:border-slate-800"
             >
               <img 
-                src="https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg" 
+                src="https://i.postimg.cc/qvHpVXB1/images-(21).jpg" 
                 alt="School Logo" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
