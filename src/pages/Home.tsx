@@ -272,7 +272,7 @@ export default function Home() {
           <div className="flex items-center gap-3 justify-start">
             <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-none border border-white/50 dark:border-slate-800/50">
               <img 
-                src="https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg" 
+                src="https://i.postimg.cc/qvHpVXB1/images-(21).jpg" 
                 alt="School Logo" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -895,7 +895,7 @@ export default function Home() {
                 <div className="flex items-center gap-6 mb-8 border-b border-slate-100 pb-8">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg bg-white border border-slate-100">
                     <img 
-                      src="https://image2url.com/r2/default/images/1773243015309-8d00926d-bd9c-4a4d-931d-e00cbf039414.jpg" 
+                      src="https://i.postimg.cc/qvHpVXB1/images-(21).jpg" 
                       alt={scannedStudent.fullName}
                       className="w-full h-full object-contain p-2"
                     />
