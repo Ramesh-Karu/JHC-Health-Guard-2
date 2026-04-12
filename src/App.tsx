@@ -303,7 +303,7 @@ const Layout = () => {
           <div className="flex items-center gap-3 pointer-events-none">
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-none border border-white/50 dark:border-slate-700/50">
               <img 
-                src="https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg" 
+                src="https://i.postimg.cc/qvHpVXB1/images-(21).jpg" 
                 alt="School Logo" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
