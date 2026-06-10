@@ -6,4 +6,4 @@ Disallow: /coach
 Disallow: /profile
 Disallow: /marketplace
 Disallow: /breakfast
-Sitemap: https://jhchealthguard.online/sitemap.xml
+Sitemap: https://healthguard.online/sitemap.xml
