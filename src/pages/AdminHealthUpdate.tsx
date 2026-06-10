@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { db, handleFirestoreError, OperationType, collection, query, where, getDocs, addDoc, updateDoc, doc, increment, getDoc } from '../firebase';
-import { Search, Save, User, FileUp } from 'lucide-react';
+import { Search, Save, User as UserIcon, FileUp } from 'lucide-react';
 import Papa from 'papaparse';
 import Toast from '../components/Toast';
 import { CACHE_KEYS } from '../lib/queries';
 import { getBmiCategory, getAgeFromDob } from '../lib/bmi';
+import { User } from '../types';
 
 export default function AdminHealthUpdate() {
   const queryClient = useQueryClient();
@@ -123,7 +124,7 @@ export default function AdminHealthUpdate() {
       complete: async (results) => {
         // Fetch all students once
         const studentsSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
-        const studentMap = new Map(studentsSnapshot.docs.map(doc => [doc.data().indexNumber, { id: doc.id, ...doc.data() }]));
+        const studentMap = new Map(studentsSnapshot.docs.map(doc => [doc.data().indexNumber, { id: doc.id, ...doc.data() } as User]));
 
         for (const row of results.data as any[]) {
           if (row.indexNumber && row.height && row.weight) {
@@ -214,7 +215,7 @@ export default function AdminHealthUpdate() {
         {student && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center gap-4 border border-blue-100 dark:border-blue-800/30">
             <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
-              <User size={24} />
+              <UserIcon size={24} />
             </div>
             <div>
               <p className="font-bold text-slate-900 dark:text-white">{student.fullName}</p>

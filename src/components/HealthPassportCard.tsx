@@ -5,7 +5,14 @@ import { Heart, Activity, ShieldCheck, CheckCircle2, Scale, Ruler, Zap, Info } f
 import { cn } from '../lib/utils';
 import { useTheme } from './ThemeProvider';
 import { getBmiCategory, getAgeFromDob } from '../lib/bmi';
+import { User, HealthRecord } from '../types';
 
+interface Props {
+  student: User;
+  latestRecord?: HealthRecord;
+  passportUrl: string;
+  forceFront?: boolean;
+}
 
 export const HealthPassportCard = React.forwardRef<HTMLDivElement, Props>(
   ({ student, latestRecord, passportUrl, forceFront }, ref) => {

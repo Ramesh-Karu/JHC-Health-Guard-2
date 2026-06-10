@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { getBmiCategory, getAgeFromDob } from '../lib/bmi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import QRCode from 'qrcode';
 import { ExportPreviewModal } from './ExportPreviewModal';
 
 interface ExportHealthDataModalProps {
@@ -164,6 +165,10 @@ export const ExportHealthDataModal: React.FC<ExportHealthDataModalProps> = ({ st
         headStyles: { fillColor: [30, 64, 175] },
         styles: { fontSize: 8 }
       });
+
+      // Add QR Code at bottom right
+      const qrCodeUrl = await QRCode.toDataURL('https://play.google.com/store/apps/details?id=com.healthguard.jhc');
+      doc.addImage(qrCodeUrl, 'PNG', 170, 250, 30, 30);
       
       doc.setFontSize(9);
       doc.setTextColor(100, 100, 100);

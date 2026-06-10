@@ -1,6 +1,7 @@
 import { doc, collection, getDocs, writeBatch, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getBmiCategory, getAgeFromDob } from './bmi';
+import { User, HealthRecord } from '../types';
 
 export const recalculateAllStudentsBMI = async () => {
   console.log('Starting BMI recalculation...');
@@ -8,12 +9,12 @@ export const recalculateAllStudentsBMI = async () => {
   // 1. Fetch all students
   const studentsQ = query(collection(db, 'users'), where('role', '==', 'student'));
   const studentsSnap = await getDocs(studentsQ);
-  const students = studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const students = studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
   // 2. Fetch all health records
   const healthQ = collection(db, 'health_records');
   const healthSnap = await getDocs(healthQ);
-  const healthRecords = healthSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const healthRecords = healthSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as HealthRecord));
 
   const batch = writeBatch(db);
   let updates = 0;

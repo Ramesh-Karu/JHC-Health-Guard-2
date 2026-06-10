@@ -272,7 +272,7 @@ export default function TeacherHealthRecords() {
                   className="w-full p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">Select Student</option>
-                  {studentsWithHealth.map((s: any) => (
+                  {students.map((s: any) => (
                     <option key={s.id} value={s.id}>{s.fullName}</option>
                   ))}
                 </select>

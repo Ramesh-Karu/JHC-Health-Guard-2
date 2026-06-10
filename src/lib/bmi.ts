@@ -24,18 +24,18 @@ export const getAgeFromDob = (dob: string) => {
   return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
 };
 
-export const getBmiCategory = (bmi: number, age: number, gender?: string): { label: string, color: string, percentile: number } => {
+export const getBmiCategory = (bmi: number, age: number, gender?: string): { label: string, color: string, percentile: number, bg: string, description: string } => {
   const roundedAge = Math.min(18, Math.max(6, Math.round(age)));
   
   // Default to Boy percentiles (as provided in chart)
   const data = boyPercentiles[roundedAge as keyof typeof boyPercentiles];
-  if (!data) return { label: 'Normal', color: 'text-emerald-500', percentile: 50 }; // Fallback
+  if (!data) return { label: 'Normal', color: 'text-emerald-500', percentile: 50, bg: 'bg-emerald-500', description: 'Your BMI is within the healthy range for your age.' }; // Fallback
 
-  if (bmi < data.p3) return { label: 'Severely Underweight', color: 'text-red-600', percentile: 1 };
-  if (bmi < data.p5) return { label: 'Underweight', color: 'text-blue-500', percentile: 3 };
-  if (bmi < data.p90) return { label: 'Acceptable Weight', color: 'text-emerald-500', percentile: 50 };
-  if (bmi < data.p97) return { label: 'Overweight', color: 'text-amber-500', percentile: 90 };
-  return { label: 'Severely Overweight', color: 'text-red-600', percentile: 97 };
+  if (bmi < data.p3) return { label: 'Severely Underweight', color: 'text-red-600', percentile: 1, bg: 'bg-red-600', description: 'Your BMI is significantly below the healthy range. Please consult a health professional.' };
+  if (bmi < data.p5) return { label: 'Underweight', color: 'text-blue-500', percentile: 3, bg: 'bg-blue-500', description: 'Your BMI is below the healthy range for your age.' };
+  if (bmi < data.p90) return { label: 'Acceptable Weight', color: 'text-emerald-500', percentile: 50, bg: 'bg-emerald-500', description: 'Your BMI is within the healthy range for your age.' };
+  if (bmi < data.p97) return { label: 'Overweight', color: 'text-amber-500', percentile: 90, bg: 'bg-amber-500', description: 'Your BMI indicates you are above the healthy range for your age.' };
+  return { label: 'Severely Overweight', color: 'text-red-600', percentile: 97, bg: 'bg-red-600', description: 'Your BMI indicates you are significantly above the healthy range for your age. Please consult a health professional.' };
 };
 
 export const calculateBmi = (weight: number, height: number) => {

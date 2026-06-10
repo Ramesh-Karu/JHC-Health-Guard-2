@@ -810,7 +810,7 @@ export default function PostureScanner() {
                     <div key={scan.id} className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-6 border border-slate-100 dark:border-slate-700">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-slate-400 dark:text-slate-500">
-                          {scan.date?.toDate ? scan.date.toDate().toLocaleDateString() : new Date(scan.date).toLocaleDateString()}
+                          {typeof (scan.date as any).toDate === 'function' ? (scan.date as any).toDate().toLocaleDateString() : new Date(scan.date).toLocaleDateString()}
                         </span>
                         <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-black">
                           SCORE: {scan.overallScore}
@@ -834,8 +834,4 @@ export default function PostureScanner() {
       </AnimatePresence>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }

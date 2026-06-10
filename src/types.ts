@@ -25,6 +25,8 @@ export interface User {
   points: number;
   wellnessBadge?: boolean;
   badgeStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  googleId?: string;
+  googleEmail?: string;
   createdAt: string;
 }
 

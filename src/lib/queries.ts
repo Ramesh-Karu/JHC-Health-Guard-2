@@ -478,7 +478,7 @@ export const useAdminDashboard = () => {
       // BMI Stats
       // Recalculate BMI categories for all records based on student's current age + gender
       const usersSnap = await fetchWithFallback(() => getDocs(studentsQ), () => getDocsFromCache(studentsQ), 'admin-students-list');
-      const students = usersSnap ? usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) : [];
+      const students = usersSnap ? usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)) : [];
       
       const bmiCategories: Record<string, number> = {};
       const studentMap = new Map(students.map(s => [s.id, s]));
@@ -545,7 +545,7 @@ export const useTeacherDashboard = (className: string, division: string) => {
         `teacher-dashboard-students-${className}`
       );
       if (!snapshot) return { totalStudents: 0, bmiStats: [], activityStats: [] };
-      const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       const studentIds = students.map(s => s.id);
 
       if (studentIds.length > 0) {

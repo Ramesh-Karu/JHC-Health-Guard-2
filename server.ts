@@ -428,7 +428,7 @@ async function startServer() {
     
     try {
       // Cleanup old photo if it exists on the server
-      const oldUser = db.prepare("SELECT photoUrl FROM users WHERE id = ?").get(req.user.id);
+      const oldUser = db.prepare("SELECT photoUrl FROM users WHERE id = ?").get(req.user.id) as { photoUrl?: string };
       if (oldUser?.photoUrl && oldUser.photoUrl.startsWith('/uploads/')) {
         const oldPath = path.join(__dirname, oldUser.photoUrl);
         if (fs.existsSync(oldPath)) {
