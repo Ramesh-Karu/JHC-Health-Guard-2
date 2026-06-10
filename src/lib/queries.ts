@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, getDocs, db, query, where, getCountFromServer, getDoc, doc, orderBy, limit, onSnapshot, loadBundle, namedQuery, getDocsFromCache, getDocFromCache, auth } from '../firebase';
 import { User, Query, Post, HealthRecord, Activity } from '../types';
 import { useEffect } from 'react';
+import { getBmiCategory, getAgeFromDob } from './bmi';
 
 // Helper to handle Firestore queries with cache fallback on quota exceeded
 const fetchWithFallback = async <T>(
@@ -170,8 +171,10 @@ export const useSTEMAnalytics = () => {
           classStatsMap[studentClass].count += 1;
 
           // BMI stats
-          if (bmiStatsMap[health.category] !== undefined) {
-            bmiStatsMap[health.category] += 1;
+          const age = getAgeFromDob((student as any).dob || '2010-01-01');
+          const category = getBmiCategory(health.bmi, age).label;
+          if (bmiStatsMap[category] !== undefined) {
+            bmiStatsMap[category] += 1;
           }
         }
       });
@@ -287,7 +290,7 @@ export const useLeaderboard = () => {
         collection(db, 'users'), 
         where('role', '==', 'student'),
         orderBy('points', 'desc'),
-        limit(100)
+        limit(500)
       );
       const snapshot = await fetchWithFallback(
         () => getDocs(q),
@@ -473,19 +476,24 @@ export const useAdminDashboard = () => {
       const allHealthRecords = hrSnap.docs.map(doc => doc.data());
       
       // BMI Stats
+      // Recalculate BMI categories for all records based on student's current age + gender
+      const usersSnap = await fetchWithFallback(() => getDocs(studentsQ), () => getDocsFromCache(studentsQ), 'admin-students-list');
+      const students = usersSnap ? usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) : [];
+      
       const bmiCategories: Record<string, number> = {};
+      const studentMap = new Map(students.map(s => [s.id, s]));
+      
       allHealthRecords.forEach((record: any) => {
-        if (record.category) {
-          bmiCategories[record.category] = (bmiCategories[record.category] || 0) + 1;
+        const student = studentMap.get(record.userId);
+        if (student && record.bmi) {
+          const age = student.dob ? getAgeFromDob(student.dob) : 18;
+          const { label: category } = getBmiCategory(record.bmi, age, student.gender);
+          bmiCategories[category] = (bmiCategories[category] || 0) + 1;
         }
       });
       const bmiStats = Object.entries(bmiCategories).map(([category, count]) => ({ category, count }));
       
-      // Class Stats - We still need students to map to classes, but we'll fetch them only if needed or use a summary
-      // For now, let's keep it but ideally this should be a pre-calculated summary document
-      const usersSnap = await fetchWithFallback(() => getDocs(studentsQ), () => getDocsFromCache(studentsQ), 'admin-students-list');
-      const students = usersSnap ? usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) : [];
-      
+      // Class Stats
       const classBmiMap: Record<string, { total: number, count: number }> = {};
       students.forEach((student: any) => {
         if (student.class) {
@@ -505,11 +513,15 @@ export const useAdminDashboard = () => {
         avgBmi: data.total / data.count
       }));
 
+      const totalPoints = students.reduce((sum, s: any) => sum + (s.points || 0), 0);
+      const avgHealthScore = totalStudents > 0 ? totalPoints / totalStudents : 0;
+
       return {
         totalStudents,
         bmiStats,
         classStats,
-        activityStats: [{ type: 'sport', count: sportActivitiesCount.data().count }]
+        activityStats: [{ type: 'sport', count: sportActivitiesCount.data().count }],
+        avgHealthScore
       };
     },
     staleTime: 1000 * 60 * 30, // 30 minutes cache for dashboard
@@ -560,8 +572,14 @@ export const useTeacherDashboard = (className: string, division: string) => {
         const healthRecords = healthSnapshots.flatMap(snap => snap.docs.map(doc => doc.data()));
         const activities = activitySnapshots.flatMap(snap => snap.docs.map(doc => doc.data()));
 
+        const studentMap = new Map(students.map(s => [s.id, s]));
         const categories = healthRecords.reduce((acc: any, curr: any) => {
-          acc[curr.category] = (acc[curr.category] || 0) + 1;
+          const student = studentMap.get(curr.userId);
+          if (student && curr.bmi) {
+            const age = student.dob ? getAgeFromDob(student.dob) : 18;
+            const { label: category } = getBmiCategory(curr.bmi, age, student.gender);
+            acc[category] = (acc[category] || 0) + 1;
+          }
           return acc;
         }, {});
 

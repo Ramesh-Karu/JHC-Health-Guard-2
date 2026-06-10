@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAllStudents, CACHE_KEYS } from '../lib/queries';
+import { useAllStudents, useAllHealthRecords, CACHE_KEYS } from '../lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 import { User as UserType } from '../types';
 import Toast from '../components/Toast';
+import { getBmiCategory, getAgeFromDob } from '../lib/bmi';
+import { ExportHealthDataModal } from '../components/ExportHealthDataModal';
 import HeartLoader from '../components/HeartLoader';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { doc, collection, getDocs, query, where, writeBatch, setDoc, deleteDoc, updateDoc, addDoc, increment } from 'firebase/firestore';
@@ -71,12 +73,25 @@ export default function Students() {
   const [editingStudent, setEditingStudent] = useState<UserType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<UserType | null>(null);
   const [healthData, setHealthData] = useState({ height: '', weight: '', date: new Date().toISOString().split('T')[0] });
   const [importPreviewData, setImportPreviewData] = useState<any[]>([]);
   const [importProgress, setImportProgress] = useState(0);
 
   const { data: allStudents = [], isLoading, refetch } = useAllStudents();
+  const { data: allHealthRecords = [] } = useAllHealthRecords();
+
+  const studentBmiMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    const sorted = [...allHealthRecords].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    sorted.forEach(record => {
+      if (!map[record.userId]) {
+        map[record.userId] = record.bmi;
+      }
+    });
+    return map;
+  }, [allHealthRecords]);
 
   const filteredStudents = useMemo(() => {
     return allStudents.filter(s => {
@@ -124,8 +139,8 @@ export default function Students() {
         const userCredential = await createUserWithEmailAndPassword(tempAuth, `${formData.username}@school.internal`, formData.password);
         
         await setDoc(doc(db, 'users', userCredential.user.uid), {
-          email: `${formData.username}@school.internal`,
-          username: formData.username,
+          email: `${formData.username.toLowerCase().trim()}@school.internal`,
+          username: formData.username.toLowerCase().trim(),
           fullName: formData.fullName,
           indexNumber: formData.indexNumber,
           admissionNumber: formData.admissionNumber,
@@ -191,10 +206,8 @@ export default function Students() {
       const weightInKg = parseFloat(healthData.weight);
       const bmi = weightInKg / (heightInMeters * heightInMeters);
       
-      let category = 'Normal';
-      if (bmi < 18.5) category = 'Underweight';
-      else if (bmi >= 25 && bmi < 30) category = 'Overweight';
-      else if (bmi >= 30) category = 'Obese';
+      const age = selectedStudent.dob ? getAgeFromDob(selectedStudent.dob) : 18;
+      const { label: category } = getBmiCategory(bmi, age, selectedStudent.gender);
 
       await addDoc(collection(db, 'health_records'), {
         userId: selectedStudent.id,
@@ -437,7 +450,7 @@ export default function Students() {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={handleExportCSV}
+            onClick={() => setIsExportModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
           >
             <FileDown size={18} />
@@ -507,6 +520,7 @@ export default function Students() {
                 <th className="px-6 py-4">Class</th>
                 <th className="px-6 py-4">Gender</th>
                 <th className="px-6 py-4">Points</th>
+                <th className="px-6 py-4">BMI</th>
                 <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
@@ -551,6 +565,9 @@ export default function Students() {
                         <Award size={14} />
                         {student.points}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-700">
+                      {studentBmiMap[student.id] ? studentBmiMap[student.id].toFixed(1) : '--'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -619,6 +636,15 @@ export default function Students() {
           </div>
         </div>
       </div>
+
+      {isExportModalOpen && (
+        <ExportHealthDataModal 
+          students={allStudents}
+          healthRecords={allHealthRecords}
+          onClose={() => setIsExportModalOpen(false)}
+          onExportSuccess={(message) => setToast({ message, type: 'success' })}
+        />
+      )}
 
       {/* Add/Edit Student Modal */}
       {isModalOpen && (

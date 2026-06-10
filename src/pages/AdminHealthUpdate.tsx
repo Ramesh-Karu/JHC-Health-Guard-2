@@ -5,6 +5,7 @@ import { Search, Save, User, FileUp } from 'lucide-react';
 import Papa from 'papaparse';
 import Toast from '../components/Toast';
 import { CACHE_KEYS } from '../lib/queries';
+import { getBmiCategory, getAgeFromDob } from '../lib/bmi';
 
 export default function AdminHealthUpdate() {
   const queryClient = useQueryClient();
@@ -69,16 +70,16 @@ export default function AdminHealthUpdate() {
       
       const bmi = weight / ((height / 100) ** 2);
       
-      let category = 'Normal';
-      if (bmi < 18.5) category = 'Underweight';
-      else if (bmi >= 25) category = 'Overweight';
-      if (bmi >= 30) category = 'Obese';
-
+      const age = student.dob ? getAgeFromDob(student.dob) : 18;
+      const { label: category } = getBmiCategory(bmi, age, student.gender);
+      
       // Simple health assessment based on new metrics
-      if (waist && hip && (waist / hip > 0.9)) category = 'At Risk (Waist/Hip)';
+      // (waist/hip logic still applies if provided, but I'll check first)
+      let finalCategory = category;
+      if (waist && hip && (waist / hip > 0.9)) finalCategory = 'At Risk (Waist/Hip)';
 
       let pointsAwarded = 0;
-      if (category === 'Normal') pointsAwarded += pointSettings.normalBMI;
+      if (finalCategory === 'Acceptable Weight') pointsAwarded += pointSettings.normalBMI;
       if (gripStrength > 20) pointsAwarded += pointSettings.goodStrength; // Assuming >20kg is good strength
 
       await addDoc(collection(db, 'health_records'), {
@@ -89,7 +90,7 @@ export default function AdminHealthUpdate() {
         hip,
         waist,
         gripStrength,
-        category,
+        category: finalCategory,
         pointsAwarded,
         date: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString()
@@ -122,13 +123,13 @@ export default function AdminHealthUpdate() {
       complete: async (results) => {
         // Fetch all students once
         const studentsSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
-        const studentMap = new Map(studentsSnapshot.docs.map(doc => [doc.data().indexNumber, doc.id]));
+        const studentMap = new Map(studentsSnapshot.docs.map(doc => [doc.data().indexNumber, { id: doc.id, ...doc.data() }]));
 
         for (const row of results.data as any[]) {
           if (row.indexNumber && row.height && row.weight) {
             try {
-              const studentId = studentMap.get(row.indexNumber);
-              if (studentId) {
+              const student = studentMap.get(row.indexNumber);
+              if (student) {
                 const height = parseFloat(row.height);
                 const weight = parseFloat(row.weight);
                 const hip = parseFloat(row.hip || 0);
@@ -136,32 +137,33 @@ export default function AdminHealthUpdate() {
                 const gripStrength = parseFloat(row.gripStrength || 0);
                 
                 const bmi = weight / ((height / 100) ** 2);
-                let category = 'Normal';
-                if (bmi < 18.5) category = 'Underweight';
-                else if (bmi >= 25) category = 'Overweight';
-                if (bmi >= 30) category = 'Obese';
-                if (waist && hip && (waist / hip > 0.9)) category = 'At Risk (Waist/Hip)';
+                
+                const age = student.dob ? getAgeFromDob(student.dob) : 18;
+                const { label: baseCategory } = getBmiCategory(bmi, age, student.gender);
+                
+                let finalCategory = baseCategory;
+                if (waist && hip && (waist / hip > 0.9)) finalCategory = 'At Risk (Waist/Hip)';
 
                 let pointsAwarded = 0;
-                if (category === 'Normal') pointsAwarded += pointSettings.normalBMI;
+                if (finalCategory === 'Acceptable Weight') pointsAwarded += pointSettings.normalBMI;
                 if (gripStrength > 20) pointsAwarded += pointSettings.goodStrength;
 
                 await addDoc(collection(db, 'health_records'), {
-                  userId: studentId,
+                  userId: student.id,
                   height,
                   weight,
                   hip,
                   waist,
                   gripStrength,
                   bmi,
-                  category,
+                  category: finalCategory,
                   pointsAwarded,
                   date: new Date().toISOString().split('T')[0],
                   createdAt: new Date().toISOString()
                 });
 
                 if (pointsAwarded > 0) {
-                  await updateDoc(doc(db, 'users', studentId), {
+                  await updateDoc(doc(db, 'users', student.id), {
                     points: increment(pointsAwarded)
                   });
                 }

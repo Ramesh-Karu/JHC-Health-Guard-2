@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
-import { Trophy, Medal, Star, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Trophy, Medal, Star, ShieldCheck, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../App';
 import { useLeaderboard } from '../lib/queries';
 import { Skeleton } from '../components/Skeleton';
+import { useQueryClient } from '@tanstack/react-query';
+import { CACHE_KEYS } from '../lib/queries';
 
 export default function Leaderboard() {
   const { user: currentUser } = useAuth();
+  const queryClient = useQueryClient();
   const { data: leaderboard = [], isLoading: loading } = useLeaderboard();
   const [filter, setFilter] = useState('All');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: CACHE_KEYS.LEADERBOARD });
+    setIsRefreshing(false);
+  };
 
   const filteredData = filter === 'All' 
     ? leaderboard 
@@ -52,6 +62,16 @@ export default function Leaderboard() {
           <p className="text-slate-500 dark:text-slate-400">Celebrating our healthiest students</p>
         </div>
         <div className="flex items-center gap-2">
+          {currentUser?.role === 'admin' && (
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+              title="Refresh Leaderboard"
+            >
+              <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+          )}
           <select 
             value={filter} 
             onChange={(e) => setFilter(e.target.value)}

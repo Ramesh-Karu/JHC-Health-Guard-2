@@ -54,14 +54,13 @@ export default function AdminTeachers() {
         const teacherRef = doc(db, 'users', editingTeacher.id);
         await updateDoc(teacherRef, teacherData);
       } else {
-        const tempApp = initializeApp(firebaseConfig as any, 'temp-create-teacher-' + Date.now());
-        const tempAuth = getAuth(tempApp);
+        const userRef = doc(collection(db, 'users'));
         
         const password = formData.password || '123456';
-        const userCredential = await createUserWithEmailAndPassword(tempAuth, formData.email, password);
         
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
+        await setDoc(userRef, {
           ...teacherData,
+          authCreated: false,
           passwordChanged: false,
           tempPassword: password,
           createdAt: new Date().toISOString()
@@ -73,8 +72,6 @@ export default function AdminTeachers() {
           totalUsers: increment(1),
           'roleCounts.teacher': increment(1)
         }, { merge: true });
-
-        await deleteApp(tempApp);
       }
       
       queryClient.invalidateQueries({ queryKey: CACHE_KEYS.TEACHERS });

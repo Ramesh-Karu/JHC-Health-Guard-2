@@ -227,7 +227,7 @@ export default function Dashboard() {
           <StatCard 
             icon={TrendingUp} 
             label="Health Score Avg" 
-            value="84" 
+            value={analytics?.avgHealthScore?.toFixed(0) || '0'} 
             trend="up" 
             trendValue="5.2%" 
             color="bg-violet-500" 

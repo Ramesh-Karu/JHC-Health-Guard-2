@@ -6,6 +6,7 @@ import { Plus, Search } from 'lucide-react';
 import { useAuth } from '../App';
 import Toast from '../components/Toast';
 import { useTeacherStudents, useHealthPointSettings, CACHE_KEYS } from '../lib/queries';
+import { getBmiCategory, getAgeFromDob } from '../lib/bmi';
 
 export default function TeacherHealthRecords() {
   const { user } = useAuth();
@@ -45,14 +46,14 @@ export default function TeacherHealthRecords() {
       
       const bmi = weightInKg / (heightInMeters * heightInMeters);
       
-      let category = 'Normal';
-      if (bmi < 18.5) category = 'Underweight';
-      else if (bmi >= 25 && bmi < 30) category = 'Overweight';
-      else if (bmi >= 30) category = 'Obese';
+      const student = students.find((s: any) => s.id === formData.userId);
+      const age = student && student.dob ? getAgeFromDob(student.dob) : 18;
+      const { label: baseCategory } = getBmiCategory(bmi, age, student?.gender);
+      let category = baseCategory;
       if (waist && hip && (waist / hip > 0.9)) category = 'At Risk (Waist/Hip)';
 
       let pointsAwarded = 0;
-      if (category === 'Normal') pointsAwarded += pointSettings.normalBMI;
+      if (category === 'Acceptable Weight') pointsAwarded += pointSettings.normalBMI;
       if (gripStrength > 20) pointsAwarded += pointSettings.goodStrength;
 
       await addDoc(collection(db, 'health_records'), {

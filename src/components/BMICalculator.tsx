@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Scale, Ruler, Activity, Info, User, Calendar, Zap, Heart, TrendingUp, Target, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { getBmiCategory, calculateBmi } from '../lib/bmi';
 
 type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'extra';
 
@@ -22,20 +23,17 @@ export default function BMICalculator() {
 
   const bmi = useMemo(() => {
     const w = parseFloat(weight);
-    const h = parseFloat(height) / 100; // cm to m
+    const h = parseFloat(height);
     if (w > 0 && h > 0) {
-      return parseFloat((w / (h * h)).toFixed(1));
+      return parseFloat(calculateBmi(w, h).toFixed(1));
     }
     return null;
   }, [weight, height]);
 
   const status = useMemo(() => {
-    if (bmi === null) return null;
-    if (bmi < 18.5) return { label: 'Underweight', color: 'text-blue-500', bg: 'bg-blue-500', description: 'You are in the underweight range. Consider consulting a nutritionist.' };
-    if (bmi < 25) return { label: 'Normal', color: 'text-emerald-500', bg: 'bg-emerald-500', description: 'You are in the normal weight range. Great job! Keep it up.' };
-    if (bmi < 30) return { label: 'Overweight', color: 'text-amber-500', bg: 'bg-amber-500', description: 'You are in the overweight range. Focus on balanced diet and exercise.' };
-    return { label: 'Obese', color: 'text-red-500', bg: 'bg-red-500', description: 'You are in the obese range. It is recommended to consult a healthcare provider.' };
-  }, [bmi]);
+    if (bmi === null || !age) return null;
+    return getBmiCategory(bmi, parseInt(age));
+  }, [bmi, age]);
 
   const bmr = useMemo(() => {
     const w = parseFloat(weight);

@@ -73,24 +73,19 @@ export default function Login() {
           }
 
           const passwordToMatch = userData?.tempPassword || '123456';
-          console.log("Lazy Auth: userData exists:", !!userData, "authCreated:", userData?.authCreated, "passwordToMatch:", passwordToMatch, "input password:", password);
           if (userData && userData.authCreated === false && passwordToMatch === password) {
             try {
-              console.log("Lazy Auth: Creating account for", loginEmail);
               let createResult;
               try {
                 createResult = await createUserWithEmailAndPassword(auth, loginEmail, password);
               } catch (createErr: any) {
-                console.log("Lazy Auth: createUserWithEmailAndPassword failed with code:", createErr.code);
                 if (createErr.code === 'auth/email-already-in-use') {
-                  console.log("Lazy Auth: Email already in use, attempting sign in with password:", password);
                   createResult = await signInWithEmailAndPassword(auth, loginEmail, password);
                 } else {
                   throw createErr;
                 }
               }
               userId = createResult.user.uid;
-              console.log("Lazy Auth: Auth user UID", userId);
               
               // Move Firestore data to the new UID and mark as authCreated
               const q = query(collection(db, 'users'), where('username', '==', userData.username));
@@ -99,7 +94,6 @@ export default function Login() {
                 throw new Error("Could not find existing user document for migration");
               }
               const existingDocId = snapshot.docs[0].id;
-              console.log("Lazy Auth: Found existing doc ID", existingDocId);
               
               const { tempPassword, authCreated, ...rest } = userData;
               const batch = writeBatch(db);
@@ -121,31 +115,24 @@ export default function Login() {
               const collectionsToMigrate = ['health_records', 'activities', 'badges', 'organic_reservations', 'breakfast_reservations', 'likes'];
               
               for (const colName of collectionsToMigrate) {
-                console.log(`Lazy Auth: Fetching ${colName} for migration...`);
                 const qMigrate = query(collection(db, colName), where('userId', '==', existingDocId));
                 try {
                   const snapshotMigrate = await getDocs(qMigrate);
-                  console.log(`Lazy Auth: Found ${snapshotMigrate.docs.length} records in ${colName}`);
                   snapshotMigrate.docs.forEach(recordDoc => {
                     batch.update(recordDoc.ref, { userId: userId });
                   });
                 } catch (migrateErr) {
-                  console.error(`Lazy Auth: Failed to fetch ${colName} for migration:`, migrateErr);
                   handleFirestoreError(migrateErr, OperationType.LIST, colName);
                   throw migrateErr;
                 }
               }
 
-              console.log("Lazy Auth: Committing migration batch...");
               try {
                 await batch.commit();
-                console.log("Lazy Auth migration batch committed successfully");
               } catch (batchErr) {
-                console.error("Lazy Auth: Batch commit failed:", batchErr);
                 handleFirestoreError(batchErr, OperationType.WRITE, 'batch-migration');
                 throw batchErr;
               }
-              console.log("Lazy Auth: Migration batch committed successfully");
               
               userData = { ...rest, authCreated: true, uid: userId };
               result = createResult;
@@ -285,7 +272,7 @@ export default function Login() {
               className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none border border-white dark:border-slate-800"
             >
               <img 
-                src="https://i.postimg.cc/qvHpVXB1/images-(21).jpg" 
+                src="https://image2url.com/r2/default/images/1774698066689-6e63ff07-2034-4699-8e48-1fe210ec509e.jpg" 
                 alt="School Logo" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
