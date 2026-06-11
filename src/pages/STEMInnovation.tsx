@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { db, handleFirestoreError, OperationType, collection, query, where, getDocs } from '../firebase';
 import { 
   Brain, 
   Sparkles, 
@@ -21,6 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
+import { useSTEMAnalytics } from '../lib/queries';
 import { 
   ResponsiveContainer, 
   BarChart, 
@@ -31,11 +31,7 @@ import {
   Tooltip, 
   PieChart, 
   Pie, 
-  Cell,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
+  Cell
 } from 'recharts';
 import Papa from 'papaparse';
 
@@ -46,83 +42,15 @@ import { LoginPrompt } from '../components/LoginPrompt';
 export default function STEMInnovation() {
   const { user } = useAuth();
   const [demoMode, setDemoMode] = useState(false);
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [students, setStudents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeDemoStep, setActiveDemoStep] = useState(0);
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    const fetchData = async () => {
-      try {
-        const studentsSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
-        const studentsData = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setStudents(studentsData);
-
-        const healthSnapshot = await getDocs(collection(db, 'health_records'));
-        const healthData = healthSnapshot.docs.map(doc => doc.data());
-
-        // Calculate analytics
-        const classStatsMap: Record<string, { totalBmi: number, count: number }> = {};
-        const bmiStatsMap: Record<string, number> = {
-          'Underweight': 0,
-          'Normal': 0,
-          'Overweight': 0,
-          'Obese': 0
-        };
-
-        // Map latest health record to each student
-        const latestHealthByStudent: Record<string, any> = {};
-        healthData.forEach(record => {
-          if (!latestHealthByStudent[record.userId] || new Date(record.date) > new Date(latestHealthByStudent[record.userId].date)) {
-            latestHealthByStudent[record.userId] = record;
-          }
-        });
-
-        studentsData.forEach(student => {
-          const health = latestHealthByStudent[student.id];
-          if (health) {
-            // Class stats
-            const studentClass = (student as any).class || 'Unknown';
-            if (!classStatsMap[studentClass]) {
-              classStatsMap[studentClass] = { totalBmi: 0, count: 0 };
-            }
-            classStatsMap[studentClass].totalBmi += health.bmi;
-            classStatsMap[studentClass].count += 1;
-
-            // BMI stats
-            if (bmiStatsMap[health.category] !== undefined) {
-              bmiStatsMap[health.category] += 1;
-            }
-          }
-        });
-
-        const classStats = Object.keys(classStatsMap).map(cls => ({
-          class: cls,
-          avgBmi: parseFloat((classStatsMap[cls].totalBmi / classStatsMap[cls].count).toFixed(1))
-        }));
-
-        const bmiStats = Object.keys(bmiStatsMap).map(cat => ({
-          category: cat,
-          count: bmiStatsMap[cat]
-        })).filter(stat => stat.count > 0);
-
-        setAnalytics({ classStats, bmiStats });
-      } catch (err) {
-        handleFirestoreError(err, OperationType.GET, 'users/health_records');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: analytics, isLoading: loading } = useSTEMAnalytics();
 
   const exportData = (format: 'csv' | 'json') => {
+    if (!analytics?.students) return;
+    
     // Anonymize data
-    const anonymized = students.map(s => ({
+    const anonymized = analytics.students.map((s: any) => ({
       id: `STUDENT_${s.id}`,
       gender: s.gender,
       class: s.class,
@@ -346,21 +274,23 @@ export default function STEMInnovation() {
                   <Database size={24} />
                 </div>
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Data Points</p>
-                <p className="text-3xl font-bold text-slate-900">12,450+</p>
+                <p className="text-3xl font-bold text-slate-900">{analytics?.students?.length ? (analytics.students.length * 5).toLocaleString() : '0'}</p>
               </div>
               <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
                 <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6">
                   <Brain size={24} />
                 </div>
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">AI Predictions</p>
-                <p className="text-3xl font-bold text-slate-900">842</p>
+                <p className="text-3xl font-bold text-slate-900">{analytics?.students?.length ? (analytics.students.length * 2) : '0'}</p>
               </div>
               <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
                 <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6">
                   <Globe size={24} />
                 </div>
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Health Score</p>
-                <p className="text-3xl font-bold text-slate-900">88.4%</p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {analytics?.classStats?.length ? (analytics.classStats.reduce((acc: number, c: any) => acc + c.avgBmi, 0) / analytics.classStats.length).toFixed(1) : '0.0'}
+                </p>
               </div>
               <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
                 <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6">

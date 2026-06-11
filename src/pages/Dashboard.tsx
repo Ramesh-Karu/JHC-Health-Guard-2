@@ -44,6 +44,7 @@ import { useAuth } from '../App';
 import { HealthRecord, Activity as ActivityType } from '../types';
 import { useQueryClient } from '@tanstack/react-query';
 import { CACHE_KEYS } from '../lib/queries';
+import { AmbientBackground } from '../components/AmbientBackground';
 
 const StatCard = ({ icon: Icon, label, value, trend, trendValue, color, isLoading }: any) => (
   <motion.div 
@@ -132,7 +133,8 @@ export default function Dashboard() {
     };
 
     return (
-      <div className="space-y-8 px-4">
+      <div className="space-y-8 px-4 relative z-10">
+        <AmbientBackground />
         <Helmet>
           <title>Dashboard | JHC Health Guard</title>
           <script type="application/ld+json">
@@ -329,7 +331,8 @@ export default function Dashboard() {
   }));
 
   return (
-    <div className="space-y-8 px-4">
+    <div className="space-y-8 px-4 relative z-10">
+      <AmbientBackground />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3 justify-start">
           <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-blue-900/20">

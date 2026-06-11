@@ -184,10 +184,15 @@ export const useSTEMAnalytics = () => {
         avgBmi: parseFloat((classStatsMap[cls].totalBmi / classStatsMap[cls].count).toFixed(1))
       }));
 
+      const bmiStats = Object.keys(bmiStatsMap).map(cat => ({
+        category: cat,
+        count: bmiStatsMap[cat]
+      })).filter(stat => stat.count > 0);
+
       return {
         students: studentsData,
         classStats,
-        bmiStats: bmiStatsMap
+        bmiStats
       };
     },
     staleTime: Infinity, // Permanent caching
