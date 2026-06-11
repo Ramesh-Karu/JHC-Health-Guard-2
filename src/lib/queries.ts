@@ -322,6 +322,64 @@ export const useLeaderboard = () => {
   });
 };
 
+// Fetch class leaderboard
+export const useClassLeaderboard = () => {
+  return useQuery({
+    queryKey: ['class-leaderboard'],
+    queryFn: async () => {
+      const q = query(
+        collection(db, 'users'), 
+        where('role', '==', 'student')
+      );
+      const snapshot = await fetchWithFallback(
+        () => getDocs(q),
+        () => getDocsFromCache(q),
+        'class-leaderboard',
+        null,
+        true // Allow unauthenticated for leaderboard
+      );
+      
+      if (!snapshot) return [];
+
+      const classMap: Record<string, { totalPoints: number, count: number }> = {};
+
+      snapshot.docs.forEach(doc => {
+        const student = doc.data();
+        if (student.class && student.division) {
+          const classKey = `${student.class} - ${student.division}`;
+          if (!classMap[classKey]) {
+            classMap[classKey] = { totalPoints: 0, count: 0 };
+          }
+          classMap[classKey].totalPoints += (student.points || 0);
+          classMap[classKey].count += 1;
+        }
+      });
+
+      const leaderboardData = Object.keys(classMap).map(classKey => {
+        const [className, division] = classKey.split(' - ');
+        return {
+          id: classKey,
+          className,
+          division,
+          totalPoints: classMap[classKey].totalPoints,
+          avgPoints: Math.round(classMap[classKey].totalPoints / classMap[classKey].count),
+          studentCount: classMap[classKey].count
+        };
+      });
+
+      // Sort by avgPoints descending
+      leaderboardData.sort((a, b) => b.avgPoints - a.avgPoints);
+
+      // Add rank
+      return leaderboardData.map((item, index) => ({
+        ...item,
+        rank: index + 1
+      }));
+    },
+    staleTime: Infinity, // Permanent caching
+  });
+};
+
 // Fetch community posts
 export const useCommunityPosts = (category: string) => {
   return useQuery({
