@@ -43,7 +43,7 @@ export default function BottomNav() {
                     transition={{ 
                       type: "spring", 
                       bounce: 0.15, 
-                      duration: 0.5,
+                      duration: 0.3,
                     }}
                     className="absolute inset-0 bg-blue-500/20 rounded-[18px]"
                   />

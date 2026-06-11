@@ -50,8 +50,12 @@ export const loadInitialData = async () => {
       await loadBundle(db, bundleData);
       console.log('Firestore bundle loaded successfully');
     }
-  } catch (err) {
-    console.error('Error loading Firestore bundle:', err);
+  } catch (err: any) {
+    if (err?.message === 'Failed to fetch' || err?.message?.includes('fetch')) {
+      console.warn('Firestore bundle server not reachable (skipping)');
+    } else {
+      console.error('Error loading Firestore bundle:', err);
+    }
   }
 };
 
@@ -317,7 +321,7 @@ export const useLeaderboard = () => {
           division: student.division || 'N/A',
           points: student.points || 0,
           wellnessBadge: student.wellnessBadge || false,
-          avatar: student.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.fullName || 'U')}&background=random`
+          avatar: student.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'
         };
       });
 

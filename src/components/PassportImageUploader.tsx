@@ -9,7 +9,7 @@ interface PassportImageUploaderProps {
 }
 
 export const PassportImageUploader: React.FC<PassportImageUploaderProps> = ({ photoUrl, fullName, onUpload }) => {
-  const defaultImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3b82f6&color=fff&size=256`;
+  const defaultImage = 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png';
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

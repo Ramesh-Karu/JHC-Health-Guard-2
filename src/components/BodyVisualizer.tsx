@@ -35,14 +35,14 @@ export const BodyVisualizer: React.FC<BodyVisualizerProps> = ({ bmi = 0, weight 
       <div className="relative z-10 p-4 flex flex-col h-[400px] md:h-[350px]">
         {/* Header Section */}
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Activity className={tailwindColor} />
-            3D Biometric Scan
+            Biometric Scan
           </h3>
           {hasData && (
             <div className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider flex items-center gap-2 bg-slate-800 ${borderColor} ${tailwindColor}`}>
               <span className={`w-2 h-2 rounded-full animate-pulse ${isHealthy ? 'bg-emerald-500' : ((isOverweight || isObese) ? 'bg-red-500' : 'bg-cyan-500')}`}></span>
-              LIVE SCAN
+              LIVE
             </div>
           )}
         </div>

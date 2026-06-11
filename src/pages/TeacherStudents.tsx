@@ -100,7 +100,7 @@ export default function TeacherStudents() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
                           <img 
-                            src={student.photoUrl || `https://ui-avatars.com/api/?name=${student.fullName}&background=random`} 
+                            src={student.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} 
                             alt={student.fullName} 
                             className="w-full h-full object-cover"
                           />

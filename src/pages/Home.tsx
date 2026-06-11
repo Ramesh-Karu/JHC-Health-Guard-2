@@ -65,34 +65,60 @@ const FeatureCard = ({ icon: Icon, title, description, delay }: any) => (
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    transition={{ delay }}
-    whileHover={{ y: -10, scale: 1.02 }}
-    className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl p-8 rounded-[32px] border border-white/50 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none group"
+    transition={{ delay, type: 'spring', stiffness: 100, damping: 15 }}
+    whileHover="hover"
+    className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl p-8 rounded-[32px] border border-white/50 dark:border-slate-700 shadow-xl shadow-slate-200/20 dark:shadow-none cursor-pointer"
   >
-    <div className="w-14 h-14 bg-brand-blue rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-blue/20 group-hover:rotate-12 transition-transform">
+    <motion.div 
+      variants={{
+        hover: { 
+          scale: 1.15,
+          rotate: [0, -10, 10, -5, 5, 0],
+          transition: { duration: 0.6, ease: "easeInOut" }
+        }
+      }}
+      className="w-14 h-14 bg-brand-blue rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-blue/20"
+    >
       <Icon size={28} className="text-white" />
-    </div>
+    </motion.div>
     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{title}</h3>
     <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{description}</p>
   </motion.div>
 );
 
 const StepItem = ({ number, title, description, icon: Icon }: any) => (
-  <div className="flex gap-6 items-start">
+  <motion.div 
+    initial="initial"
+    whileHover="hover"
+    className="flex gap-6 items-start cursor-pointer group"
+  >
     <div className="relative">
-      <div className="w-12 h-12 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-lg z-10 relative">
+      <motion.div 
+        variants={{
+          hover: { scale: 1.1, backgroundColor: "#3b82f6", color: "#ffffff" }
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+        className="w-12 h-12 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-lg z-10 relative"
+      >
         {number}
-      </div>
+      </motion.div>
       {number !== 5 && <div className="absolute top-12 left-1/2 -translate-x-1/2 w-0.5 h-full bg-slate-200 dark:bg-slate-700" />}
     </div>
     <div className="pt-1">
       <div className="flex items-center gap-3 mb-2">
-        <Icon size={18} className="text-brand-blue" />
-        <h4 className="font-bold text-slate-900 dark:text-white">{title}</h4>
+        <motion.div
+           variants={{
+             hover: { rotate: 15, scale: 1.2 }
+           }}
+           transition={{ type: "spring", stiffness: 300, damping: 10 }}
+        >
+          <Icon size={18} className="text-brand-blue" />
+        </motion.div>
+        <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors">{title}</h4>
       </div>
       <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
     </div>
-  </div>
+  </motion.div>
 );
 
 export default function Home() {
@@ -231,7 +257,7 @@ export default function Home() {
             rank: i + 1,
             name: u.fullName,
             points: u.points || 0,
-            avatar: u.photoUrl || `https://ui-avatars.com/api/?name=${u.fullName}&background=3b82f6&color=fff`
+            avatar: u.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'
           }));
         }
           

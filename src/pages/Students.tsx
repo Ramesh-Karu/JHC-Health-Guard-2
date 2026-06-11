@@ -544,7 +544,7 @@ export default function Students() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden">
                           <img 
-                            src={student.photoUrl || `https://ui-avatars.com/api/?name=${student.fullName}&background=3b82f6&color=fff`} 
+                            src={student.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} 
                             alt="" 
                             className="w-full h-full object-cover"
                           />

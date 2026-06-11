@@ -259,7 +259,7 @@ export default function AdminBadgeApplications() {
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700">
-                              <img src={app.userPhoto || `https://ui-avatars.com/api/?name=${app.userName}&background=3b82f6&color=fff`} alt="" className="w-full h-full object-cover" />
+                              <img src={app.userPhoto || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} alt="" className="w-full h-full object-cover" />
                             </div>
                             <span className="font-bold text-slate-900 dark:text-white">{app.userName}</span>
                           </div>
@@ -308,7 +308,7 @@ export default function AdminBadgeApplications() {
                   <div key={app.id} className="p-5 space-y-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700">
-                        <img src={app.userPhoto || `https://ui-avatars.com/api/?name=${app.userName}&background=3b82f6&color=fff`} alt="" className="w-full h-full object-cover" />
+                        <img src={app.userPhoto || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-slate-900 dark:text-white">{app.userName}</h3>
@@ -457,7 +457,7 @@ export default function AdminBadgeApplications() {
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden border border-slate-200 dark:border-slate-700">
                     <img
-                      src={quickStudent.photoUrl || `https://ui-avatars.com/api/?name=${quickStudent.fullName}&background=3b82f6&color=fff`}
+                      src={quickStudent.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'}
                       alt=""
                       className="w-full h-full object-cover"
                     />

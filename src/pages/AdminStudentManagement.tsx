@@ -230,7 +230,7 @@ export default function AdminStudentManagement() {
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
                   <img 
-                    src={student.photoUrl || `https://ui-avatars.com/api/?name=${student.fullName}&background=3b82f6&color=fff`} 
+                    src={student.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} 
                     alt={student.fullName} 
                     className="w-full h-full object-cover"
                   />

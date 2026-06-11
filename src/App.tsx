@@ -329,7 +329,7 @@ const Layout = () => {
               </div>
               <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm">
                 <img 
-                  src={user?.photoUrl || `https://ui-avatars.com/api/?name=${user?.fullName || 'Guest'}&background=3b82f6&color=fff`} 
+                  src={user?.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
@@ -340,7 +340,17 @@ const Layout = () => {
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-32 md:pb-8 bg-transparent relative z-10">
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
       <BottomNav />

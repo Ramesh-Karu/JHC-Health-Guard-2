@@ -44,27 +44,23 @@ import { useAuth } from '../App';
 import { HealthRecord, Activity as ActivityType } from '../types';
 import { useQueryClient } from '@tanstack/react-query';
 import { CACHE_KEYS } from '../lib/queries';
-import { AmbientBackground } from '../components/AmbientBackground';
 
 const StatCard = ({ icon: Icon, label, value, trend, trendValue, color, isLoading }: any) => (
   <motion.div 
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.3 }}
-    whileHover={{ 
-      y: -5, 
-      rotateX: 5, 
-      rotateY: 5, 
-      scale: 1.02,
-      transition: { duration: 0.2 } 
+    variants={{
+      hidden: { opacity: 0, y: 20, scale: 0.95 },
+      visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } }
     }}
-    style={{ perspective: 1000 }}
+    whileHover="hover"
     className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
   >
     <div className="flex items-start justify-between mb-4">
-      <div className={cn("p-2.5 sm:p-3 rounded-2xl", color)}>
+      <motion.div 
+        variants={{ hover: { scale: 1.1, rotate: 5 } }}
+        className={cn("p-2.5 sm:p-3 rounded-2xl", color)}
+      >
         <Icon size={20} className="text-white sm:w-6 sm:h-6" />
-      </div>
+      </motion.div>
       {trend && !isLoading && (
         <div className={cn(
           "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold",
@@ -133,8 +129,7 @@ export default function Dashboard() {
     };
 
     return (
-      <div className="space-y-8 px-4 relative z-10">
-        <AmbientBackground />
+      <div className="space-y-8 px-4">
         <Helmet>
           <title>Dashboard | JHC Health Guard</title>
           <script type="application/ld+json">
@@ -310,7 +305,7 @@ export default function Dashboard() {
                         fontSize: '12px'
                       }}
                     />
-                    <Bar dataKey="avgBmi" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={20} />
+                    <Bar dataKey="avgBmi" fill="#3b82f6" radius={[10, 10, 0, 0]} barSize={30} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -331,8 +326,7 @@ export default function Dashboard() {
   }));
 
   return (
-    <div className="space-y-8 px-4 relative z-10">
-      <AmbientBackground />
+    <div className="space-y-8 px-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3 justify-start">
           <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-blue-900/20">
@@ -343,19 +337,7 @@ export default function Dashboard() {
             <p className="text-slate-500 dark:text-slate-400">Here's your health summary for today.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => window.location.href = '/health-pass'}
-            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center gap-2"
-          >
-            View Profile
-            <ChevronRight size={18} />
-          </button>
-          <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-            <Calendar size={18} className="text-blue-500" />
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
-          </div>
-        </div>
+
       </div>
 
       {/* Health Passport Card */}
@@ -376,7 +358,18 @@ export default function Dashboard() {
         />
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div
+        variants={{
+          hidden: { opacity: 1 },
+          visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
         <StatCard 
           icon={Scale} 
           label="Current Weight" 
@@ -407,33 +400,66 @@ export default function Dashboard() {
           color="bg-violet-500" 
           isLoading={hrLoading}
         />
-      </div>
+      </motion.div>
 
       {/* Gamification Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-3xl text-white shadow-lg">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+      >
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-3xl text-white shadow-lg"
+        >
           <p className="text-blue-100 text-sm font-bold uppercase">Current Level</p>
           <h2 className="text-3xl font-bold mt-1">Level {Math.floor((user?.points || 0) / 100) + 1}</h2>
           <p className="text-blue-100 text-sm mt-2">{100 - ((user?.points || 0) % 100)} points to next level</p>
-        </div>
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
+        </motion.div>
+        <motion.div 
+          whileHover="hover"                
+          className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between"
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0 },
+            hover: { y: -5 }
+          }}
+        >
           <div>
             <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase">Daily Streak</p>
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mt-1">5 Days</h2>
           </div>
-          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-500 dark:text-orange-400">
+          <motion.div 
+            variants={{ hover: { rotate: 15, scale: 1.1, flexShrink: 0 } }}
+            className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-500 dark:text-orange-400"
+          >
             <Zap size={32} />
-          </div>
-        </div>
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase mb-4">Badges</p>
-          <div className="flex gap-2">
-            <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center text-yellow-600 dark:text-yellow-400 font-bold">🥇</div>
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">🏃</div>
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 font-bold">🍎</div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+          <motion.div 
+            whileHover="hover"
+            className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+          >
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase mb-4">Badges</p>
+            <div className="flex gap-2">
+              {['🥇', '🏃', '🍎'].map((emoji, i) => (
+                <motion.div 
+                  key={i}
+                  variants={{ hover: { y: -5, scale: 1.1 } }}
+                  transition={{ type: "spring", stiffness: 300, damping: 10, delay: i * 0.05 }}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                    i === 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                    i === 1 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                    'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                  }`}
+                >
+                  {emoji}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
@@ -450,22 +476,28 @@ export default function Dashboard() {
             ) : (
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorBmi" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-700" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', backgroundColor: '#1e293b', color: '#f1f5f9' }}
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', backgroundColor: '#334155', color: '#f1f5f9' }}
                     />
-                    <Line 
+                    <Area 
                       type="monotone" 
                       dataKey="bmi" 
                       stroke="#3b82f6" 
-                      strokeWidth={4} 
-                      dot={{ r: 6, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
-                      activeDot={{ r: 8 }}
+                      strokeWidth={3} 
+                      fillOpacity={1} 
+                      fill="url(#colorBmi)"
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}
@@ -478,21 +510,27 @@ export default function Dashboard() {
                 [1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)
               ) : activities.length > 0 ? (
                 activities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    key={activity.id} 
+                    className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl cursor-pointer"
+                  >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
+                      <motion.div 
+                        whileHover={{ rotate: 15 }}
+                        className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm"
+                      >
                         <Activity className="text-blue-500" size={20} />
-                      </div>
+                      </motion.div>
                       <div>
                         <p className="font-bold text-slate-900 dark:text-white">{activity.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-blue-600 dark:text-blue-400 font-bold">+{activity.points} pts</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">{activity.type}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               ) : (
                 <div className="text-center py-10">
@@ -508,9 +546,13 @@ export default function Dashboard() {
           {annLoading ? (
             <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-slate-700 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center">
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: 10 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center cursor-pointer"
+                >
                   <MessageSquare size={20} />
-                </div>
+                </motion.div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Class Announcements</h3>
               </div>
               <div className="space-y-3">
@@ -521,9 +563,13 @@ export default function Dashboard() {
           ) : announcements.length > 0 ? (
             <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-blue-100 dark:border-slate-700 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center">
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: 10 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-xl flex items-center justify-center cursor-pointer"
+                >
                   <MessageSquare size={20} />
-                </div>
+                </motion.div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Class Announcements</h3>
               </div>
               <div className="space-y-3">
@@ -561,7 +607,9 @@ export default function Dashboard() {
                   <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
-                      animate={{ width: `${(goal.current / goal.target) * 100}%` }}
+                      whileInView={{ width: `${(goal.current / goal.target) * 100}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, type: "spring", bounce: 0.1, damping: 15 }}
                       className={cn("h-full rounded-full", goal.color)}
                     />
                   </div>

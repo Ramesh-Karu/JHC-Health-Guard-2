@@ -364,7 +364,7 @@ export default function Community() {
                     onClick={() => handleViewUser(post.authorId)}
                     className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-50 dark:border-slate-700 hover:ring-2 hover:ring-blue-500 transition-all"
                   >
-                    <img src={post.authorPhoto || `https://ui-avatars.com/api/?name=${post.authorName}&background=3b82f6&color=fff`} alt="" className="w-full h-full object-cover" />
+                    <img src={post.authorPhoto || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} alt="" className="w-full h-full object-cover" />
                   </button>
                   <div>
                     <div className="flex items-center gap-2">
@@ -732,7 +732,7 @@ export default function Community() {
                 {comments.map((comment) => (
                   <div key={comment.id} className="flex gap-4">
                     <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-slate-50 dark:border-slate-700">
-                      <img src={comment.authorPhoto || `https://ui-avatars.com/api/?name=${comment.authorName}&background=3b82f6&color=fff`} alt="" className="w-full h-full object-cover" />
+                      <img src={comment.authorPhoto || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                       <div className="flex items-center justify-between mb-1">
@@ -806,7 +806,7 @@ export default function Community() {
                 <div className="relative -mt-12 mb-6">
                   <div className="w-24 h-24 rounded-[32px] bg-white dark:bg-slate-900 p-1.5 shadow-xl">
                     <div className="w-full h-full rounded-[26px] bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-50 dark:border-slate-700">
-                      <img src={viewingUser.photoUrl || `https://ui-avatars.com/api/?name=${viewingUser.fullName}&background=3b82f6&color=fff`} alt="" className="w-full h-full object-cover" />
+                      <img src={viewingUser.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} alt="" className="w-full h-full object-cover" />
                     </div>
                   </div>
                   {viewingUser.role === 'admin' && (

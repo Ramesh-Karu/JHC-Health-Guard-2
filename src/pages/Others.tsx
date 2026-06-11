@@ -76,6 +76,25 @@ export default function Others() {
     setIsScannerOpen(false);
   };
 
+  const handleSavePhotoUrl = async () => {
+    if (!user) return;
+    setIsSavingPhoto(true);
+    try {
+      await updateDoc(doc(db, 'users', user.id), {
+        photoUrl: newPhotoUrl
+      });
+      if (login) {
+        login({ ...user, photoUrl: newPhotoUrl });
+      }
+      setIsPhotoModalOpen(false);
+    } catch (error) {
+      console.error("Failed to update photo url:", error);
+      alert("Failed to update profile image.");
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
   const sections = [
     {
       title: 'Health & Wellness',
@@ -202,13 +221,11 @@ export default function Others() {
                 className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-8 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-sm"
               >
                 <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
-                  {user?.photoUrl ? (
-                    <img src={user.photoUrl} alt={user.fullName} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-2xl">
-                      {user?.fullName?.charAt(0) || 'U'}
-                    </div>
-                  )}
+                  <img 
+                    src={user?.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} 
+                    alt={user?.fullName || 'User'} 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{user?.fullName}</h2>

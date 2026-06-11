@@ -293,6 +293,19 @@ export default function HealthPass() {
               </h3>
               
               <div className="grid grid-cols-1 gap-4">
+                {isEditing && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Profile Image URL</label>
+                    <input 
+                      type="url" 
+                      value={formData.photoUrl || ''}
+                      onChange={(e) => setFormData({...formData, photoUrl: e.target.value})}
+                      placeholder="https://..."
+                      className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
+                    />
+                  </div>
+                )}
+                
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
                   {isEditing ? (

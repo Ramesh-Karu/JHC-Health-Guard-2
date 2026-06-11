@@ -106,7 +106,7 @@ export default function StudentPassportPopup({ studentId, onClose }: StudentPass
               <div className="flex items-center gap-6 relative z-10">
                 <div className="w-24 h-24 rounded-3xl border-2 border-white/20 overflow-hidden bg-white flex-shrink-0">
                   <img 
-                    src={student.photoUrl || `https://ui-avatars.com/api/?name=${student.fullName}&background=3b82f6&color=fff`} 
+                    src={student.photoUrl || 'https://i.ibb.co/N2KPc9HL/1000218700-removebg-preview.png'} 
                     alt={student.fullName} 
                     className="w-full h-full object-cover"
                   />
