@@ -1,0 +1,1349 @@
+name: Capacitor Mobile Build Pipeline
+on:
+  repository_dispatch:
+    types: [trigger-build]
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Cache npm Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
+
+      - name: Setup Java Development Kit (JDK 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Clean Conflicting Non-NPM Lockfiles & Artifacts
+        run: |
+          rm -f yarn.lock pnpm-lock.yaml bun.lockb || true
+          rm -rf dist build www out dist-binaries || true
+          mkdir -p dist-binaries
+
+      - name: Install Project & Capacitor Dependencies
+        timeout-minutes: 10
+        run: |
+          echo "[DEPS] Pre-injecting Capacitor core and android dependencies into package.json..."
+          node << "EOF"
+          const fs = require("fs");
+          if (fs.existsSync("package.json")) {
+            try {
+              const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+              pkg.dependencies = pkg.dependencies || {};
+              pkg.devDependencies = pkg.devDependencies || {};
+
+              const capDeps = {
+                "@capacitor/core": "^6.0.0",
+                "@capacitor/android": "^6.0.0",
+                "@capacitor/app": "^6.0.0",
+                "@capacitor/status-bar": "^6.0.0",
+                "@capacitor/local-notifications": "^6.0.0",
+                "@capacitor/action-sheet": "^6.0.0"
+              };
+              for (const [dep, ver] of Object.entries(capDeps)) {
+                if (!pkg.dependencies[dep]) {
+                  pkg.dependencies[dep] = ver;
+                }
+              }
+              if (!pkg.devDependencies["@capacitor/cli"] && !pkg.dependencies["@capacitor/cli"]) {
+                pkg.devDependencies["@capacitor/cli"] = "^6.0.0";
+              }
+              fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
+              console.log("[DEPS] Successfully injected Capacitor packages into package.json for unified install.");
+            } catch (err) {
+              console.warn("[DEPS] Could not inject Capacitor packages:", err.message);
+            }
+          }
+          EOF
+
+          # Configure npm for non-interactive high performance
+          npm config set fetch-retry-mintimeout 10000
+          npm config set fetch-retry-maxtimeout 60000
+          npm config set audit false
+          npm config set fund false
+
+          echo "[INSTALL] Running unified npm install with --legacy-peer-deps..."
+          npm install --legacy-peer-deps --no-audit --no-fund --prefer-offline || {
+            echo "[INSTALL] Retrying with --force..."
+            npm install --force --no-audit --no-fund || {
+              echo "[INSTALL] Resetting lockfile and retrying..."
+              rm -f package-lock.json
+              npm install --legacy-peer-deps --no-audit --no-fund || true
+            }
+          }
+
+      - name: Inject Environment Secrets & Configuration (.env)
+        run: |
+          node << "EOF"
+          const fs = require("fs");
+          let payload = {};
+          try {
+            const eventPath = process.env.GITHUB_EVENT_PATH;
+            if (eventPath && fs.existsSync(eventPath)) {
+              const eventData = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+              payload = eventData.client_payload || {};
+              if (payload.config && typeof payload.config === "object") {
+                Object.assign(payload, payload.config);
+              }
+            }
+          } catch (e) {
+            console.log("No custom event payload found:", e.message);
+          }
+
+          const envVars = payload.envVars || {};
+          const secrets = payload.secrets || [];
+
+          const map = {};
+          if (Array.isArray(secrets)) {
+            secrets.forEach(s => {
+              if (s && s.key && s.value && s.enabled !== false) {
+                const k = String(s.key).trim();
+                const v = String(s.value).trim();
+                map[k] = v;
+                if (!k.startsWith("VITE_")) {
+                  map[`VITE_${k}`] = v;
+                } else {
+                  map[k.replace(/^VITE_/, "")] = v;
+                }
+              }
+            });
+          }
+
+          if (envVars && typeof envVars === "object") {
+            Object.keys(envVars).forEach(k => {
+              const val = String(envVars[k]).trim();
+              if (k && val) {
+                map[k] = val;
+                if (!k.startsWith("VITE_")) {
+                  map[`VITE_${k}`] = val;
+                }
+              }
+            });
+          }
+
+          if (Object.keys(map).length > 0) {
+            let envLines = [];
+            for (const [key, val] of Object.entries(map)) {
+              envLines.push(`${key}=${val}`);
+            }
+            const envContent = envLines.join("\n") + "\n";
+            fs.writeFileSync(".env", envContent);
+            fs.writeFileSync(".env.local", envContent);
+            fs.writeFileSync(".env.production", envContent);
+            console.log(`[SECRETS] Successfully injected ${Object.keys(map).length} environment variables into .env, .env.local, and .env.production:`);
+            Object.keys(map).forEach(k => console.log(` - ${k}`));
+          } else {
+            console.log("[SECRETS] No payload secrets provided for this build run.");
+          }
+          EOF
+
+      - name: Build Web Application Assets
+        run: |
+          if [ -f "package.json" ] && grep -q '"build"' package.json; then
+            npm run build || npx vite build || true
+          fi
+          mkdir -p dist www build public
+          if [ ! -f dist/index.html ] && [ ! -f www/index.html ]; then
+            if [ -f index.html ]; then
+              cp -r index.html dist/ 2>/dev/null || true
+            else
+              echo '<!DOCTYPE html><html><head><title>App</title></head><body><div id="root"></div></body></html>' > dist/index.html
+            fi
+          fi
+
+      - name: Configure App Metadata (SemVer, Package ID, Display Name)
+        run: |
+          node << "EOF"
+          const fs = require("fs");
+          const path = require("path");
+
+          let payload = {};
+          try {
+            const eventPath = process.env.GITHUB_EVENT_PATH;
+            if (eventPath && fs.existsSync(eventPath)) {
+              const eventData = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+              payload = eventData.client_payload || {};
+              if (payload.config && typeof payload.config === "object") {
+                Object.assign(payload, payload.config);
+              }
+            }
+          } catch (e) {
+            console.log("No custom event payload:", e.message);
+          }
+
+          const appName = payload.appName || "CapacitorApp";
+          const appId = payload.appId || payload.packageName || "com.app.capacitor";
+          const version = payload.version || "1.0.0";
+          const versionCode = Number(payload.versionCode) || 1;
+          const buildType = (payload.type || "apk").toLowerCase();
+          const hostname = (payload.hostname || payload.serverHostname || "").trim();
+
+          console.log(`[CONFIG] App Name: ${appName} | Package: ${appId} | Version: ${version} (${versionCode}) | Hostname: ${hostname || 'default'} | Type: ${buildType}`);
+
+          const displayMode = payload.displayMode || "system_bars";
+
+          let capTsContent = "import { CapacitorConfig } from '@capacitor/cli';\n\n";
+          capTsContent += "const config: CapacitorConfig = {\n";
+          capTsContent += `  appId: '${appId}',\n`;
+          capTsContent += `  appName: '${appName.replace(/'/g, "\\'")}',\n`;
+          capTsContent += "  webDir: 'dist',\n";
+          capTsContent += "  server: {\n";
+          if (hostname) {
+            capTsContent += `    hostname: '${hostname}',\n`;
+          }
+          capTsContent += "    androidScheme: 'https',\n";
+          capTsContent += "    allowNavigation: ['*'],\n";
+          capTsContent += "    cleartext: true\n";
+          capTsContent += "  },\n";
+          capTsContent += "  android: {\n";
+          capTsContent += "    allowMixedContent: true,\n";
+          capTsContent += "    captureInput: true,\n";
+          capTsContent += "    webContentsDebuggingEnabled: true\n";
+          capTsContent += "  },\n";
+          capTsContent += "  plugins: {\n";
+          capTsContent += "    LocalNotifications: {\n";
+          capTsContent += "      smallIcon: 'ic_stat_icon_config_sample',\n";
+          capTsContent += "      iconColor: '#4F46E5',\n";
+          capTsContent += "      sound: 'beep.wav'\n";
+          capTsContent += "    },\n";
+          if (displayMode === "system_bars") {
+            capTsContent += "    StatusBar: {\n";
+            capTsContent += "      overlaysWebView: false,\n";
+            capTsContent += "      style: 'DEFAULT'\n";
+            capTsContent += "    },\n";
+          } else {
+            capTsContent += "    StatusBar: {\n";
+            capTsContent += "      overlaysWebView: true\n";
+            capTsContent += "    },\n";
+          }
+          const splashBgColor = payload.splashBackgroundColor || (payload.config && payload.config.splashBackgroundColor) || "#0f172a";
+          const splashScaleType = payload.splashScaleType || (payload.config && payload.config.splashScaleType) || "CENTER_CROP";
+          capTsContent += "    SplashScreen: {\n";
+          capTsContent += "      launchShowDuration: 1800,\n";
+          capTsContent += "      launchAutoHide: true,\n";
+          capTsContent += `      backgroundColor: '${splashBgColor}',\n`;
+          capTsContent += "      androidSplashResourceName: 'splash',\n";
+          capTsContent += `      androidScaleType: '${splashScaleType}',\n`;
+          capTsContent += "      showSpinner: false,\n";
+          capTsContent += "      splashFullScreen: true,\n";
+          capTsContent += "      splashImmersive: true\n";
+          capTsContent += "    }\n";
+          capTsContent += "  }\n";
+          capTsContent += "};\n\nexport default config;\n";
+          fs.writeFileSync("capacitor.config.ts", capTsContent);
+
+          let config = {
+            appId,
+            appName,
+            webDir: "dist",
+            server: {
+              ...(hostname ? { hostname } : {}),
+              androidScheme: "https",
+              allowNavigation: ["*"],
+              cleartext: true
+            },
+            android: {
+              allowMixedContent: true,
+              captureInput: true,
+              webContentsDebuggingEnabled: true
+            },
+            plugins: {
+              LocalNotifications: {
+                smallIcon: "ic_stat_icon_config_sample",
+                iconColor: "#4F46E5",
+                sound: "beep.wav"
+              },
+              StatusBar: {
+                overlaysWebView: displayMode === "system_bars" ? false : true,
+                style: "DEFAULT"
+              },
+              SplashScreen: {
+                launchShowDuration: 1800,
+                launchAutoHide: true,
+                backgroundColor: splashBgColor,
+                androidSplashResourceName: "splash",
+                androidScaleType: splashScaleType,
+                showSpinner: false,
+                splashFullScreen: true,
+                splashImmersive: true
+              }
+            }
+          };
+          fs.writeFileSync("capacitor.config.json", JSON.stringify(config, null, 2));
+          console.log(`[CONFIG] Injected capacitor configs with displayMode='${displayMode}', splashBg='${splashBgColor}' (StatusBar overlaysWebView: ${displayMode !== "system_bars"})`);
+          EOF
+
+      - name: Setup Capacitor Native Android Project
+        run: |
+          if [ ! -f "android/build.gradle" ] || [ ! -f "android/gradlew" ] || [ ! -f "android/settings.gradle" ]; then
+            echo "Initializing clean Android native platform..."
+            rm -rf android
+            if [ ! -d "node_modules/@capacitor/android" ]; then
+              npm install --legacy-peer-deps --no-audit --no-fund @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/status-bar @capacitor/splash-screen || true
+            fi
+            npx cap add android || npx @capacitor/cli add android || npx cap add android --packagemanager npm || true
+          fi
+          npx cap sync android || npx @capacitor/cli sync android || true
+
+      - name: Configure Android Manifest, Strings, Gradle & Keystore Signing
+        run: |
+          node << "EOF"
+          const fs = require("fs");
+          const path = require("path");
+          const { execSync } = require("child_process");
+
+          let payload = {};
+          try {
+            const eventPath = process.env.GITHUB_EVENT_PATH;
+            if (eventPath && fs.existsSync(eventPath)) {
+              const eventData = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+              payload = eventData.client_payload || {};
+              if (payload.config && typeof payload.config === "object") {
+                Object.assign(payload, payload.config);
+              }
+            }
+          } catch (e) {}
+
+          const appName = payload.appName || "CapacitorApp";
+          const appId = payload.appId || payload.packageName || "com.app.capacitor";
+          const version = payload.version || "1.0.0";
+          const versionCode = Number(payload.versionCode) || 1;
+          const iconBase64 = payload.iconBase64;
+          const targetDevice = payload.targetDevice || (payload.config && payload.config.targetDevice) || "universal";
+          const targetSdkVersion = payload.targetSdkVersion || (payload.config && payload.config.targetSdkVersion) || 36;
+          const compileSdkVersion = payload.compileSdkVersion || targetSdkVersion;
+          const tvBannerBase64 = payload.tvBannerBase64 || (payload.config && payload.config.tvBannerBase64);
+          const isTv = targetDevice === "tv";
+          const isUniversal = targetDevice === "universal";
+          const isTvSupport = isTv || isUniversal;
+          const isGame = !!(payload.isGame || (payload.config && payload.config.isGame));
+          const tvOrientation = payload.tvOrientation || (payload.config && payload.config.tvOrientation) || "landscape";
+          const hardwareBlackout = !!(payload.hardwareBlackout || (payload.config && payload.config.hardwareBlackout));
+          if (hardwareBlackout) {
+            console.log("[SECURITY] Android FLAG_SECURE hardware blackout ENABLED: screen recording, screen capture & screenshots will be blocked with pitch-black screen.");
+          }
+
+          const keystorePath = path.join("android", "app", "release.keystore");
+          let keystoreRestored = false;
+
+          if (payload.keystoreBase64 && typeof payload.keystoreBase64 === "string" && payload.keystoreBase64.length > 50) {
+            try {
+              const rawB64 = payload.keystoreBase64.includes("base64,") ? payload.keystoreBase64.split("base64,")[1] : payload.keystoreBase64;
+              fs.writeFileSync(keystorePath, Buffer.from(rawB64, "base64"));
+              keystoreRestored = true;
+              console.log("Restored persistent release keystore from build payload (" + fs.statSync(keystorePath).size + " bytes) - signature identical across updates");
+            } catch (kErr) {
+              console.log("Payload keystore restoration notice:", kErr.message);
+            }
+          }
+
+          if (!keystoreRestored && !fs.existsSync(keystorePath)) {
+            const repoKeystoreCandidates = [
+              path.join(".github", "keystore.base64"),
+              path.join("resources", "keystore.base64")
+            ];
+            for (const cand of repoKeystoreCandidates) {
+              if (fs.existsSync(cand)) {
+                try {
+                  const b64 = fs.readFileSync(cand, "utf8").trim();
+                  fs.writeFileSync(keystorePath, Buffer.from(b64, "base64"));
+                  keystoreRestored = true;
+                  console.log("Restored persistent keystore from repository file: " + cand);
+                  break;
+                } catch (e) {}
+              }
+            }
+          }
+
+          if (!fs.existsSync(keystorePath)) {
+            try {
+              console.log("Generating fallback self-signed keystore for release builds...");
+              execSync(`keytool -genkey -v -keystore ${keystorePath} -alias appkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android123 -keypass android123 -dname "CN=${appName},O=Mobile,C=US"`, { stdio: "inherit" });
+            } catch (kErr) {
+              console.log("Keystore generation notice:", kErr.message);
+            }
+          }
+
+          const stringsPath = path.join("android", "app", "src", "main", "res", "values", "strings.xml");
+          if (fs.existsSync(stringsPath)) {
+            let strings = fs.readFileSync(stringsPath, "utf8");
+            strings = strings.replace(/<string name="app_name">.*?<\/string>/g, `<string name="app_name">${appName}</string>`);
+            strings = strings.replace(/<string name="title_activity_main">.*?<\/string>/g, `<string name="title_activity_main">${appName}</string>`);
+            fs.writeFileSync(stringsPath, strings);
+            console.log("Updated Android strings.xml with title:", appName);
+          }
+
+          const stylesPath = path.join("android", "app", "src", "main", "res", "values", "styles.xml");
+          const displayMode = payload.displayMode || "system_bars";
+          if (fs.existsSync(stylesPath)) {
+            let styles = fs.readFileSync(stylesPath, "utf8");
+            if (displayMode === "fullscreen") {
+              styles = styles.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/g, (match) => {
+                if (!match.includes("android:windowFullscreen")) {
+                  return match.replace("</style>", 
+                    '    <item name="android:windowFullscreen">true</item>\n' +
+                    '    <item name="android:windowContentOverlay">@null</item>\n' +
+                    '    <item name="android:windowActionBar">false</item>\n' +
+                    '    <item name="android:windowNoTitle">true</item>\n' +
+                    '    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>\n' +
+                    '    </style>');
+                }
+                return match;
+              });
+              console.log("[SYSTEM UI] Configured ALL Android styles.xml themes for Immersive Fullscreen");
+            } else {
+              styles = styles.replace(/<item name="android:windowFullscreen">.*?<\/item>/g, '<item name="android:windowFullscreen">false</item>');
+              console.log("[SYSTEM UI] Configured Android styles.xml for Standard System Bars");
+            }
+            fs.writeFileSync(stylesPath, styles);
+          }
+
+          const variablesPath = path.join("android", "variables.gradle");
+          if (fs.existsSync(variablesPath)) {
+            let vars = fs.readFileSync(variablesPath, "utf8");
+            vars = vars.replace(/compileSdkVersion\s*=\s*\d+/g, `compileSdkVersion = ${compileSdkVersion}`);
+            vars = vars.replace(/targetSdkVersion\s*=\s*\d+/g, `targetSdkVersion = ${targetSdkVersion}`);
+            fs.writeFileSync(variablesPath, vars);
+            console.log(`[GRADLE] Updated variables.gradle: compileSdkVersion=${compileSdkVersion}, targetSdkVersion=${targetSdkVersion}`);
+          }
+
+          const gradlePath = path.join("android", "app", "build.gradle");
+          if (fs.existsSync(gradlePath)) {
+            let gradle = fs.readFileSync(gradlePath, "utf8");
+
+            gradle = gradle.replace(/applicationId\s+['"][^'"]+['"]/g, `applicationId "${appId}"`);
+            gradle = gradle.replace(/applicationId\s*=\s*['"][^'"]+['"]/g, `applicationId = "${appId}"`);
+            gradle = gradle.replace(/namespace\s+['"][^'"]+['"]/g, `namespace "${appId}"`);
+            gradle = gradle.replace(/namespace\s*=\s*['"][^'"]+['"]/g, `namespace = "${appId}"`);
+            gradle = gradle.replace(/versionName\s+['"][^'"]+['"]/g, `versionName "${version}"`);
+            gradle = gradle.replace(/versionCode\s+\d+/g, `versionCode ${versionCode}`);
+
+            gradle = gradle.replace(/targetSdkVersion\s+\d+/g, `targetSdkVersion ${targetSdkVersion}`);
+            gradle = gradle.replace(/targetSdkVersion\s*=\s*\d+/g, `targetSdkVersion = ${targetSdkVersion}`);
+            gradle = gradle.replace(/targetSdk\s+\d+/g, `targetSdk ${targetSdkVersion}`);
+            gradle = gradle.replace(/targetSdk\s*=\s*\d+/g, `targetSdk = ${targetSdkVersion}`);
+
+            gradle = gradle.replace(/compileSdkVersion\s+\d+/g, `compileSdkVersion ${compileSdkVersion}`);
+            gradle = gradle.replace(/compileSdkVersion\s*=\s*\d+/g, `compileSdkVersion = ${compileSdkVersion}`);
+            gradle = gradle.replace(/compileSdk\s+\d+/g, `compileSdk ${compileSdkVersion}`);
+            gradle = gradle.replace(/compileSdk\s*=\s*\d+/g, `compileSdk = ${compileSdkVersion}`);
+
+            if (!gradle.includes("signingConfigs")) {
+              const signingBlock = "    signingConfigs {\n        release {\n            if (file(\"release.keystore\").exists()) {\n                storeFile file(\"release.keystore\")\n                storePassword \"android123\"\n                keyAlias \"appkey\"\n                keyPassword \"android123\"\n            }\n        }\n    }\n";
+              if (gradle.includes("buildTypes {")) {
+                gradle = gradle.replace("buildTypes {", signingBlock + "    buildTypes {");
+              } else {
+                gradle += "\nandroid {\n" + signingBlock + "}\n";
+              }
+            }
+
+            if (gradle.includes("buildTypes {") && !gradle.includes("signingConfig signingConfigs.release")) {
+              gradle = gradle.replace(/(buildTypes\s*\{[\s\S]*?release\s*\{)/, '$1\n            signingConfig signingConfigs.release');
+            }
+
+            fs.writeFileSync(gradlePath, gradle);
+            console.log(`Updated build.gradle: applicationId=${appId}, versionName=${version} (${versionCode}), targetSdkVersion=${targetSdkVersion}, release signing configured.`);
+          }
+
+          let imgBuf = null;
+          if (iconBase64 && typeof iconBase64 === "string" && iconBase64.length > 50) {
+            try {
+              const cleanB64 = iconBase64.includes("base64,") ? iconBase64.split("base64,")[1] : iconBase64;
+              imgBuf = Buffer.from(cleanB64, "base64");
+            } catch (e) {}
+          }
+          if (!imgBuf) {
+            const iconCandidates = [
+              path.join("resources", "icon.png"),
+              path.join("public", "icon.png"),
+              path.join("src", "assets", "icon.png"),
+              path.join("public", "logo.png")
+            ];
+            for (const cand of iconCandidates) {
+              if (fs.existsSync(cand)) {
+                try {
+                  imgBuf = fs.readFileSync(cand);
+                  console.log("Loaded custom launcher icon from repository asset: " + cand);
+                  break;
+                } catch (e) {}
+              }
+            }
+          }
+          if (imgBuf) {
+            try {
+              const resDir = path.join("android", "app", "src", "main", "res");
+              const mipmapDirs = ["mipmap-mdpi", "mipmap-hdpi", "mipmap-xhdpi", "mipmap-xxhdpi", "mipmap-xxxhdpi"];
+              mipmapDirs.forEach(dir => {
+                const targetFolder = path.join(resDir, dir);
+                fs.mkdirSync(targetFolder, { recursive: true });
+                fs.writeFileSync(path.join(targetFolder, "ic_launcher.png"), imgBuf);
+                fs.writeFileSync(path.join(targetFolder, "ic_launcher_round.png"), imgBuf);
+                fs.writeFileSync(path.join(targetFolder, "ic_launcher_foreground.png"), imgBuf);
+              });
+              console.log("Successfully set custom application launcher icon across all mipmap resolutions.");
+            } catch (iconErr) {
+              console.log("Notice: Failed to render custom icon buffer:", iconErr.message);
+            }
+          }
+
+          // Android TV 16:9 Leanback Launcher Banner
+          let bannerBuf = null;
+          if (tvBannerBase64 && typeof tvBannerBase64 === "string" && tvBannerBase64.length > 50) {
+            try {
+              const cleanB64 = tvBannerBase64.includes("base64,") ? tvBannerBase64.split("base64,")[1] : tvBannerBase64;
+              bannerBuf = Buffer.from(cleanB64, "base64");
+            } catch (e) {}
+          }
+          if (!bannerBuf) {
+            const bannerCandidates = [
+              path.join("resources", "banner.png"),
+              path.join("public", "banner.png"),
+              path.join("src", "assets", "banner.png"),
+              path.join("resources", "tv_banner.png"),
+              path.join("public", "tv_banner.png")
+            ];
+            for (const cand of bannerCandidates) {
+              if (fs.existsSync(cand)) {
+                try {
+                  bannerBuf = fs.readFileSync(cand);
+                  console.log("Loaded custom TV banner from repository asset: " + cand);
+                  break;
+                } catch (e) {}
+              }
+            }
+          }
+          if (!bannerBuf && imgBuf) {
+            bannerBuf = imgBuf; // Fallback to launcher icon buffer
+          }
+          if (!bannerBuf) {
+            const fallbackIconPaths = [
+              path.join("android", "app", "src", "main", "res", "mipmap-xhdpi", "ic_launcher.png"),
+              path.join("android", "app", "src", "main", "res", "mipmap-hdpi", "ic_launcher.png"),
+              path.join("android", "app", "src", "main", "res", "mipmap-mdpi", "ic_launcher.png"),
+              path.join("android", "app", "src", "main", "res", "drawable", "ic_launcher_background.png")
+            ];
+            for (const fPath of fallbackIconPaths) {
+              if (fs.existsSync(fPath)) {
+                try {
+                  bannerBuf = fs.readFileSync(fPath);
+                  console.log("[TV] Used native launcher asset for banner fallback: " + fPath);
+                  break;
+                } catch(e) {}
+              }
+            }
+          }
+
+          // Always write banner.png to all drawable densities
+          if (bannerBuf) {
+            try {
+              const resDir = path.join("android", "app", "src", "main", "res");
+              const bannerFolders = [
+                "drawable",
+                "drawable-mdpi",
+                "drawable-hdpi",
+                "drawable-xhdpi",
+                "drawable-xxhdpi",
+                "drawable-xxxhdpi",
+                "mipmap-mdpi",
+                "mipmap-hdpi",
+                "mipmap-xhdpi",
+                "mipmap-xxhdpi",
+                "mipmap-xxxhdpi"
+              ];
+              bannerFolders.forEach(dir => {
+                const targetFolder = path.join(resDir, dir);
+                fs.mkdirSync(targetFolder, { recursive: true });
+                fs.writeFileSync(path.join(targetFolder, "banner.png"), bannerBuf);
+              });
+              console.log("[TV] Stored 16:9 Leanback banner.png across all drawable and mipmap densities.");
+            } catch (bannerErr) {
+              console.log("Notice: Failed to write TV banner asset:", bannerErr.message);
+            }
+          }
+
+          // === CUSTOM SPLASH SCREEN INJECTION (Mobile Portrait & Android TV 16:9 Landscape) ===
+          let splashBuf = null;
+          const rawSplashB64 = payload.splashBase64 || (payload.config && payload.config.splashBase64) || payload.splashIconBase64 || (payload.config && payload.config.splashIconBase64);
+          if (rawSplashB64 && typeof rawSplashB64 === "string" && rawSplashB64.length > 50) {
+            try {
+              const cleanSplashB64 = rawSplashB64.includes("base64,") ? rawSplashB64.split("base64,")[1] : rawSplashB64;
+              splashBuf = Buffer.from(cleanSplashB64, "base64");
+              console.log("[SPLASH] Loaded custom portrait/generic splash image (" + splashBuf.length + " bytes)");
+            } catch (e) {
+              console.log("Notice: Could not parse custom splashBase64:", e.message);
+            }
+          }
+
+          let splashLandBuf = null;
+          const rawSplashLandB64 = payload.splashLandBase64 || (payload.config && payload.config.splashLandBase64);
+          if (rawSplashLandB64 && typeof rawSplashLandB64 === "string" && rawSplashLandB64.length > 50) {
+            try {
+              const cleanSplashLandB64 = rawSplashLandB64.includes("base64,") ? rawSplashLandB64.split("base64,")[1] : rawSplashLandB64;
+              splashLandBuf = Buffer.from(cleanSplashLandB64, "base64");
+              console.log("[SPLASH] Loaded custom 16:9 landscape TV splash image (" + splashLandBuf.length + " bytes)");
+            } catch (e) {
+              console.log("Notice: Could not parse custom splashLandBase64:", e.message);
+            }
+          }
+
+          // Fallback to repository splash assets
+          if (!splashBuf) {
+            const possibleSplashPaths = [
+              path.join("resources", "splash.png"),
+              path.join("public", "splash.png"),
+              path.join("src", "assets", "splash.png"),
+              path.join("assets", "splash.png")
+            ];
+            for (const sPath of possibleSplashPaths) {
+              if (fs.existsSync(sPath)) {
+                try {
+                  splashBuf = fs.readFileSync(sPath);
+                  console.log("[SPLASH] Found repo portrait splash asset at " + sPath);
+                  break;
+                } catch(e) {}
+              }
+            }
+          }
+
+          if (!splashLandBuf) {
+            const possibleSplashLandPaths = [
+              path.join("resources", "splash-land.png"),
+              path.join("public", "splash-land.png"),
+              path.join("src", "assets", "splash-land.png"),
+              path.join("assets", "splash-land.png"),
+              path.join("resources", "banner.png")
+            ];
+            for (const sPath of possibleSplashLandPaths) {
+              if (fs.existsSync(sPath)) {
+                try {
+                  splashLandBuf = fs.readFileSync(sPath);
+                  console.log("[SPLASH] Found repo landscape TV splash asset at " + sPath);
+                  break;
+                } catch(e) {}
+              }
+            }
+          }
+
+          // Fallbacks if one or both are missing
+          if (!splashBuf && imgBuf) {
+            splashBuf = imgBuf;
+            console.log("[SPLASH] Using custom launcher icon as fallback portrait splash");
+          } else if (!splashBuf && bannerBuf) {
+            splashBuf = bannerBuf;
+          }
+
+          if (!splashLandBuf && bannerBuf) {
+            splashLandBuf = bannerBuf;
+            console.log("[SPLASH] Using TV banner as fallback 16:9 landscape splash");
+          } else if (!splashLandBuf && splashBuf) {
+            splashLandBuf = splashBuf;
+          }
+
+          // Write separate portrait vs landscape splash assets to native Android drawable directories
+          try {
+            const resDir = path.join("android", "app", "src", "main", "res");
+            const isTvDevice = payload.targetDevice === 'tv' || (payload.config && payload.config.targetDevice === 'tv') || isTv;
+
+            const landFolders = [
+              "drawable-land-mdpi",
+              "drawable-land-hdpi",
+              "drawable-land-xhdpi",
+              "drawable-land-xxhdpi",
+              "drawable-land-xxxhdpi"
+            ];
+            const portFolders = [
+              "drawable-port-mdpi",
+              "drawable-port-hdpi",
+              "drawable-port-xhdpi",
+              "drawable-port-xxhdpi",
+              "drawable-port-xxxhdpi"
+            ];
+            const defaultFolders = [
+              "drawable",
+              "drawable-mdpi",
+              "drawable-hdpi",
+              "drawable-xhdpi",
+              "drawable-xxhdpi",
+              "drawable-xxxhdpi"
+            ];
+
+            const effectiveLandBuf = splashLandBuf || splashBuf;
+            const effectivePortBuf = splashBuf || splashLandBuf;
+
+            if (effectiveLandBuf) {
+              landFolders.forEach(dir => {
+                const targetFolder = path.join(resDir, dir);
+                fs.mkdirSync(targetFolder, { recursive: true });
+                fs.writeFileSync(path.join(targetFolder, "splash.png"), effectiveLandBuf);
+              });
+            }
+
+            if (effectivePortBuf) {
+              portFolders.forEach(dir => {
+                const targetFolder = path.join(resDir, dir);
+                fs.mkdirSync(targetFolder, { recursive: true });
+                fs.writeFileSync(path.join(targetFolder, "splash.png"), effectivePortBuf);
+              });
+            }
+
+            // Default folders get 16:9 landscape asset on TV devices, or portrait asset on mobile
+            const effectiveDefaultBuf = isTvDevice ? (effectiveLandBuf || effectivePortBuf) : (effectivePortBuf || effectiveLandBuf);
+            if (effectiveDefaultBuf) {
+              defaultFolders.forEach(dir => {
+                const targetFolder = path.join(resDir, dir);
+                fs.mkdirSync(targetFolder, { recursive: true });
+                fs.writeFileSync(path.join(targetFolder, "splash.png"), effectiveDefaultBuf);
+              });
+            }
+
+            console.log("[SPLASH] Successfully injected dedicated landscape 16:9 TV splash (" + (effectiveLandBuf ? effectiveLandBuf.length : 0) + "B) and portrait splash (" + (effectivePortBuf ? effectivePortBuf.length : 0) + "B) into Android res folders.");
+          } catch (splashErr) {
+            console.log("Notice: Failed to write splash screen assets:", splashErr.message);
+          }
+
+          // Inject splash background color into res/values/colors.xml
+          try {
+            const splashColor = payload.splashBackgroundColor || (payload.config && payload.config.splashBackgroundColor) || "#0f172a";
+            const colorsXmlPath = path.join("android", "app", "src", "main", "res", "values", "colors.xml");
+            if (fs.existsSync(colorsXmlPath)) {
+              let colorsXml = fs.readFileSync(colorsXmlPath, "utf8");
+              if (!colorsXml.includes("colorSplash")) {
+                colorsXml = colorsXml.replace("</resources>", `    <color name="colorSplash">${splashColor}</color>\n    <color name="splash_background">${splashColor}</color>\n</resources>`);
+                fs.writeFileSync(colorsXmlPath, colorsXml);
+                console.log("[SPLASH] Injected colorSplash '" + splashColor + "' into colors.xml");
+              }
+            }
+          } catch (cErr) {
+            console.log("Notice: Could not update splash color in colors.xml:", cErr.message);
+          }
+
+          const manifestPath = path.join("android", "app", "src", "main", "AndroidManifest.xml");
+          if (fs.existsSync(manifestPath)) {
+            let manifest = fs.readFileSync(manifestPath, "utf8");
+            
+            // Clean up any stale or invalid permission tags (e.g. without package dots)
+            manifest = manifest.replace(/<uses-permission\s+android:name="(?![a-zA-Z0-9_]+\.)[^"]+"\s*\/>\s*/g, "");
+
+            const PERMISSION_MAP = {
+              camera: [
+                "android.permission.CAMERA",
+                "android.permission.RECORD_AUDIO",
+                "android.permission.MODIFY_AUDIO_SETTINGS"
+              ],
+              microphone: [
+                "android.permission.RECORD_AUDIO",
+                "android.permission.MODIFY_AUDIO_SETTINGS"
+              ],
+              media_library: [
+                "android.permission.READ_MEDIA_IMAGES",
+                "android.permission.READ_MEDIA_VIDEO",
+                "android.permission.READ_MEDIA_AUDIO",
+                "android.permission.READ_EXTERNAL_STORAGE"
+              ],
+              storage_read_write: [
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE",
+                "android.permission.READ_MEDIA_IMAGES",
+                "android.permission.READ_MEDIA_VIDEO",
+                "android.permission.READ_MEDIA_AUDIO"
+              ],
+              manage_storage: [
+                "android.permission.MANAGE_EXTERNAL_STORAGE",
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE"
+              ],
+              sms: [
+                "android.permission.SEND_SMS",
+                "android.permission.RECEIVE_SMS",
+                "android.permission.READ_SMS",
+                "android.permission.RECEIVE_MMS"
+              ],
+              phone_state: [
+                "android.permission.CALL_PHONE",
+                "android.permission.READ_PHONE_STATE"
+              ],
+              contacts: [
+                "android.permission.READ_CONTACTS",
+                "android.permission.WRITE_CONTACTS",
+                "android.permission.GET_ACCOUNTS"
+              ],
+              location: [
+                "android.permission.ACCESS_FINE_LOCATION",
+                "android.permission.ACCESS_COARSE_LOCATION"
+              ],
+              location_background: [
+                "android.permission.ACCESS_BACKGROUND_LOCATION",
+                "android.permission.ACCESS_FINE_LOCATION",
+                "android.permission.ACCESS_COARSE_LOCATION"
+              ],
+              bluetooth: [
+                "android.permission.BLUETOOTH",
+                "android.permission.BLUETOOTH_ADMIN",
+                "android.permission.BLUETOOTH_SCAN",
+                "android.permission.BLUETOOTH_CONNECT",
+                "android.permission.BLUETOOTH_ADVERTISE"
+              ],
+              biometrics: [
+                "android.permission.USE_BIOMETRIC",
+                "android.permission.USE_FINGERPRINT"
+              ],
+              vibration: [
+                "android.permission.VIBRATE"
+              ],
+              notifications: [
+                "android.permission.POST_NOTIFICATIONS"
+              ],
+              media_playback: [
+                "android.permission.FOREGROUND_SERVICE",
+                "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+                "android.permission.WAKE_LOCK",
+                "android.permission.MODIFY_AUDIO_SETTINGS",
+                "android.permission.POST_NOTIFICATIONS",
+                "android.permission.INTERNET",
+                "android.permission.ACCESS_NETWORK_STATE"
+              ],
+              network_state: [
+                "android.permission.INTERNET",
+                "android.permission.ACCESS_NETWORK_STATE",
+                "android.permission.ACCESS_WIFI_STATE",
+                "android.permission.CHANGE_WIFI_STATE"
+              ],
+              boot_completed: [
+                "android.permission.RECEIVE_BOOT_COMPLETED",
+                "android.permission.WAKE_LOCK",
+                "android.permission.FOREGROUND_SERVICE"
+              ],
+              inapp_browser: [
+                "android.permission.INTERNET",
+                "android.permission.ACCESS_NETWORK_STATE"
+              ]
+            };
+
+            const FEATURE_MAP = {
+              camera: [
+                "android.hardware.camera",
+                "android.hardware.camera.autofocus",
+                "android.hardware.camera.front"
+              ],
+              microphone: [
+                "android.hardware.microphone"
+              ],
+              location: [
+                "android.hardware.location",
+                "android.hardware.location.gps",
+                "android.hardware.location.network"
+              ],
+              location_background: [
+                "android.hardware.location",
+                "android.hardware.location.gps"
+              ],
+              bluetooth: [
+                "android.hardware.bluetooth",
+                "android.hardware.bluetooth_le"
+              ],
+              biometrics: [
+                "android.hardware.fingerprint"
+              ],
+              sms: [
+                "android.hardware.telephony"
+              ],
+              phone_state: [
+                "android.hardware.telephony"
+              ]
+            };
+
+            const rawPermList = [];
+            if (Array.isArray(payload.permissions)) rawPermList.push(...payload.permissions);
+            if (payload.config && Array.isArray(payload.config.permissions)) rawPermList.push(...payload.config.permissions);
+            if (Array.isArray(payload.rawPermissions)) rawPermList.push(...payload.rawPermissions);
+            if (payload.config && Array.isArray(payload.config.rawPermissions)) rawPermList.push(...payload.config.rawPermissions);
+
+            const resolvedPerms = new Set([
+              "android.permission.INTERNET",
+              "android.permission.ACCESS_NETWORK_STATE"
+            ]);
+            const resolvedFeatures = new Set();
+
+            rawPermList.forEach(item => {
+              if (!item) return;
+              const key = String(item).trim();
+              if (PERMISSION_MAP[key]) {
+                PERMISSION_MAP[key].forEach(p => resolvedPerms.add(p));
+              } else if (key.startsWith("android.permission.") || key.includes(".")) {
+                resolvedPerms.add(key);
+              }
+              if (FEATURE_MAP[key]) {
+                FEATURE_MAP[key].forEach(f => resolvedFeatures.add(f));
+              }
+            });
+
+            const tagsToInject = [];
+            resolvedPerms.forEach(p => {
+              const regex = new RegExp(`<uses-permission[^>]*android:name=["']${p}["']`);
+              if (!regex.test(manifest)) {
+                tagsToInject.push(`<uses-permission android:name="${p}" />`);
+              }
+            });
+
+            resolvedFeatures.forEach(f => {
+              const regex = new RegExp(`<uses-feature[^>]*android:name=["']${f}["']`);
+              if (!regex.test(manifest)) {
+                tagsToInject.push(`<uses-feature android:name="${f}" android:required="false" />`);
+              }
+            });
+
+            // Android TV & Universal Dual-Mode Hardware/Software Declarations
+            if (isTvSupport) {
+              const tvFeatures = [
+                '<uses-feature android:name="android.software.leanback" android:required="false" />',
+                '<uses-feature android:name="android.hardware.touchscreen" android:required="false" />',
+                '<uses-feature android:name="android.hardware.telephony" android:required="false" />',
+                '<uses-feature android:name="android.hardware.camera" android:required="false" />',
+                '<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />',
+                '<uses-feature android:name="android.hardware.microphone" android:required="false" />',
+                '<uses-feature android:name="android.hardware.bluetooth" android:required="false" />',
+                '<uses-feature android:name="android.hardware.location" android:required="false" />'
+              ];
+              tvFeatures.forEach(fTag => {
+                const fName = fTag.match(/android:name="([^"]+)"/)?.[1];
+                if (fName && !manifest.includes(fName)) {
+                  tagsToInject.push(fTag);
+                }
+              });
+            }
+
+            if (tagsToInject.length > 0 && manifest.includes("<application")) {
+              const injection = "\n    " + tagsToInject.join("\n    ") + "\n    <application";
+              manifest = manifest.replace("<application", injection);
+            }
+
+            // Robust attribute setter to avoid duplicate attributes in XML
+            function setAttributeOnTag(xml, tagPattern, attrName, attrVal) {
+              return xml.replace(tagPattern, (match, prefix, tagAttrs) => {
+                const cleanAttrs = tagAttrs.replace(new RegExp(`\\s*${attrName}=["'][^"']*["']`, 'g'), '');
+                return `${prefix}${cleanAttrs} ${attrName}="${attrVal}"`;
+              });
+            }
+
+            // Harden <application> tag attributes
+            manifest = setAttributeOnTag(manifest, /(<application\b)([^>]*)/, 'android:requestLegacyExternalStorage', 'true');
+            manifest = setAttributeOnTag(manifest, /(<application\b)([^>]*)/, 'android:usesCleartextTraffic', 'true');
+
+            // Android TV & Universal Banner & Activity Configuration
+            if (isTvSupport) {
+              manifest = setAttributeOnTag(manifest, /(<application\b)([^>]*)/, 'android:banner', '@drawable/banner');
+              manifest = setAttributeOnTag(manifest, /(<application\b)([^>]*)/, 'android:isGame', isGame ? 'true' : 'false');
+
+              const targetOrientation = (tvOrientation === "sensorLandscape") ? "sensorLandscape" : "landscape";
+              
+              // Set orientation & banner on MainActivity
+              manifest = manifest.replace(/(<activity\b[^>]*android:name=["'](?:\.MainActivity|[^"']*MainActivity)["'][^>]*)/g, (actMatch) => {
+                let updated = actMatch.replace(/\s*android:screenOrientation=["'][^"']*["']/g, '');
+                updated = updated.replace(/\s*android:banner=["'][^"']*["']/g, '');
+                if (isTv) {
+                  // Hardcode landscape only when explicitly TV-only target
+                  return `${updated} android:screenOrientation="${targetOrientation}" android:banner="@drawable/banner"`;
+                } else {
+                  // Universal dual-mode: let mobile use portrait/sensor, MainActivity will lock TV at runtime
+                  return `${updated} android:banner="@drawable/banner"`;
+                }
+              });
+
+              if (!manifest.includes("android.intent.category.LEANBACK_LAUNCHER")) {
+                if (/android\.intent\.category\.LAUNCHER/i.test(manifest)) {
+                  manifest = manifest.replace(
+                    /(<category\s+android:name=["']android\.intent\.category\.LAUNCHER["']\s*\/?>)/i,
+                    '$1\n                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />'
+                  );
+                } else if (manifest.includes("</intent-filter>")) {
+                  manifest = manifest.replace(
+                    '</intent-filter>',
+                    '    <category android:name="android.intent.category.LEANBACK_LAUNCHER" />\n            </intent-filter>'
+                  );
+                }
+              }
+              console.log(`[DEVICE TARGET] Configured TV support (isTv=${isTv}, isUniversal=${isUniversal}), Leanback banner, and dual launcher categories into AndroidManifest.xml`);
+            }
+
+            fs.writeFileSync(manifestPath, manifest);
+            console.log(`[PERMISSIONS] Successfully injected ${tagsToInject.length} permissions & features into AndroidManifest.xml:`);
+            resolvedPerms.forEach(p => console.log(` + ${p}`));
+          }
+
+          // Helper to recursively find files
+          function findFiles(dir, filename) {
+            let results = [];
+            if (!fs.existsSync(dir)) return results;
+            const list = fs.readdirSync(dir);
+            list.forEach(file => {
+              const fullPath = path.join(dir, file);
+              const stat = fs.statSync(fullPath);
+              if (stat && stat.isDirectory()) {
+                results = results.concat(findFiles(fullPath, filename));
+              } else if (file === filename) {
+                results.push(fullPath);
+              }
+            });
+            return results;
+          }
+
+          // Configure MainActivity.java (Immersive Fullscreen & Back Button Navigation)
+          try {
+            const javaBase = path.join("android", "app", "src", "main", "java");
+            const kotlinBase = path.join("android", "app", "src", "main", "kotlin");
+            const existingActivities = findFiles(javaBase, "MainActivity.java");
+
+            // Clean up any duplicate Kotlin MainActivity to prevent duplicate class build errors
+            const existingKtActivities = [
+              ...findFiles(javaBase, "MainActivity.kt"),
+              ...findFiles(kotlinBase, "MainActivity.kt")
+            ];
+            existingKtActivities.forEach(ktFile => {
+              try {
+                fs.unlinkSync(ktFile);
+                console.log("[NATIVE ACTIVITY] Removed conflicting Kotlin activity:", ktFile);
+              } catch(e) {}
+            });
+
+            const isFullscreenMode = (payload.displayMode === "fullscreen");
+            const isHistoryBack = (payload.backButtonBehavior !== "exit");
+
+            let actPaths = existingActivities;
+            if (actPaths.length === 0) {
+              const pkgParts = appId.split(".");
+              const targetDir = path.join(javaBase, ...pkgParts);
+              fs.mkdirSync(targetDir, { recursive: true });
+              actPaths = [path.join(targetDir, "MainActivity.java")];
+            }
+
+            actPaths.forEach(actPath => {
+              let pkgLine = "package " + appId + ";";
+              if (fs.existsSync(actPath)) {
+                const existingContent = fs.readFileSync(actPath, "utf8");
+                const pkgMatch = existingContent.match(/package\s+([a-zA-Z0-9_.]+);/);
+                if (pkgMatch) {
+                  pkgLine = pkgMatch[0];
+                }
+              }
+
+              let javaImports = 
+                "import android.app.UiModeManager;\n" +
+                "import android.content.pm.ActivityInfo;\n" +
+                "import android.content.res.Configuration;\n" +
+                "import android.os.Bundle;\n" +
+                (hardwareBlackout ? "import android.view.WindowManager;\n" : "") +
+                "import com.getcapacitor.BridgeActivity;\n\n";
+
+              let javaCode = pkgLine + "\n\n" + javaImports +
+                "public class MainActivity extends BridgeActivity {\n" +
+                "    @Override\n" +
+                "    public void onCreate(Bundle savedInstanceState) {\n" +
+                (hardwareBlackout ? "        // Step 1.A: Android Hardware Blackout - Prevent screen recording and screenshots (FLAG_SECURE)\n" +
+                "        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);\n" : "") +
+                "        super.onCreate(savedInstanceState);\n" +
+                "        try {\n" +
+                "            UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);\n" +
+                "            if (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {\n" +
+                "                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);\n" +
+                "            }\n" +
+                "        } catch (Exception e) {}\n" +
+                "    }\n" +
+                "}\n";
+
+              fs.mkdirSync(path.dirname(actPath), { recursive: true });
+              fs.writeFileSync(actPath, javaCode);
+              console.log("[NATIVE ACTIVITY] Written smart dual-mode BridgeActivity MainActivity.java at: " + actPath + (hardwareBlackout ? " [HARDWARE BLACKOUT FLAG_SECURE ENABLED]" : ""));
+            });
+          } catch (actErr) {
+            console.log("[NATIVE ACTIVITY] Notice configuring MainActivity.java:", actErr.message);
+          }
+
+          // Inject JS back button listener and Fullscreen CSS/Plugin calls into HTML
+          const htmlTargets = [
+            path.join("dist", "index.html"),
+            path.join("index.html"),
+            path.join("public", "index.html")
+          ];
+
+          const isFullscreen = (payload.displayMode === "fullscreen");
+
+          const backScript = '<script id="capacitor-backbutton-handler">\n' +
+            '(function() {\n' +
+            '  function initNav() {\n' +
+            '    var App = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App);\n' +
+            '    var StatusBar = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar);\n' +
+            (isFullscreen ? '    if (StatusBar && StatusBar.hide) { try { StatusBar.hide(); } catch(e) {} }\n' : '') +
+            '    if (App && App.addListener) {\n' +
+            '      App.addListener("backButton", function(data) {\n' +
+            '        var iframes = document.querySelectorAll("iframe");\n' +
+            '        var handled = false;\n' +
+            '        for (var i = 0; i < iframes.length; i++) {\n' +
+            '          try {\n' +
+            '            var win = iframes[i].contentWindow;\n' +
+            '            if (win && win.history && win.history.length > 1) {\n' +
+            '              win.history.back();\n' +
+            '              handled = true;\n' +
+            '              break;\n' +
+            '            }\n' +
+            '          } catch(e) {}\n' +
+            '        }\n' +
+            '        if (!handled) {\n' +
+            '          if (window.history && window.history.length > 1) {\n' +
+            '            window.history.back();\n' +
+            '          } else if (data && data.canGoBack) {\n' +
+            '            window.history.back();\n' +
+            '          } else {\n' +
+            '            App.exitApp();\n' +
+            '          }\n' +
+            '        }\n' +
+            '      });\n' +
+            '    }\n' +
+            '  }\n' +
+            '  if (document.readyState === "loading") {\n' +
+            '    document.addEventListener("DOMContentLoaded", initNav);\n' +
+            '  } else {\n' +
+            '    initNav();\n' +
+            '  }\n' +
+            '})();\n' +
+            '</script>';
+
+          const fullCss = '<style id="capacitor-fullscreen-style">\n' +
+            'html, body, #root {\n' +
+            '  width: 100vw !important;\n' +
+            '  height: 100vh !important;\n' +
+            '  margin: 0 !important;\n' +
+            '  padding: 0 !important;\n' +
+            '  overflow: hidden !important;\n' +
+            '}\n' +
+            '</style>';
+
+          htmlTargets.forEach(hPath => {
+            if (fs.existsSync(hPath)) {
+              try {
+                let html = fs.readFileSync(hPath, "utf8");
+                if (isFullscreen && !html.includes("capacitor-fullscreen-style")) {
+                  if (html.includes("</head>")) {
+                    html = html.replace("</head>", fullCss + "\n</head>");
+                  } else {
+                    html = fullCss + "\n" + html;
+                  }
+                }
+                if (!html.includes("capacitor-backbutton-handler")) {
+                  if (html.includes("</body>")) {
+                    html = html.replace("</body>", backScript + "\n</body>");
+                  } else {
+                    html += backScript;
+                  }
+                  console.log("[NATIVE HTML] Injected navigation/fullscreen listener into: " + hPath);
+                } else {
+                  html = html.replace(/<script id="capacitor-backbutton-handler">[\s\S]*?<\/script>/, backScript);
+                  console.log("[NATIVE HTML] Updated navigation/fullscreen listener in: " + hPath);
+                }
+                fs.writeFileSync(hPath, html);
+              } catch (hErr) {
+                console.log("[NATIVE HTML] Notice updating HTML file " + hPath + ":", hErr.message);
+              }
+            }
+          });
+          EOF
+
+      - name: Auto-repair Google Services Package Name
+        run: |
+          node << "EOF"
+          const fs = require("fs");
+          const path = require("path");
+          const gsPath = path.join("android", "app", "google-services.json");
+          const gradlePath = path.join("android", "app", "build.gradle");
+          if (fs.existsSync(gsPath) && fs.existsSync(gradlePath)) {
+            const gradle = fs.readFileSync(gradlePath, "utf8");
+            const match = gradle.match(/applicationId\s+['"]([^'"]+)['"]/) || 
+                          gradle.match(/applicationId\s*=\s*['"]([^'"]+)['"]/) ||
+                          gradle.match(/namespace\s+['"]([^'"]+)['"]/) ||
+                          gradle.match(/namespace\s*=\s*['"]([^'"]+)['"]/);
+            if (match && match[1]) {
+              const appId = match[1];
+              console.log("Syncing google-services.json package_name to:", appId);
+              let gs = fs.readFileSync(gsPath, "utf8");
+              gs = gs.replace(/"package_name":\s*"[^"]+"/g, `"package_name": "${appId}"`);
+              fs.writeFileSync(gsPath, gs);
+            }
+          }
+          EOF
+
+      - name: Execute Android Build (APK, AAB, or Android Studio Project ZIP)
+        run: |
+          node << "EOF"
+          const fs = require("fs");
+          const path = require("path");
+          let payload = {};
+          try {
+            const eventPath = process.env.GITHUB_EVENT_PATH;
+            if (eventPath && fs.existsSync(eventPath)) {
+              const eventData = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+              payload = eventData.client_payload || {};
+              if (payload.config && typeof payload.config === "object") {
+                Object.assign(payload, payload.config);
+              }
+            }
+          } catch (e) {}
+
+          const buildType = (payload.type || "apk").toLowerCase();
+          fs.writeFileSync(".build_target_type", buildType);
+          EOF
+
+          TARGET_TYPE=$(cat .build_target_type 2>/dev/null || echo "apk")
+          echo "Target binary format: $TARGET_TYPE"
+
+          if [ ! -f "android/build.gradle" ] || [ ! -f "android/gradlew" ] || [ ! -f "android/settings.gradle" ]; then
+            echo "Android project directory missing or incomplete. Re-initializing native Android project..."
+            rm -rf android
+            if [ ! -d "node_modules/@capacitor/android" ]; then
+              npm install --legacy-peer-deps --no-audit --no-fund @capacitor/core @capacitor/cli @capacitor/android || true
+            fi
+            npx cap add android || npx @capacitor/cli add android || true
+            npx cap sync android || npx @capacitor/cli sync android || true
+          fi
+
+          if [ ! -d "android" ]; then
+            echo "ERROR: Could not find or create android project directory."
+            exit 1
+          fi
+
+          if [ "$TARGET_TYPE" = "zip" ] || [ "$TARGET_TYPE" = "project_zip" ]; then
+            echo "[INFO] Target output is Android Studio Project ZIP. Skipping Gradle APK/AAB binary compilation."
+          else
+            cd android
+            if [ -f gradlew ]; then
+              chmod +x gradlew || true
+            elif [ -f build.gradle ]; then
+              echo "Generating Gradle wrapper..."
+              gradle wrapper || true
+              chmod +x gradlew || true
+            else
+              echo "ERROR: No build.gradle found inside android project."
+              exit 1
+            fi
+
+            echo "Starting Gradle compilation..."
+            chmod +x gradlew || true
+
+            if [ "$TARGET_TYPE" = "aab" ]; then
+              echo "Compiling Play Store Android App Bundle (.AAB)..."
+              ./gradlew :app:bundleRelease --no-daemon --stacktrace --info -x lint -x test || ./gradlew :app:bundleDebug --no-daemon --stacktrace --info -x lint -x test
+            else
+              echo "Compiling Direct Install Android Package (.APK)..."
+              ./gradlew :app:assembleRelease --no-daemon --stacktrace --info -x lint -x test || ./gradlew :app:assembleDebug --no-daemon --stacktrace --info -x lint -x test
+            fi
+          fi
+
+      - name: Collect & Validate Built Artifacts
+        run: |
+          node << "EOF"
+          const fs = require("fs");
+          const path = require("path");
+          const { execSync } = require("child_process");
+
+          let payload = {};
+          try {
+            const eventPath = process.env.GITHUB_EVENT_PATH;
+            if (eventPath && fs.existsSync(eventPath)) {
+              const eventData = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+              payload = eventData.client_payload || {};
+              if (payload.config && typeof payload.config === "object") {
+                Object.assign(payload, payload.config);
+              }
+            }
+          } catch (e) {}
+
+          const appName = (payload.appName || "app").replace(/[^a-zA-Z0-9_-]/g, "_");
+          const version = payload.version || "1.0.0";
+          const buildType = (payload.type || "apk").toLowerCase();
+          const outDir = path.join(process.cwd(), "dist-binaries");
+          fs.mkdirSync(outDir, { recursive: true });
+
+          let found = false;
+
+          function scan(dir, ext) {
+            if (!fs.existsSync(dir)) return [];
+            let files = [];
+            const items = fs.readdirSync(dir, { withFileTypes: true });
+            for (const item of items) {
+              const full = path.join(dir, item.name);
+              if (item.isDirectory()) {
+                files = files.concat(scan(full, ext));
+              } else if (item.name.endsWith(ext)) {
+                files.push(full);
+              }
+            }
+            return files;
+          }
+
+          if (buildType === "zip" || buildType === "project_zip") {
+            const target = path.join(outDir, `${appName}-v${version}-android-studio.zip`);
+            console.log(`[ZIP] Packaging complete Android Studio project workspace into: ${target}`);
+            try {
+              // Ensure clean permission on gradlew before zipping
+              try {
+                if (fs.existsSync(path.join("android", "gradlew"))) {
+                  fs.chmodSync(path.join("android", "gradlew"), 0o755);
+                }
+              } catch (_) {}
+
+              // Package android/ directory along with project root metadata
+              execSync(`zip -q -r "${target}" android capacitor.config.* package.json README* 2>/dev/null || (cd android && zip -q -r "${target}" .)`);
+              if (fs.existsSync(target)) {
+                const stats = fs.statSync(target);
+                console.log(`[SUCCESS] Generated Android Studio Project ZIP (${(stats.size / (1024 * 1024)).toFixed(2)} MB) -> ${target}`);
+                found = true;
+              }
+            } catch (zErr) {
+              console.error("[ERROR] Failed creating project ZIP archive:", zErr.message);
+            }
+          } else if (buildType === "aab") {
+            const aabs = scan(path.join("android", "app", "build", "outputs", "bundle"), ".aab");
+            if (aabs.length > 0) {
+              const target = path.join(outDir, `${appName}-v${version}.aab`);
+              fs.copyFileSync(aabs[0], target);
+              console.log(`[SUCCESS] Copied valid Android App Bundle -> ${target}`);
+              found = true;
+            }
+          } else {
+            const apks = scan(path.join("android", "app", "build", "outputs", "apk"), ".apk");
+            if (apks.length > 0) {
+              const target = path.join(outDir, `${appName}-v${version}.apk`);
+              fs.copyFileSync(apks[0], target);
+              console.log(`[SUCCESS] Copied valid Android APK -> ${target}`);
+              found = true;
+            }
+          }
+
+          if (!found) {
+            console.error(`[ERROR] No valid .${buildType} binary was produced by Gradle.`);
+            process.exit(1);
+          }
+          EOF
+
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-release-binary
+          path: dist-binaries/*
+          if-no-files-found: error
